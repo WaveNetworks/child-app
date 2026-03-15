@@ -68,6 +68,10 @@
                 <i class="bi bi-book sidebar-icon"></i>
                 <span class="sidebar-text">UI Guide</span>
             </a>
+            <a class="nav-link <?= ($page ?? '') === 'privacy' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=privacy">
+                <i class="bi bi-shield-check sidebar-icon"></i>
+                <span class="sidebar-text">Privacy & Data</span>
+            </a>
         </nav>
         <div class="sidebar-footer text-center d-none d-md-block p-2 border-top border-secondary border-opacity-25">
             <button class="btn btn-sm btn-outline-light rounded-circle" id="sidebarToggle" type="button">
@@ -189,10 +193,12 @@
             $_SESSION['info']    = null;
             ?>
 
-            <!-- REGION: content -->
+            <!-- REGION: content (replaced by spa-nav.js during SPA navigation) -->
+            <div id="content-dynamic">
             <?php if (isset($current_page_file) && file_exists($current_page_file)) {
                 include($current_page_file);
             } ?>
+            </div>
         </div>
 
         <!-- REGION: footer -->
@@ -297,6 +303,7 @@
 <!-- REGION: footer-scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 <script src="../../admin/assets/js/bs-init.js"></script>
+<script src="../../admin/assets/js/error-reporter.js"></script>
 <script src="../../admin/assets/js/sidebar.js"></script>
 <script src="../../admin/assets/js/color-mode.js"></script>
 <script src="../assets/js/modal.js"></script>
@@ -306,5 +313,6 @@
 <script src="../assets/js/page-nav.js"></script>
 <script src="../../admin/assets/js/notifications.js"></script>
 <script src="../assets/js/bg-canvas.js"></script>
+<script src="../assets/js/spa-nav.js"></script>
 </body>
 </html>
