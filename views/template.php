@@ -205,7 +205,10 @@
         <footer class="app-footer px-4 py-2 d-flex align-items-center border-top border-secondary border-opacity-25">
             <nav class="small">
                 <a href="#" class="text-muted text-decoration-none me-3">Terms of Use</a>
-                <a href="#" class="text-muted text-decoration-none">Privacy Policy</a>
+                <a href="#" class="text-muted text-decoration-none me-3">Privacy Policy</a>
+                <?php if (function_exists('has_role') && has_role('admin')) { ?>
+                <a href="../../admin/app/" class="badge bg-danger bg-opacity-75 text-decoration-none"><i class="bi bi-shield-lock me-1"></i>Admin</a>
+                <?php } ?>
             </nav>
             <span class="small text-muted ms-auto">Intended use only &copy; <?= date('Y') ?> <?= h($b['site_name']) ?></span>
         </footer>
