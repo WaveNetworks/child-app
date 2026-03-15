@@ -68,6 +68,11 @@
                 <i class="bi bi-book sidebar-icon"></i>
                 <span class="sidebar-text">UI Guide</span>
             </a>
+            <!-- REMOVABLE: HTML5 Game demo — delete this link + views/game.php + assets/js/pong-game.js + route in app/index.php -->
+            <a class="nav-link <?= ($page ?? '') === 'game' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=game">
+                <i class="bi bi-controller sidebar-icon"></i>
+                <span class="sidebar-text">HTML5 Game</span>
+            </a>
         </nav>
         <div class="sidebar-footer text-center d-none d-md-block p-2 border-top border-secondary border-opacity-25">
             <button class="btn btn-sm btn-outline-light rounded-circle" id="sidebarToggle" type="button">
@@ -313,6 +318,8 @@
 <script src="../assets/js/page-nav.js"></script>
 <script src="../../admin/assets/js/notifications.js"></script>
 <script src="../assets/js/bg-canvas.js"></script>
+<!-- REMOVABLE: Pong game — delete this line + assets/js/pong-game.js + views/game.php + sidebar link + route in app/index.php -->
+<script src="../assets/js/pong-game.js"></script>
 <script src="../assets/js/spa-nav.js"></script>
 </body>
 </html>

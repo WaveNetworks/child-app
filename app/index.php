@@ -21,6 +21,7 @@ $views = [
     'examples'  => __DIR__ . '/../views/examples.php',
     'ui-guide'  => __DIR__ . '/../views/ui-guide.php',
     'privacy'   => __DIR__ . '/../views/privacy.php',
+    'game'      => __DIR__ . '/../views/game.php',       // REMOVABLE: HTML5 Game demo
 ];
 
 if (isset($views[$page]) && file_exists($views[$page])) {
