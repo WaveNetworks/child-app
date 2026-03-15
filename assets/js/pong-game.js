@@ -65,7 +65,11 @@
     function resize() {
         W = window.innerWidth;
         H = window.innerHeight;
-        // Don't resize canvas here — bg-canvas.js handles that on resize
+        // Ensure canvas pixel buffer matches viewport (bg-canvas also does this on resize,
+        // but we need it correct for our animation frames too)
+        canvas.width = W * dpr;
+        canvas.height = H * dpr;
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         PADDLE_H = Math.max(80, H * 0.12);
         BALL_R = Math.max(8, Math.min(W, H) * 0.008);
     }
