@@ -46,8 +46,6 @@
     function colors() {
         var dark = isDark();
         return {
-            court:       dark ? 'rgba(255,255,255,0.06)'     : 'rgba(0,0,0,0.06)',
-            centerLine:  dark ? 'rgba(255,255,255,0.10)'     : 'rgba(0,0,0,0.10)',
             paddleL:     dark ? '#6366f1'                    : '#4338ca',
             paddleLGlow: dark ? 'rgba(99,102,241,0.6)'      : 'rgba(67,56,202,0.4)',
             paddleR:     dark ? '#f43f5e'                    : '#be123c',
@@ -244,27 +242,6 @@
         if (window.bgCanvasDraw) {
             window.bgCanvasDraw();
         }
-
-        // Subtle court border
-        ctx.strokeStyle = c.court;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(20, 10, W - 40, H - 20);
-
-        // Center line (dashed)
-        ctx.setLineDash([10, 10]);
-        ctx.strokeStyle = c.centerLine;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(W / 2, 10);
-        ctx.lineTo(W / 2, H - 10);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        // Center circle
-        ctx.beginPath();
-        ctx.arc(W / 2, H / 2, 50, 0, Math.PI * 2);
-        ctx.strokeStyle = c.centerLine;
-        ctx.stroke();
 
         // Scores (bottom of screen)
         ctx.font = 'bold ' + Math.max(60, H * 0.1) + 'px monospace';
