@@ -76,7 +76,7 @@ The main HTML shell includes all structural UI regions:
 - Topnav: live search (desktop + mobile), notification bell, color mode toggle,
   theme switcher, user dropdown, right panel trigger (vertical dots, rightmost icon)
 - Right panel: offcanvas-end with tabbed content (General, Preferences, About)
-- Footer: sticky to bottom, Terms/Privacy links, copyright text
+- Footer: sticky to bottom, Terms/Privacy links, admin badge (admin-only, links to admin panel), copyright text
 - Canvas: #bgCanvas for gamified/animated backgrounds
 - Toast: reads #toast-data div, shows Bootstrap toasts via toast.js
 - Large modal: #largeModal for AJAX content via modalView()
@@ -374,10 +374,12 @@ Service and Privacy Policy". Validated in admin's loginActions.php register acti
 - `updateItemStatus` — Change item status inline. Logs `item_updated`.
 
 ### memberActions/profileActions.php
+- `updateProfile` — Update personal info (first_name, last_name, email) on admin shard. Email uniqueness validated.
+- `changePassword` — Change password with current password verification. Uses admin core's hash_password().
 - `updateAppPreferences` — Save user prefs (items_per_page, default_status, email_on_item_change, bio) to shard.
 
 ### memberActions/exampleActions.php
-- `sendFeedback` — Validate and process the feedback modal form (subject, message, priority).
+- `sendFeedback` — Validate and process the feedback modal form (subject, message).
 
 ### memberActions/privacyActions.php
 - `updateConsent` — Toggle optional consent preferences (marketing_email, cookie_analytics, cookie_marketing).
