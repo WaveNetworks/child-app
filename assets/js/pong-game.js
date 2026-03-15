@@ -266,13 +266,13 @@
         ctx.strokeStyle = c.centerLine;
         ctx.stroke();
 
-        // Scores
+        // Scores (bottom of screen)
         ctx.font = 'bold ' + Math.max(60, H * 0.1) + 'px monospace';
         ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
+        ctx.textBaseline = 'bottom';
         ctx.fillStyle = c.score;
-        ctx.fillText(scoreL, W * 0.25, 30);
-        ctx.fillText(scoreR, W * 0.75, 30);
+        ctx.fillText(scoreL, W * 0.25, H - 20);
+        ctx.fillText(scoreR, W * 0.75, H - 20);
 
         // Rally counter
         if (rallyCount > 2) {
