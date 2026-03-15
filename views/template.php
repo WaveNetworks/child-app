@@ -68,10 +68,6 @@
                 <i class="bi bi-book sidebar-icon"></i>
                 <span class="sidebar-text">UI Guide</span>
             </a>
-            <a class="nav-link <?= ($page ?? '') === 'privacy' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=privacy">
-                <i class="bi bi-shield-check sidebar-icon"></i>
-                <span class="sidebar-text">Privacy & Data</span>
-            </a>
         </nav>
         <div class="sidebar-footer text-center d-none d-md-block p-2 border-top border-secondary border-opacity-25">
             <button class="btn btn-sm btn-outline-light rounded-circle" id="sidebarToggle" type="button">
@@ -142,6 +138,7 @@
                         <li><span class="dropdown-item-text small text-muted"><?= h($_SESSION['email'] ?? '') ?></span></li>
                         <li><hr class="dropdown-divider"></li>
                         <li><a class="dropdown-item" href="index.php?page=profile"><i class="bi bi-person me-2"></i>Profile</a></li>
+                        <li><a class="dropdown-item" href="index.php?page=privacy"><i class="bi bi-shield-check me-2"></i>Privacy & Data</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             <form method="post" class="d-inline">

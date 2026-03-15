@@ -76,6 +76,7 @@ The main HTML shell includes all structural UI regions:
 - Topnav: live search (desktop + mobile), notification bell, color mode toggle,
   theme switcher, user dropdown, right panel trigger (vertical dots, rightmost icon)
 - Right panel: offcanvas-end with tabbed content (General, Preferences, About)
+- User dropdown: email, Profile link, Privacy & Data link, Logout
 - Footer: sticky to bottom, Terms/Privacy links, admin badge (admin-only, links to admin panel), copyright text
 - Canvas: #bgCanvas for gamified/animated backgrounds
 - Toast: reads #toast-data div, shows Bootstrap toasts via toast.js
@@ -340,7 +341,7 @@ Tracked events (by existing action files): `item_created`, `item_updated`, `item
   30-day cooling-off period, cancel button when pending
 
 Route: `index.php?page=privacy` (added to views array in app/index.php).
-Sidebar link in views/template.php (bi-shield-check icon).
+Accessible via user dropdown in topnav and a button on the Profile page (not in sidebar).
 
 ### Privacy action file
 `include/actions/memberActions/privacyActions.php` — 7 actions:
