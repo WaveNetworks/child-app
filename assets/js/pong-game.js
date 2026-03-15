@@ -1,6 +1,7 @@
 /**
  * pong-game.js — Self-playing Pong on #bgCanvas
- * Takes over the background canvas with an animated pong game.
+ * Layers a pong game ON TOP of the existing nebula background.
+ * bg-canvas.js draws the nebula/grid first, then this draws game elements over it.
  * Two AI paddles with imperfect tracking for natural-looking rallies.
  * Responds to data-bs-theme for light/dark neon aesthetics.
  *
@@ -45,19 +46,17 @@
     function colors() {
         var dark = isDark();
         return {
-            bg:          dark ? 'rgba(10, 10, 26, 0.92)'    : 'rgba(240, 240, 243, 0.92)',
-            court:       dark ? 'rgba(255,255,255,0.04)'     : 'rgba(0,0,0,0.04)',
-            centerLine:  dark ? 'rgba(255,255,255,0.08)'     : 'rgba(0,0,0,0.08)',
+            court:       dark ? 'rgba(255,255,255,0.06)'     : 'rgba(0,0,0,0.06)',
+            centerLine:  dark ? 'rgba(255,255,255,0.10)'     : 'rgba(0,0,0,0.10)',
             paddleL:     dark ? '#6366f1'                    : '#4338ca',
-            paddleLGlow: dark ? 'rgba(99,102,241,0.5)'      : 'rgba(67,56,202,0.3)',
+            paddleLGlow: dark ? 'rgba(99,102,241,0.6)'      : 'rgba(67,56,202,0.4)',
             paddleR:     dark ? '#f43f5e'                    : '#be123c',
-            paddleRGlow: dark ? 'rgba(244,63,94,0.5)'       : 'rgba(190,18,60,0.3)',
+            paddleRGlow: dark ? 'rgba(244,63,94,0.6)'       : 'rgba(190,18,60,0.4)',
             ball:        dark ? '#22d3ee'                    : '#0891b2',
-            ballGlow:    dark ? 'rgba(34,211,238,0.6)'       : 'rgba(8,145,178,0.35)',
+            ballGlow:    dark ? 'rgba(34,211,238,0.7)'       : 'rgba(8,145,178,0.45)',
             ballTrail:   dark ? 'rgba(34,211,238,'           : 'rgba(8,145,178,',
-            score:       dark ? 'rgba(255,255,255,0.12)'     : 'rgba(0,0,0,0.08)',
-            scoreFill:   dark ? 'rgba(255,255,255,0.25)'     : 'rgba(0,0,0,0.18)',
-            text:        dark ? 'rgba(255,255,255,0.15)'     : 'rgba(0,0,0,0.12)',
+            score:       dark ? 'rgba(255,255,255,0.10)'     : 'rgba(0,0,0,0.07)',
+            text:        dark ? 'rgba(255,255,255,0.18)'     : 'rgba(0,0,0,0.15)',
             particle:    dark ? ['#6366f1','#22d3ee','#f43f5e','#a78bfa','#34d399']
                                : ['#4338ca','#0891b2','#be123c','#7c3aed','#059669']
         };
@@ -66,9 +65,7 @@
     function resize() {
         W = window.innerWidth;
         H = window.innerHeight;
-        canvas.width = W * dpr;
-        canvas.height = H * dpr;
-        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        // Don't resize canvas here — bg-canvas.js handles that on resize
         PADDLE_H = Math.max(80, H * 0.12);
         BALL_R = Math.max(8, Math.min(W, H) * 0.008);
     }
@@ -114,35 +111,27 @@
     }
 
     function updateAI(paddle, side) {
-        // AI: track ball with imperfect reaction time + slight offset
         var targetY = ball.y - PADDLE_H / 2;
-
-        // Only react when ball is heading toward this paddle
         var approaching = (side === 'left' && ball.vx < 0) || (side === 'right' && ball.vx > 0);
 
         if (approaching) {
-            // Predict where ball will arrive (simple linear prediction)
             var dx = side === 'left' ? (paddle.x - ball.x) : (paddle.x - ball.x);
             var timeToArrive = Math.abs(dx / ball.vx);
             var predictedY = ball.y + ball.vy * timeToArrive;
 
-            // Bounce prediction off top/bottom
             while (predictedY < 0 || predictedY > H) {
                 if (predictedY < 0) predictedY = -predictedY;
                 if (predictedY > H) predictedY = 2 * H - predictedY;
             }
 
             targetY = predictedY - PADDLE_H / 2;
-            // Add some imperfection
             targetY += (Math.random() - 0.5) * PADDLE_H * (1 - settings.aiReaction) * 0.5;
         } else {
-            // Drift back toward center when ball going away
             targetY = H / 2 - PADDLE_H / 2;
         }
 
         paddle.targetY = targetY;
 
-        // Smooth movement toward target
         var diff = paddle.targetY - paddle.y;
         var maxMove = settings.paddleSpeed * (approaching ? 1.0 : 0.5);
         if (Math.abs(diff) > maxMove) {
@@ -151,17 +140,14 @@
             paddle.y += diff * 0.3;
         }
 
-        // Clamp to screen
         if (paddle.y < 0) paddle.y = 0;
         if (paddle.y + PADDLE_H > H) paddle.y = H - PADDLE_H;
     }
 
     function update() {
-        // Move ball
         ball.x += ball.vx;
         ball.y += ball.vy;
 
-        // Trail
         trail.push({ x: ball.x, y: ball.y });
         if (trail.length > settings.trailLength) trail.shift();
 
@@ -185,11 +171,10 @@
             ball.y <= paddleL.y + PADDLE_H) {
 
             ball.x = paddleL.x + PADDLE_W + BALL_R;
-            // Angle based on where it hits the paddle
-            var hitPos = (ball.y - paddleL.y) / PADDLE_H; // 0 to 1
-            var angle = (hitPos - 0.5) * 1.2; // -0.6 to 0.6 radians
-            var speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy) * 1.02; // tiny speedup
-            speed = Math.min(speed, 12); // cap
+            var hitPos = (ball.y - paddleL.y) / PADDLE_H;
+            var angle = (hitPos - 0.5) * 1.2;
+            var speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy) * 1.02;
+            speed = Math.min(speed, 12);
             ball.vx = Math.cos(angle) * speed;
             ball.vy = Math.sin(angle) * speed;
             rallyCount++;
@@ -214,7 +199,7 @@
             spawnParticles(ball.x, ball.y, settings.particleCount);
         }
 
-        // Score — ball past left or right edge
+        // Score
         if (ball.x < -BALL_R * 2) {
             scoreR++;
             rallyCount = 0;
@@ -228,7 +213,6 @@
             resetBall(-1);
         }
 
-        // AI
         updateAI(paddleL, 'left');
         updateAI(paddleR, 'right');
 
@@ -247,9 +231,15 @@
     function drawGame() {
         var c = colors();
 
-        // Background
-        ctx.fillStyle = c.bg;
-        ctx.fillRect(0, 0, W, H);
+        // Let bg-canvas draw the nebula first by dispatching its draw.
+        // bg-canvas.js exposes nothing, but its resize handler redraws.
+        // Instead, we just draw our game elements on top — bg-canvas already
+        // drew the nebula on the last resize/theme-change. We only need to
+        // re-trigger it each frame. We call the exposed redraw if available,
+        // otherwise we accept the static nebula underneath.
+        if (window.bgCanvasDraw) {
+            window.bgCanvasDraw();
+        }
 
         // Subtle court border
         ctx.strokeStyle = c.court;
@@ -290,7 +280,7 @@
 
         // Ball trail
         for (var i = 0; i < trail.length; i++) {
-            var alpha = (i / trail.length) * 0.4;
+            var alpha = (i / trail.length) * 0.5;
             var size = BALL_R * (0.3 + (i / trail.length) * 0.7);
             ctx.beginPath();
             ctx.arc(trail[i].x, trail[i].y, size, 0, Math.PI * 2);
@@ -299,11 +289,11 @@
         }
 
         // Ball glow
-        var ballGrad = ctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, BALL_R * 4);
+        var ballGrad = ctx.createRadialGradient(ball.x, ball.y, 0, ball.x, ball.y, BALL_R * 5);
         ballGrad.addColorStop(0, c.ballGlow);
         ballGrad.addColorStop(1, 'transparent');
         ctx.fillStyle = ballGrad;
-        ctx.fillRect(ball.x - BALL_R * 4, ball.y - BALL_R * 4, BALL_R * 8, BALL_R * 8);
+        ctx.fillRect(ball.x - BALL_R * 5, ball.y - BALL_R * 5, BALL_R * 10, BALL_R * 10);
 
         // Ball
         ctx.beginPath();
@@ -313,7 +303,7 @@
 
         // Left paddle glow
         ctx.shadowColor = c.paddleLGlow;
-        ctx.shadowBlur = 20;
+        ctx.shadowBlur = 25;
         ctx.fillStyle = c.paddleL;
         roundRect(ctx, paddleL.x, paddleL.y, PADDLE_W, PADDLE_H, 4);
         ctx.fill();
@@ -321,7 +311,7 @@
 
         // Right paddle glow
         ctx.shadowColor = c.paddleRGlow;
-        ctx.shadowBlur = 20;
+        ctx.shadowBlur = 25;
         ctx.fillStyle = c.paddleR;
         roundRect(ctx, paddleR.x, paddleR.y, PADDLE_W, PADDLE_H, 4);
         ctx.fill();
@@ -372,7 +362,6 @@
         active = true;
         resize();
         init();
-        // Signal to bg-canvas that game is active
         canvas.setAttribute('data-game-active', 'true');
         loop();
     }
@@ -385,7 +374,7 @@
             animId = null;
         }
         canvas.removeAttribute('data-game-active');
-        // Trigger bg-canvas to redraw by dispatching resize
+        // Trigger bg-canvas to redraw the nebula
         window.dispatchEvent(new Event('resize'));
     }
 
@@ -393,18 +382,10 @@
     window.addEventListener('resize', function() {
         if (!active) return;
         resize();
-        // Reposition paddles
         paddleR.x = W - 30 - PADDLE_W;
-        // Clamp ball
         if (ball.x > W) ball.x = W - BALL_R;
         if (ball.y > H) ball.y = H - BALL_R;
     });
-
-    // Redraw on theme change
-    var observer = new MutationObserver(function() {
-        // Colors update automatically on next frame via colors()
-    });
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
 
     // Public API
     window.pongGame = {

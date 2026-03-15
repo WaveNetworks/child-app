@@ -183,4 +183,7 @@
 
     var observer = new MutationObserver(function() { draw(); });
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
+
+    // Expose draw() so pong-game.js can redraw the nebula each frame underneath the game
+    window.bgCanvasDraw = draw;
 })();

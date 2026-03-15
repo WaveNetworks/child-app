@@ -96,38 +96,50 @@ $page_title = 'HTML5 Game';
         </div>
     </div>
 
-    <!-- Info card -->
-    <div class="col-lg-4">
-        <div class="card h-100">
-            <div class="card-header">
-                <i class="bi bi-info-circle me-1"></i> How It Works
+    <!-- Collapsible info cards -->
+    <div class="col-12">
+        <div class="accordion" id="gameInfoAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseHowItWorks">
+                        <i class="bi bi-info-circle me-2"></i> How It Works
+                    </button>
+                </h2>
+                <div id="collapseHowItWorks" class="accordion-collapse collapse" data-bs-parent="#gameInfoAccordion">
+                    <div class="accordion-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <dt class="text-muted small mb-1">Canvas</dt>
+                                <dd class="small">The game renders on <code>#bgCanvas</code>, the full-viewport canvas element behind all UI. The nebula gradient and grid stay visible underneath.</dd>
+                            </div>
+                            <div class="col-md-3">
+                                <dt class="text-muted small mb-1">AI Players</dt>
+                                <dd class="small">Both paddles are controlled by AI that predicts the ball trajectory with adjustable imperfection. Lower skill = more missed shots and entertaining rallies.</dd>
+                            </div>
+                            <div class="col-md-3">
+                                <dt class="text-muted small mb-1">Physics</dt>
+                                <dd class="small">Ball angle changes based on where it hits the paddle. Speed increases slightly with each rally hit. Particle effects burst on every bounce.</dd>
+                            </div>
+                            <div class="col-md-3">
+                                <dt class="text-muted small mb-1">Theming</dt>
+                                <dd class="small">Switch between dark and light mode &mdash; the game adapts its color palette in real time. Try toggling the <i class="bi bi-moon-fill"></i> button while the game is running.</dd>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <dl class="small mb-0">
-                    <dt class="text-muted mb-1">Canvas</dt>
-                    <dd class="mb-3">The game renders on <code>#bgCanvas</code>, the full-viewport canvas element behind all UI. When the game stops, the normal nebula background is restored.</dd>
-
-                    <dt class="text-muted mb-1">AI Players</dt>
-                    <dd class="mb-3">Both paddles are controlled by AI that predicts the ball trajectory with adjustable imperfection. Lower skill = more missed shots and entertaining rallies.</dd>
-
-                    <dt class="text-muted mb-1">Physics</dt>
-                    <dd class="mb-3">Ball angle changes based on where it hits the paddle. Speed increases slightly with each rally hit. Particle effects burst on every bounce.</dd>
-
-                    <dt class="text-muted mb-1">Theming</dt>
-                    <dd class="mb-2">Switch between dark and light mode &mdash; the game adapts its color palette in real time. Try toggling the <i class="bi bi-moon-fill"></i> button while the game is running.</dd>
-                </dl>
-            </div>
-        </div>
-
-        <div class="card mt-3">
-            <div class="card-header">
-                <i class="bi bi-code-slash me-1"></i> For Developers
-            </div>
-            <div class="card-body">
-                <p class="small text-muted mb-2">
-                    This demonstrates the canvas background pattern described in <code>CLAUDE.md</code>:
-                </p>
-                <pre class="small mb-0"><code>// Start the game
+            <div class="accordion-item">
+                <h2 class="accordion-header">
+                    <button class="accordion-button collapsed py-2" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDevInfo">
+                        <i class="bi bi-code-slash me-2"></i> For Developers
+                    </button>
+                </h2>
+                <div id="collapseDevInfo" class="accordion-collapse collapse" data-bs-parent="#gameInfoAccordion">
+                    <div class="accordion-body">
+                        <p class="small text-muted mb-2">
+                            This demonstrates the canvas background pattern described in <code>CLAUDE.md</code>:
+                        </p>
+                        <pre class="small mb-0"><code>// Start the game
 window.pongGame.start();
 
 // Stop and restore nebula
@@ -136,6 +148,8 @@ window.pongGame.stop();
 // Adjust settings live
 window.pongGame.settings.ballSpeed = 8;
 window.pongGame.settings.aiReaction = 0.6;</code></pre>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
