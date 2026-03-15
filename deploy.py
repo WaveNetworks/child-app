@@ -87,6 +87,8 @@ EXCLUDE_PATTERNS = [
     ".gitignore",
     "cert/",
     "docker/",
+    "docker-compose.test.yml",
+    "assets/scss/",
 ]
 
 
