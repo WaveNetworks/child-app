@@ -1,0 +1,202 @@
+// ============================================================================
+// Custom Theme — Variable Overrides
+// ============================================================================
+// These variables are loaded BEFORE Bootstrap compiles, so they replace
+// Bootstrap's defaults. Only uncommented lines take effect.
+//
+// USAGE:
+//   1. Edit the values below to taste
+//   2. Copy this file to assets/scss/_variables.scss
+//   3. Copy the sibling _bootswatch.scss to assets/scss/_bootswatch.scss
+//   4. Run: npm run build:css
+//
+// TIP: To start from a Bootswatch theme instead of from scratch:
+//   cp node_modules/bootswatch/dist/{theme}/_variables.scss assets/scss/_variables.scss
+//   cp node_modules/bootswatch/dist/{theme}/_bootswatch.scss assets/scss/_bootswatch.scss
+//
+// Full variable reference: node_modules/bootstrap/scss/_variables.scss
+// ============================================================================
+
+
+// ─── COLORS ─────────────────────────────────────────────────────────────────
+// Brand palette — change these to match your product identity.
+
+$primary:       #4e73df;
+$secondary:     #858796;
+$success:       #1cc88a;
+$info:          #36b9cc;
+$warning:       #f6c23e;
+$danger:        #e74a3b;
+$light:         #f8f9fc;
+$dark:          #5a5c69;
+
+// Fine-tune tint/shade steps (Bootstrap generates -100 through -900 variants)
+// $blue:    #4e73df;
+// $indigo:  #6610f2;
+// $purple:  #6f42c1;
+// $pink:    #e83e8c;
+// $red:     #e74a3b;
+// $orange:  #fd7e14;
+// $yellow:  #f6c23e;
+// $green:   #1cc88a;
+// $teal:    #20c9a6;
+// $cyan:    #36b9cc;
+
+
+// ─── BODY ───────────────────────────────────────────────────────────────────
+
+$body-bg:       #f8f9fc;
+$body-color:    #5a5c69;
+
+
+// ─── TYPOGRAPHY ─────────────────────────────────────────────────────────────
+// Google Font: add <link> to template.php or @import url() at top of _bootswatch.scss
+
+$font-family-sans-serif: "Nunito", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+// $font-family-monospace: "Fira Code", SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+// $font-size-base:   1rem;     // 16px
+// $font-size-sm:     0.875rem; // 14px
+// $font-size-lg:     1.25rem;  // 20px
+// $font-weight-normal: 400;
+// $font-weight-bold:   700;
+// $line-height-base:   1.5;
+
+// Headings
+// $headings-font-family: null;  // null = inherits $font-family-sans-serif
+// $headings-font-weight: 500;
+// $headings-color:       null;  // null = inherits $body-color
+// $h1-font-size: 2.5rem;
+// $h2-font-size: 2rem;
+// $h3-font-size: 1.75rem;
+// $h4-font-size: 1.5rem;
+// $h5-font-size: 1.25rem;
+// $h6-font-size: 1rem;
+
+
+// ─── LINKS ──────────────────────────────────────────────────────────────────
+
+// $link-color:            $primary;
+// $link-decoration:       underline;
+// $link-hover-color:      shift-color($link-color, 20%);
+// $link-hover-decoration: null;
+
+
+// ─── SPACING ────────────────────────────────────────────────────────────────
+// Base spacer unit — Bootstrap multiplies this to generate spacing utilities:
+// .p-1 = $spacer * .25,  .p-2 = $spacer * .5,  .p-3 = $spacer, etc.
+
+// $spacer: 1rem;
+
+
+// ─── BORDERS & ROUNDED CORNERS ──────────────────────────────────────────────
+
+$border-radius:    0.35rem;
+// $border-radius-sm:  0.25rem;
+// $border-radius-lg:  0.5rem;
+// $border-radius-xl:  1rem;
+// $border-radius-pill: 50rem;
+// $border-width:      1px;
+// $border-color:      $gray-300;
+
+
+// ─── SHADOWS ────────────────────────────────────────────────────────────────
+
+// $box-shadow:    0 0.5rem 1rem rgba($black, 0.15);
+// $box-shadow-sm: 0 0.125rem 0.25rem rgba($black, 0.075);
+// $box-shadow-lg: 0 1rem 3rem rgba($black, 0.175);
+
+
+// ─── COMPONENTS ─────────────────────────────────────────────────────────────
+
+// Buttons
+// $btn-padding-y:       0.375rem;
+// $btn-padding-x:       0.75rem;
+// $btn-font-size:       $font-size-base;
+// $btn-border-radius:   $border-radius;
+// $btn-font-weight:     400;
+// $btn-focus-box-shadow: 0 0 0 0.25rem rgba($primary, 0.25);
+
+// Cards
+// $card-spacer-y:       1rem;
+// $card-spacer-x:       1rem;
+// $card-border-radius:  $border-radius;
+// $card-border-color:   rgba($black, 0.125);
+// $card-cap-bg:         rgba($black, 0.03);
+// $card-bg:             $white;
+
+// Navbar
+// $navbar-padding-y:          0.5rem;
+// $navbar-brand-font-size:    1.25rem;
+// $navbar-dark-color:         rgba($white, 0.55);
+// $navbar-dark-hover-color:   rgba($white, 0.75);
+// $navbar-dark-active-color:  $white;
+// $navbar-light-color:        rgba($black, 0.55);
+// $navbar-light-hover-color:  rgba($black, 0.7);
+// $navbar-light-active-color: rgba($black, 0.9);
+
+// Forms
+// $input-bg:              $white;
+// $input-border-color:    $gray-400;
+// $input-border-radius:   $border-radius;
+// $input-focus-border-color: tint-color($primary, 50%);
+// $input-focus-box-shadow: 0 0 0 0.25rem rgba($primary, 0.25);
+// $input-placeholder-color: $gray-500;
+
+// Tables
+// $table-bg:              transparent;
+// $table-striped-bg:      rgba($black, 0.05);
+// $table-hover-bg:        rgba($black, 0.075);
+// $table-border-color:    $gray-300;
+// $table-cell-padding-y:  0.5rem;
+// $table-cell-padding-x:  0.5rem;
+
+// Alerts
+// $alert-padding-y:       1rem;
+// $alert-padding-x:       1rem;
+// $alert-border-radius:   $border-radius;
+
+// Badges
+// $badge-font-size:       0.75em;
+// $badge-font-weight:     700;
+// $badge-padding-y:       0.35em;
+// $badge-padding-x:       0.65em;
+// $badge-border-radius:   $border-radius;
+
+// Modals
+// $modal-content-border-radius: $border-radius-lg;
+// $modal-header-padding:        1rem 1rem;
+// $modal-backdrop-bg:           $black;
+// $modal-backdrop-opacity:      0.5;
+
+// Dropdowns
+// $dropdown-border-radius: $border-radius;
+// $dropdown-border-color:  rgba($black, 0.15);
+// $dropdown-link-hover-bg: $gray-200;
+
+// Pagination
+// $pagination-active-bg:    $primary;
+// $pagination-active-color: $white;
+// $pagination-border-radius: $border-radius;
+
+// Breadcrumbs
+// $breadcrumb-divider: quote("/");
+// $breadcrumb-active-color: $gray-600;
+
+
+// ─── TRANSITIONS ────────────────────────────────────────────────────────────
+
+// $transition-base:  all 0.2s ease-in-out;
+// $transition-fade:  opacity 0.15s linear;
+
+
+// ─── GRID / LAYOUT ──────────────────────────────────────────────────────────
+// Rarely changed, but available if you need custom breakpoints.
+
+// $grid-gutter-width: 1.5rem;
+// $container-max-widths: (
+//   sm: 540px,
+//   md: 720px,
+//   lg: 960px,
+//   xl: 1140px,
+//   xxl: 1320px
+// );

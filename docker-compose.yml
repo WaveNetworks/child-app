@@ -1,0 +1,155 @@
+services:
+  app:
+    build: .
+    ports:
+      - "80:80"
+    environment:
+      - ENVIRONMENT=development
+      # Admin core DB (consumed by admin's bootstrap when config.php absent)
+      - DB_HOST_MAIN=db
+      - DB_NAME_MAIN=wncore_main
+      - DB_USER=root
+      - DB_PASSWORD=dev_root_password_123
+      - DB_HOST_SHARD=db_shard
+      - DB_NAME_SHARD=wncore_shard_1
+      - DB_HOST_SHARD2=db_shard2
+      - DB_NAME_SHARD2=wncore_shard_2
+      - FILES_LOCATION=/var/files/
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
+      - MAIL_FROM=noreply@localhost
+      - MAIL_FROM_NAME=Wave Networks
+      - APP_SECRET=dev_app_secret_64_chars_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+      - HIDDEN_HASH=dev_hidden_hash_xxxxxxxxxxxxxxxxxx
+      - SEED_TEST_DATA=true
+      # Child app's own DBs
+      - CHILD_DB_HOST=db_child
+      - CHILD_DB_NAME=childapp_main
+      - CHILD_DB_USER=root
+      - CHILD_DB_PASS=dev_root_password_123
+      - CHILD_DB_HOST_SHARD=db_child_shard
+      - CHILD_DB_NAME_SHARD=childapp_shard_1
+      - CHILD_DB_HOST_SHARD2=db_child_shard2
+      - CHILD_DB_NAME_SHARD2=childapp_shard_2
+    volumes:
+      - .:/var/www/public_html/child-app
+      - ../admin:/var/www/public_html/admin
+      - files_vol:/var/files
+    depends_on:
+      db:
+        condition: service_healthy
+      db_shard:
+        condition: service_healthy
+      db_shard2:
+        condition: service_healthy
+      db_child:
+        condition: service_healthy
+      db_child_shard:
+        condition: service_healthy
+      db_child_shard2:
+        condition: service_healthy
+
+  # Admin core databases — named volumes shared across all Wave Networks projects
+  # If admin was started first, these volumes already contain user data and will be reused.
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: dev_root_password_123
+      MYSQL_DATABASE: wncore_main
+    volumes:
+      - wn_db_main:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  db_shard:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: dev_root_password_123
+      MYSQL_DATABASE: wncore_shard_1
+    volumes:
+      - wn_db_shard1:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  db_shard2:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: dev_root_password_123
+      MYSQL_DATABASE: wncore_shard_2
+    volumes:
+      - wn_db_shard2:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Child app's own databases
+  db_child:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: dev_root_password_123
+      MYSQL_DATABASE: childapp_main
+    volumes:
+      - wn_db_child_main:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  db_child_shard:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: dev_root_password_123
+      MYSQL_DATABASE: childapp_shard_1
+    volumes:
+      - wn_db_child_shard1:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  db_child_shard2:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: dev_root_password_123
+      MYSQL_DATABASE: childapp_shard_2
+    volumes:
+      - wn_db_child_shard2:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "8025:8025"
+
+# Named volumes with explicit names (no project prefix) so all Wave Networks
+# projects share the same database volumes. Admin's compose should use the
+# same volume names — see admin's docker-compose.yml.
+volumes:
+  files_vol:
+    name: wn_files
+  wn_db_main:
+    name: wn_db_main
+  wn_db_shard1:
+    name: wn_db_shard1
+  wn_db_shard2:
+    name: wn_db_shard2
+  wn_db_child_main:
+    name: wn_db_child_main
+  wn_db_child_shard1:
+    name: wn_db_child_shard1
+  wn_db_child_shard2:
+    name: wn_db_child_shard2

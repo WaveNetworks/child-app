@@ -1,0 +1,87 @@
+// Child App — Glassmorphism / Transparent Theme
+// Designed to let the HTML canvas background show through all UI elements.
+// Full variable reference: node_modules/bootstrap/scss/_variables.scss
+
+// Colors — vivid accents on transparent backgrounds
+$primary:       #6366f1; // indigo-500
+$secondary:     #94a3b8; // slate-400
+$success:       #22c55e; // green-500
+$info:          #06b6d4; // cyan-500
+$warning:       #eab308; // yellow-500
+$danger:        #ef4444; // red-500
+$light:         rgba(255, 255, 255, 0.1);
+$dark:          rgba(0, 0, 0, 0.4);
+
+// Typography
+$font-family-sans-serif: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+// Body — transparent so canvas shows through
+$body-bg:       transparent;
+$body-color:    rgba(255, 255, 255, 0.9);
+
+// Links
+$link-color:    #818cf8; // indigo-400
+$link-hover-color: #a5b4fc; // indigo-300
+
+// Borders — subtle glass edges
+$border-color:  rgba(255, 255, 255, 0.1);
+$border-radius: 0.75rem;
+$border-radius-lg: 1rem;
+$border-radius-sm: 0.5rem;
+
+// Cards — glass panels
+$card-bg:             rgba(255, 255, 255, 0.08);
+$card-border-color:   rgba(255, 255, 255, 0.12);
+$card-cap-bg:         rgba(255, 255, 255, 0.05);
+$card-color:          rgba(255, 255, 255, 0.9);
+
+// Navbar
+$navbar-dark-color:         rgba(255, 255, 255, 0.75);
+$navbar-dark-hover-color:   rgba(255, 255, 255, 1);
+$navbar-dark-active-color:  #fff;
+
+// Forms — glass inputs
+$input-bg:                  rgba(255, 255, 255, 0.08);
+$input-color:               rgba(255, 255, 255, 0.9);
+$input-border-color:        rgba(255, 255, 255, 0.15);
+$input-focus-border-color:  rgba(99, 102, 241, 0.5);
+$input-focus-box-shadow:    0 0 0 0.25rem rgba(99, 102, 241, 0.2);
+$input-placeholder-color:   rgba(255, 255, 255, 0.4);
+
+// Dropdowns — glass menus
+$dropdown-bg:             rgba(30, 30, 50, 0.85);
+$dropdown-border-color:   rgba(255, 255, 255, 0.1);
+$dropdown-link-color:     rgba(255, 255, 255, 0.85);
+$dropdown-link-hover-bg:  rgba(255, 255, 255, 0.1);
+$dropdown-link-hover-color: #fff;
+$dropdown-divider-bg:     rgba(255, 255, 255, 0.1);
+
+// Tables — transparent rows
+$table-bg:            transparent;
+$table-color:         rgba(255, 255, 255, 0.85);
+$table-striped-bg:    rgba(255, 255, 255, 0.04);
+$table-hover-bg:      rgba(255, 255, 255, 0.08);
+$table-border-color:  rgba(255, 255, 255, 0.08);
+
+// Modals
+$modal-content-bg:            rgba(30, 30, 50, 0.9);
+$modal-content-border-color:  rgba(255, 255, 255, 0.1);
+$modal-backdrop-bg:           #000;
+$modal-backdrop-opacity:      0.6;
+
+// Pagination
+$pagination-bg:           rgba(255, 255, 255, 0.05);
+$pagination-border-color: rgba(255, 255, 255, 0.1);
+$pagination-color:        rgba(255, 255, 255, 0.7);
+$pagination-hover-bg:     rgba(255, 255, 255, 0.1);
+$pagination-hover-color:  #fff;
+$pagination-active-bg:    $primary;
+$pagination-active-color: #fff;
+
+// Badges
+$badge-font-weight: 600;
+
+// Alerts
+$alert-bg-scale:     -90%;
+$alert-border-scale: -70%;
+$alert-color-scale:  30%;

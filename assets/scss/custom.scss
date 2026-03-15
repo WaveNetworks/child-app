@@ -1,0 +1,15 @@
+// Child App — Custom Bootswatch Theme Build
+// Follows the Bootswatch pattern: variables → bootstrap → bootswatch extras
+// Compile: npm run build:css
+// Watch:   npm run watch
+
+// 1. Your variable overrides (colors, fonts, spacing, etc.)
+//    Edit _variables.scss to customize the theme.
+@import "variables";
+
+// 2. Full Bootstrap (uses your overridden variables)
+@import "bootstrap/scss/bootstrap";
+
+// 3. Post-Bootstrap component overrides and extras
+//    Edit _bootswatch.scss for rules that must come after Bootstrap compiles.
+@import "bootswatch";

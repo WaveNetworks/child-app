@@ -1,0 +1,13 @@
+services:
+  app:
+    environment:
+      - ENVIRONMENT=testing
+      - SEED_TEST_DATA=true
+
+  playwright:
+    profiles: ["testing"]
+    build:
+      context: tests/
+      dockerfile: Dockerfile.playwright
+    depends_on:
+      - app
