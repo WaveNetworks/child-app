@@ -1,8 +1,19 @@
+# docker-compose.yml
+#
+# MULTI-APP SETUP: If running multiple apps on the same machine:
+#   1. Rename ALL volumes below with your app prefix
+#      (e.g., wn_db_main → yourapp_admin_main)
+#   2. Change host ports to avoid conflicts
+#      (e.g., 80:80 → 8081:80, 8025:8025 → 8026:8025)
+#   3. Each app stack is fully independent — own admin, own databases
+#
+# See: https://subtheme.com/docs/setup#multi-app
+
 services:
   app:
     build: .
     ports:
-      - "80:80"
+      - "80:80"  # Change if port in use (8081, 8082, etc.)
     environment:
       - ENVIRONMENT=development
       # Admin core DB (consumed by admin's bootstrap when config.php absent)
@@ -133,11 +144,10 @@ services:
   mailhog:
     image: mailhog/mailhog
     ports:
-      - "8025:8025"
+      - "8025:8025"  # Change if port in use (8026, 8027, etc.)
 
-# Named volumes with explicit names (no project prefix) so all Wave Networks
-# projects share the same database volumes. Admin's compose should use the
-# same volume names — see admin's docker-compose.yml.
+# MULTI-APP: Replace 'wn' prefix with your app name
+# Example: wn_db_main → payments_admin_main
 volumes:
   files_vol:
     name: wn_files

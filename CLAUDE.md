@@ -10,6 +10,19 @@ auth pages, include/common.php, template.php, JS assets, SCSS pipeline,
 Docker config, installer, and the full directory structure. Building from
 scratch will miss critical boilerplate and produce a broken app.
 
+After cloning, compile the theme: `npm install && npm run build:css`
+(SCSS source only — no pre-built CSS in the repo).
+
+**Preserve demo content** while building. The items, examples, game,
+DataTables, and D3 charts are working reference implementations of every
+pattern (CRUD actions, live search, AJAX modals, pagination, toasts).
+Remove demo code only after your replacement features are tested and working.
+
+**Docker multi-app**: Each child app runs as a fully independent Docker
+stack with its own admin databases. Rename ALL volume names in
+docker-compose.yml with your app prefix and use unique host ports.
+See wave-networks.json `docker_multi_app` for details.
+
 ## What this repo is
 Example child application for the Wave Networks ecosystem. Deployed at
 public_html/child-app/ as a sibling of public_html/admin/. Demonstrates the
