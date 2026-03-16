@@ -63,6 +63,13 @@ if (!in_array($tab, $validTabs)) { $tab = 'profile'; }
 .tabdrop-more .dropdown-menu { min-width: 12rem; }
 .tabdrop-more .dropdown-item.active { font-weight: 600; }
 .tabdrop-more > .nav-link.active { border-color: var(--bs-nav-tabs-link-active-border-color, #dee2e6); border-bottom-color: transparent; }
+
+/* Profile wall header */
+.profile-wall-banner {
+    height: 100px;
+    background: linear-gradient(135deg, var(--bs-primary) 0%, rgba(var(--bs-primary-rgb), .6) 50%, rgba(var(--bs-primary-rgb), .3) 100%);
+    border-radius: 0;
+}
 </style>
 
 <h4 class="mb-4">Profile & Settings</h4>
@@ -113,33 +120,72 @@ if (!in_array($tab, $validTabs)) { $tab = 'profile'; }
              TAB: Profile
              ═══════════════════════════════════════════════════════════ -->
         <div class="tab-pane fade <?= $tab === 'profile' ? 'show active' : '' ?>" id="pane-profile" role="tabpanel">
-            <form method="post">
-                <input type="hidden" name="action" value="updateProfile">
-                <div class="card-body">
-                    <?php if ($profile_success) { ?>
-                    <div class="alert alert-success alert-dismissible fade show" role="alert">
-                        <i class="bi bi-check-circle me-1"></i> <?= $profile_success ?>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                    <?php } ?>
-                    <?php if ($profile_error) { ?>
-                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                        <i class="bi bi-exclamation-triangle me-1"></i> <?= $profile_error ?>
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                    <?php } ?>
+            <?php if ($profile_success || $profile_error) { ?>
+            <div class="card-body pb-0">
+                <?php if ($profile_success) { ?>
+                <div class="alert alert-success alert-dismissible fade show mb-0" role="alert">
+                    <i class="bi bi-check-circle me-1"></i> <?= $profile_success ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                <?php } ?>
+                <?php if ($profile_error) { ?>
+                <div class="alert alert-danger alert-dismissible fade show mb-0" role="alert">
+                    <i class="bi bi-exclamation-triangle me-1"></i> <?= $profile_error ?>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                <?php } ?>
+            </div>
+            <?php } ?>
 
-                    <div class="text-center mb-4">
-                        <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center" style="width:80px;height:80px">
-                            <span class="fs-2 text-primary fw-bold">
+            <!-- Profile wall header -->
+            <?php $avatar_url = get_profile_image_url(); ?>
+            <div class="position-relative">
+                <div class="profile-wall-banner"></div>
+                <div class="text-center" style="margin-top:-50px;position:relative;z-index:2;padding-bottom:1rem">
+                    <div class="position-relative d-inline-block">
+                        <?php if ($avatar_url) { ?>
+                        <img src="<?= h($avatar_url) ?>" alt="Profile photo"
+                             class="rounded-circle border border-3 border-white shadow-sm" style="width:100px;height:100px;object-fit:cover;background:var(--bs-body-bg)">
+                        <?php } else { ?>
+                        <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center border border-3 border-white shadow-sm"
+                             style="width:100px;height:100px;background:var(--bs-body-bg)">
+                            <span class="fs-1 text-primary fw-bold">
                                 <?= h(strtoupper(substr($profile['first_name'] ?? '?', 0, 1))) ?><?= h(strtoupper(substr($profile['last_name'] ?? '', 0, 1))) ?>
                             </span>
                         </div>
-                        <div class="text-muted small mt-2">
-                            Member since <?= h(date('M j, Y', strtotime($profile['created'] ?? 'now'))) ?>
-                        </div>
+                        <?php } ?>
+                        <label for="profile_image_input" class="position-absolute bottom-0 end-0 bg-primary rounded-circle d-flex align-items-center justify-content-center shadow-sm"
+                               style="width:32px;height:32px;cursor:pointer;border:2px solid white" title="Change photo">
+                            <i class="bi bi-camera-fill text-white" style="font-size:.85rem"></i>
+                        </label>
                     </div>
+                    <h5 class="mb-0 mt-2"><?= h(($profile['first_name'] ?? '') . ' ' . ($profile['last_name'] ?? '')) ?></h5>
+                    <div class="text-muted small"><?= h($user['email'] ?? '') ?></div>
+                    <div class="text-muted small mt-1">
+                        <i class="bi bi-calendar3 me-1"></i>Member since <?= h(date('M j, Y', strtotime($profile['created'] ?? 'now'))) ?>
+                    </div>
+                    <?php if ($avatar_url) { ?>
+                    <form method="post" class="d-inline">
+                        <input type="hidden" name="action" value="deleteProfileImage">
+                        <button type="submit" class="btn btn-link btn-sm text-danger p-0 mt-1" title="Remove photo">
+                            <i class="bi bi-trash me-1"></i>Remove photo
+                        </button>
+                    </form>
+                    <?php } ?>
+                </div>
+            </div>
+            <!-- Hidden file upload form -->
+            <form method="post" enctype="multipart/form-data" id="avatarForm">
+                <input type="hidden" name="action" value="uploadProfileImage">
+                <input type="file" name="profile_image" id="profile_image_input"
+                       accept="image/jpeg,image/png,image/webp,image/gif" class="d-none"
+                       onchange="document.getElementById('avatarForm').submit()">
+            </form>
 
+            <hr class="my-0">
+            <form method="post">
+                <input type="hidden" name="action" value="updateProfile">
+                <div class="card-body">
                     <div class="row g-3 mb-3">
                         <div class="col-sm-6">
                             <label for="first_name" class="form-label">First name</label>
