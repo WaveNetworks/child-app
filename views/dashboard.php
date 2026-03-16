@@ -199,15 +199,23 @@ for ($i = 5; $i >= 0; $i--) {
     // ── Line chart ──────────────────────────────────────────────────────────
     var monthlyData = <?= json_encode($filled) ?>;
 
-    var container = document.getElementById('lineChart');
-    if (container && monthlyData.length) {
+    var lineContainer = document.getElementById('lineChart');
+
+    function drawLineChart() {
+        if (!lineContainer || !monthlyData.length) return;
+
+        // Clear previous
+        lineContainer.innerHTML = '';
+
         var margin = {top: 20, right: 20, bottom: 30, left: 40};
-        var width = container.clientWidth - margin.left - margin.right;
-        var height = 220 - margin.top - margin.bottom;
+        var width = lineContainer.clientWidth - margin.left - margin.right;
+        var height = Math.max(160, Math.min(220, lineContainer.clientWidth * 0.35)) - margin.top - margin.bottom;
 
         var svg = d3.select('#lineChart').append('svg')
-            .attr('width', width + margin.left + margin.right)
+            .attr('width', '100%')
             .attr('height', height + margin.top + margin.bottom)
+            .attr('viewBox', '0 0 ' + (width + margin.left + margin.right) + ' ' + (height + margin.top + margin.bottom))
+            .attr('preserveAspectRatio', 'xMidYMid meet')
             .append('g')
             .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
@@ -277,6 +285,8 @@ for ($i = 5; $i >= 0; $i--) {
             .attr('stroke-width', 2);
     }
 
+    drawLineChart();
+
     // ── Donut chart ─────────────────────────────────────────────────────────
     var statusData = [
         {label: 'Active',   value: <?= (int) $counts['active'] ?>,   color: getComputedStyle(document.documentElement).getPropertyValue('--bs-success').trim() || '#22c55e'},
@@ -285,9 +295,15 @@ for ($i = 5; $i >= 0; $i--) {
     ];
 
     var donutContainer = document.getElementById('donutChart');
-    if (donutContainer) {
+
+    function drawDonutChart() {
+        if (!donutContainer) return;
+
+        // Clear previous
+        donutContainer.innerHTML = '';
+
         var total = statusData.reduce(function(s, d) { return s + d.value; }, 0);
-        var size = 180;
+        var size = Math.min(180, donutContainer.clientWidth - 20);
         var radius = size / 2;
         var innerRadius = radius * 0.6;
 
@@ -346,7 +362,8 @@ for ($i = 5; $i >= 0; $i--) {
             .style('justify-content', 'center')
             .style('gap', '12px')
             .style('margin-top', '12px')
-            .style('font-size', '12px');
+            .style('font-size', '12px')
+            .style('flex-wrap', 'wrap');
 
         statusData.forEach(function(d) {
             var item = legend.append('span').style('color', textColor);
@@ -360,5 +377,17 @@ for ($i = 5; $i >= 0; $i--) {
             item.append('span').text(d.label);
         });
     }
+
+    drawDonutChart();
+
+    // ── Resize handler ──────────────────────────────────────────────────────
+    var resizeTimer;
+    window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(function() {
+            drawLineChart();
+            drawDonutChart();
+        }, 250);
+    });
 })();
 </script>

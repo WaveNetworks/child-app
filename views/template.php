@@ -35,6 +35,9 @@
 
 <div class="d-flex" id="wrapper" style="position:relative;z-index:1;">
 
+    <!-- REGION: sidebar backdrop (real element — inside #wrapper stacking context so sidebar z-index works) -->
+    <div id="sidebarBackdrop"></div>
+
     <!-- REGION: sidebar -->
     <div class="d-flex flex-column" id="sidebar">
         <div class="sidebar-brand px-3 py-2">
@@ -74,7 +77,7 @@
                 <span class="sidebar-text">HTML5 Game</span>
             </a>
         </nav>
-        <div class="sidebar-footer text-center d-none d-md-block p-2 border-top border-secondary border-opacity-25">
+        <div class="sidebar-toggle-area text-center d-none d-sm-block p-2 border-top border-secondary border-opacity-25">
             <button class="btn btn-sm btn-outline-light rounded-circle" id="sidebarToggle" type="button">
                 <i class="bi bi-chevron-left" id="sidebarToggleIcon"></i>
             </button>
@@ -126,8 +129,8 @@
                     <i class="bi bi-moon-fill"></i>
                 </button>
 
-                <!-- Theme switcher -->
-                <select class="form-select form-select-sm me-2" id="themeSelector" style="width: auto;"
+                <!-- Theme switcher (hidden on small screens to prevent topnav wrapping) -->
+                <select class="form-select form-select-sm me-2 d-none d-lg-inline-block" id="themeSelector" style="width: auto;"
                         data-custom-css="../assets/css/custom.css"
                         data-has-custom="<?= has_custom_theme() ? '1' : '0' ?>"
                         data-registered-themes='<?= get_registered_themes_json() ?>'>
