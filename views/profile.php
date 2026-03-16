@@ -64,11 +64,16 @@ if (!in_array($tab, $validTabs)) { $tab = 'profile'; }
 .tabdrop-more .dropdown-item.active { font-weight: 600; }
 .tabdrop-more > .nav-link.active { border-color: var(--bs-nav-tabs-link-active-border-color, #dee2e6); border-bottom-color: transparent; }
 
-/* Profile wall header */
-.profile-wall-banner {
-    height: 100px;
-    background: linear-gradient(135deg, var(--bs-primary) 0%, rgba(var(--bs-primary-rgb), .6) 50%, rgba(var(--bs-primary-rgb), .3) 100%);
-    border-radius: 0;
+/* Profile wall header — uses --bs-emphasis-color so it adapts to any theme/mode */
+.profile-wall-header {
+    background: linear-gradient(180deg,
+        transparent 0%,
+        transparent 30%,
+        rgba(var(--bs-emphasis-color-rgb), .04) 45%,
+        rgba(var(--bs-emphasis-color-rgb), .1) 65%,
+        rgba(var(--bs-emphasis-color-rgb), .18) 85%,
+        rgba(var(--bs-emphasis-color-rgb), .25) 100%);
+    padding: 2rem 1rem 1.25rem;
 }
 </style>
 
@@ -139,9 +144,8 @@ if (!in_array($tab, $validTabs)) { $tab = 'profile'; }
 
             <!-- Profile wall header -->
             <?php $avatar_url = get_profile_image_url(); ?>
-            <div class="position-relative">
-                <div class="profile-wall-banner"></div>
-                <div class="text-center" style="margin-top:-50px;position:relative;z-index:2;padding-bottom:1rem">
+            <div class="profile-wall-header">
+                <div class="text-center">
                     <div class="position-relative d-inline-block">
                         <?php if ($avatar_url) { ?>
                         <img src="<?= h($avatar_url) ?>" alt="Profile photo"
