@@ -156,7 +156,7 @@ window.pongGame.settings.aiReaction = 0.6;</code></pre>
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+(function() {
     var toggle = document.getElementById('pongToggle');
     var label = document.getElementById('pongToggleLabel');
 
@@ -207,5 +207,5 @@ document.addEventListener('DOMContentLoaded', function() {
     bindSlider('settingPaddleSpeed', 'paddleSpeedVal', 'paddleSpeed');
     bindSlider('settingAI', 'aiVal', 'aiReaction');
     bindSlider('settingTrail', 'trailVal', 'trailLength');
-});
+})();
 </script>
