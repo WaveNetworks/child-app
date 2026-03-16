@@ -145,8 +145,7 @@
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><span class="dropdown-item-text small text-muted"><?= h($_SESSION['email'] ?? '') ?></span></li>
                         <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="index.php?page=profile"><i class="bi bi-person me-2"></i>Profile</a></li>
-                        <li><a class="dropdown-item" href="index.php?page=privacy"><i class="bi bi-shield-check me-2"></i>Privacy & Data</a></li>
+                        <li><a class="dropdown-item" href="index.php?page=profile"><i class="bi bi-person me-2"></i>Profile & Settings</a></li>
                         <li><hr class="dropdown-divider"></li>
                         <li>
                             <form method="post" class="d-inline">

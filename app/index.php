@@ -13,6 +13,13 @@ include(__DIR__ . '/../include/common.php');
 
 $page = $_GET['page'] ?? $_POST['page'] ?? 'dashboard';
 
+// Redirect legacy privacy page into profile tabs
+if ($page === 'privacy') {
+    $tab = $_GET['tab'] ?? 'consent';
+    header('Location: index.php?page=profile&tab=' . urlencode($tab));
+    exit;
+}
+
 // Map page names to view files
 $views = [
     'dashboard' => __DIR__ . '/../views/dashboard.php',
@@ -20,7 +27,6 @@ $views = [
     'profile'   => __DIR__ . '/../views/profile.php',
     'examples'  => __DIR__ . '/../views/examples.php',
     'ui-guide'  => __DIR__ . '/../views/ui-guide.php',
-    'privacy'   => __DIR__ . '/../views/privacy.php',
     'game'      => __DIR__ . '/../views/game.php',       // REMOVABLE: HTML5 Game demo
 ];
 
