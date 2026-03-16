@@ -1,18 +1,13 @@
 # Allow only index.php, deny everything else
-<IfModule mod_authz_core.c>
-    Require all denied
-</IfModule>
-<IfModule !mod_authz_core.c>
-    Order allow,deny
-    Deny from all
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{THE_REQUEST} !/install/index\.php
+    RewriteRule !^index\.php$ - [F,L]
 </IfModule>
 
-<Files "index.php">
-    <IfModule mod_authz_core.c>
-        Require all granted
-    </IfModule>
-    <IfModule !mod_authz_core.c>
-        Order allow,deny
-        Allow from all
-    </IfModule>
-</Files>
+# Fallback: deny directory listings
+Options -Indexes
+
+# Set DirectoryIndex
+DirectoryIndex index.php

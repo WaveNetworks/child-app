@@ -6,7 +6,7 @@
     RewriteEngine On
 
     # Block access to sensitive directories
-    RewriteRule ^(include|config|views|snippets|db_migrations|install|docker)(/|$) - [F,L]
+    RewriteRule ^(include|config|views|snippets|db_migrations|docker)(/|$) - [F,L]
 
     # Pretty URLs (optional - index.php handles routing)
     RewriteCond %{REQUEST_FILENAME} !-f

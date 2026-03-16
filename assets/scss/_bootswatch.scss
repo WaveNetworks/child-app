@@ -258,6 +258,13 @@ div.dt-container {
 
 // ─── BUTTONS ──────────────────────────────────────────────────────────────────
 .btn-outline-light {
+  // Override BS5 CSS custom props — $light is rgba(255,255,255,0.1) in this theme
+  // which makes --bs-btn-color nearly invisible. Set explicit visible values.
+  --bs-btn-color: rgba(255, 255, 255, 0.8);
+  --bs-btn-border-color: rgba(255, 255, 255, 0.2);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: rgba(255, 255, 255, 0.1);
+  --bs-btn-hover-border-color: rgba(255, 255, 255, 0.3);
   border-color: rgba(255, 255, 255, 0.2);
   color: rgba(255, 255, 255, 0.8);
 
@@ -665,6 +672,13 @@ div.dt-container {
   }
 
   .btn-outline-light {
+    // Override BS5 CSS custom props for light mode — must set these or
+    // --bs-btn-color from dark mode (near-invisible white) persists.
+    --bs-btn-color: rgba(0, 0, 0, 0.7);
+    --bs-btn-border-color: rgba(0, 0, 0, 0.15);
+    --bs-btn-hover-color: rgba(0, 0, 0, 0.9);
+    --bs-btn-hover-bg: rgba(0, 0, 0, 0.05);
+    --bs-btn-hover-border-color: rgba(0, 0, 0, 0.25);
     border-color: rgba(0, 0, 0, 0.15);
     color: rgba(0, 0, 0, 0.7);
 

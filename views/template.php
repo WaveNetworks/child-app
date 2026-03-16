@@ -23,7 +23,7 @@
     <link rel="icon" href="../../admin/uploads/<?= h($b['favicon_path']) ?>">
     <link rel="apple-touch-icon" href="../../admin/uploads/<?= h($b['favicon_path']) ?>">
     <?php } ?>
-    <link rel="stylesheet" href="../../admin/assets/css/style.css">
+    <link rel="stylesheet" href="../../admin/assets/css/style.css?v=20260316">
     <link rel="stylesheet" href="../../admin/assets/css/bs-theme-overrides.css">
     <link rel="stylesheet" href="<?= h(get_app_theme_css_url()) ?>" id="themeStylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
