@@ -1,5 +1,15 @@
 # child-app — CLAUDE.md
 
+## CRITICAL: This repo is a template — always clone it first
+**Never create a child app directory from scratch.** To build a new child app:
+```
+git clone https://github.com/WaveNetworks/child-app.git your-app-name/
+```
+Then modify the cloned files — don't recreate them. The template provides
+auth pages, include/common.php, template.php, JS assets, SCSS pipeline,
+Docker config, installer, and the full directory structure. Building from
+scratch will miss critical boilerplate and produce a broken app.
+
 ## What this repo is
 Example child application for the Wave Networks ecosystem. Deployed at
 public_html/child-app/ as a sibling of public_html/admin/. Demonstrates the
