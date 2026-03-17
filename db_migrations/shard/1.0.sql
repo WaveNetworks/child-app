@@ -2,7 +2,6 @@
 -- Initial schema: db_version tracking, user_history, childapp_user_prefs
 -- ⚠️ REMINDER: Update child-app/include/common.php $child_shard_version = 1.0;
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
-START TRANSACTION;
 SET time_zone = "+00:00";
 
 -- Migration version tracking (matches admin's schema: version_id int PK)
@@ -39,5 +38,3 @@ CREATE TABLE IF NOT EXISTS `childapp_user_prefs` (
     `updated` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`user_id`, `pref_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-COMMIT;

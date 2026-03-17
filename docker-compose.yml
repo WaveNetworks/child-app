@@ -1,5 +1,9 @@
 # docker-compose.yml
 #
+# Single MySQL server hosts all 6 namespaced databases.
+# Source code is COPIED into the image at build time — your working
+# directory is never mounted or modified by Docker.
+#
 # MULTI-APP SETUP: When you clone child-app as your own app (e.g. payments/):
 #   1. Rename ALL child_app_ prefixes to your app name (payments_)
 #   2. Change host ports to avoid conflicts (80→8081, 8025→8026)
@@ -9,19 +13,22 @@
 
 services:
   app:
-    build: .
+    build:
+      context: .
+      additional_contexts:
+        admin: ../admin
     ports:
       - "80:80"  # Change if port in use (8081, 8082, etc.)
     environment:
       - ENVIRONMENT=development
-      # Admin core databases (namespaced by child app)
-      - DB_HOST_MAIN=db_admin
+      # All databases live on a single MySQL server
+      - DB_HOST_MAIN=db
       - DB_NAME_MAIN=child_app_admin_main
       - DB_USER=root
       - DB_PASSWORD=dev_root_password_123
-      - DB_HOST_SHARD=db_admin_shard1
+      - DB_HOST_SHARD=db
       - DB_NAME_SHARD=child_app_admin_shard_1
-      - DB_HOST_SHARD2=db_admin_shard2
+      - DB_HOST_SHARD2=db
       - DB_NAME_SHARD2=child_app_admin_shard_2
       - FILES_LOCATION=/var/files/
       - SMTP_HOST=mailhog
@@ -31,110 +38,30 @@ services:
       - APP_SECRET=dev_app_secret_64_chars_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
       - HIDDEN_HASH=dev_hidden_hash_xxxxxxxxxxxxxxxxxx
       - SEED_TEST_DATA=true
-      # Child app's own databases (namespaced by child app)
-      - CHILD_DB_HOST=db_app
+      # Child app's own databases (same server, different DB names)
+      - CHILD_DB_HOST=db
       - CHILD_DB_NAME=child_app_main
       - CHILD_DB_USER=root
       - CHILD_DB_PASS=dev_root_password_123
-      - CHILD_DB_HOST_SHARD=db_app_shard1
+      - CHILD_DB_HOST_SHARD=db
       - CHILD_DB_NAME_SHARD=child_app_shard_1
-      - CHILD_DB_HOST_SHARD2=db_app_shard2
+      - CHILD_DB_HOST_SHARD2=db
       - CHILD_DB_NAME_SHARD2=child_app_shard_2
     volumes:
-      # Source code read-only — Docker cannot modify your working directory
-      - .:/var/www/public_html/child-app:ro
-      - ../admin:/var/www/public_html/admin:ro
-      # Writable paths use named volumes
-      - admin_vendor:/var/www/public_html/admin/vendor
+      # Only persistent data — no source code mounts
       - files_vol:/var/files
     depends_on:
-      db_admin:
-        condition: service_healthy
-      db_admin_shard1:
-        condition: service_healthy
-      db_admin_shard2:
-        condition: service_healthy
-      db_app:
-        condition: service_healthy
-      db_app_shard1:
-        condition: service_healthy
-      db_app_shard2:
+      db:
         condition: service_healthy
 
-  # Admin core databases — namespaced by child app name
-  db_admin:
+  # Single MySQL server — all 6 databases created by init script
+  db:
     image: mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: dev_root_password_123
-      MYSQL_DATABASE: child_app_admin_main
     volumes:
-      - db_admin_main:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
-  db_admin_shard1:
-    image: mysql:8.0
-    environment:
-      MYSQL_ROOT_PASSWORD: dev_root_password_123
-      MYSQL_DATABASE: child_app_admin_shard_1
-    volumes:
-      - db_admin_shard1:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
-  db_admin_shard2:
-    image: mysql:8.0
-    environment:
-      MYSQL_ROOT_PASSWORD: dev_root_password_123
-      MYSQL_DATABASE: child_app_admin_shard_2
-    volumes:
-      - db_admin_shard2:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
-  # Child app's own databases — namespaced by child app name
-  db_app:
-    image: mysql:8.0
-    environment:
-      MYSQL_ROOT_PASSWORD: dev_root_password_123
-      MYSQL_DATABASE: child_app_main
-    volumes:
-      - db_app_main:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
-  db_app_shard1:
-    image: mysql:8.0
-    environment:
-      MYSQL_ROOT_PASSWORD: dev_root_password_123
-      MYSQL_DATABASE: child_app_shard_1
-    volumes:
-      - db_app_shard1:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-
-  db_app_shard2:
-    image: mysql:8.0
-    environment:
-      MYSQL_ROOT_PASSWORD: dev_root_password_123
-      MYSQL_DATABASE: child_app_shard_2
-    volumes:
-      - db_app_shard2:/var/lib/mysql
+      - db_data:/var/lib/mysql
+      - ./docker/init-databases.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 5s
@@ -150,10 +77,4 @@ services:
 # Example: child_app → payments (db names become payments_admin_main, etc.)
 volumes:
   files_vol:
-  admin_vendor:
-  db_admin_main:
-  db_admin_shard1:
-  db_admin_shard2:
-  db_app_main:
-  db_app_shard1:
-  db_app_shard2:
+  db_data:

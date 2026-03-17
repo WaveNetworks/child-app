@@ -2,7 +2,6 @@
 -- Initial schema: db_version tracking, app_settings, items table
 -- ⚠️ REMINDER: Update child-app/include/common.php $child_db_version = 1.0;
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
-START TRANSACTION;
 SET time_zone = "+00:00";
 
 -- Migration version tracking (matches admin's schema: version_id int PK)
@@ -36,5 +35,3 @@ CREATE TABLE IF NOT EXISTS `items` (
     INDEX `idx_user_status` (`user_id`, `status`),
     INDEX `idx_updated` (`updated`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-COMMIT;
