@@ -106,6 +106,7 @@ EXCLUDE_PATTERNS = [
     "docker/",
     "docker-compose.test.yml",
     "assets/scss/",
+    ".scss",
 ]
 
 
@@ -238,24 +239,23 @@ def deploy(files_to_upload, files_to_delete=None, dry_run=False):
 
 def get_build_artifacts():
     """Get built files that aren't git-tracked but must be deployed (e.g. compiled CSS)."""
-    project_root = os.path.dirname(os.path.abspath(__file__))
-    artifacts = []
-    # Compiled SCSS output — always deploy if it exists
-    css_path = os.path.join(project_root, "assets", "css", "custom.css")
-    if os.path.isfile(css_path):
-        artifacts.append("assets/css/custom.css")
-    return artifacts
+    # Themes are now git-tracked in assets/themes/*/custom.css — no build artifacts needed
+    return []
 
 
 def check_css_build():
-    """Warn if assets/css/custom.css is missing (needs npm run build:css)."""
+    """Warn if no theme CSS files exist (needs npm run build:css)."""
     project_root = os.path.dirname(os.path.abspath(__file__))
-    css_path = os.path.join(project_root, "assets", "css", "custom.css")
-    if not os.path.isfile(css_path):
-        print("[DEPLOY] WARNING: assets/css/custom.css not found!")
-        print("         The glassmorphism theme has not been built.")
+    themes_dir = os.path.join(project_root, "assets", "themes")
+    if not os.path.isdir(themes_dir):
+        print("[DEPLOY] WARNING: assets/themes/ directory not found!")
+        return
+    import glob as g
+    css_files = g.glob(os.path.join(themes_dir, "*", "custom.css"))
+    if not css_files:
+        print("[DEPLOY] WARNING: No compiled theme CSS found in assets/themes/*/")
         print("         Run: npm install && npm run build:css")
-        print("         Without this file, the app and any website using it will be unstyled.")
+        print("         Without theme CSS, the app will be unstyled.")
         resp = input("         Continue anyway? [y/N] ").strip().lower()
         if resp != 'y':
             print("[DEPLOY] Aborted. Build CSS first.")

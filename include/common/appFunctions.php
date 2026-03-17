@@ -6,33 +6,43 @@
 
 /**
  * Get the CSS URL for the child app's active theme.
- * If the user has selected "custom" (or no theme cookie is set and custom.css exists),
- * returns the locally compiled custom.css. Otherwise falls back to admin's
- * Bootswatch theme system.
+ * Checks assets/themes/{slug}/custom.css first, then falls back to
+ * admin's Bootswatch theme system.
  *
  * @param string $admin_prefix  Path prefix to admin's assets (e.g. '../../admin/')
  * @return string
  */
 function get_app_theme_css_url($admin_prefix = '../../admin/', $webroot_prefix = '../../') {
-    $custom_exists = file_exists(__DIR__ . '/../../assets/css/custom.css');
     $theme = $_COOKIE['wn_theme'] ?? '';
+    $themes_dir = __DIR__ . '/../../assets/themes';
 
-    // "custom" or registered theme name selected, or no theme cookie and custom.css exists (default)
-    if ($custom_exists && ($theme === 'custom' || $theme === '' || $theme === 'glassmorphism')) {
-        $css_path = __DIR__ . '/../../assets/css/custom.css';
-        $v = filemtime($css_path);
-        return '../assets/css/custom.css?v=' . $v;
+    // Check if the active theme has a local compiled CSS
+    if ($theme !== '') {
+        $css_path = $themes_dir . '/' . $theme . '/custom.css';
+        if (file_exists($css_path)) {
+            $v = filemtime($css_path);
+            return '../assets/themes/' . $theme . '/custom.css?v=' . $v;
+        }
+    }
+
+    // No cookie — use first available custom theme as default
+    if ($theme === '' && is_dir($themes_dir)) {
+        foreach (glob($themes_dir . '/*/custom.css') as $css_file) {
+            $slug = basename(dirname($css_file));
+            $v = filemtime($css_file);
+            return '../assets/themes/' . $slug . '/custom.css?v=' . $v;
+        }
     }
 
     return get_theme_css_url($admin_prefix, $webroot_prefix);
 }
 
 /**
- * Check whether the child app has a compiled custom.css available.
- * Used by the theme switcher JS to know whether to show the "Custom" option.
+ * Check whether the child app has any compiled custom themes available.
  *
  * @return bool
  */
 function has_custom_theme() {
-    return file_exists(__DIR__ . '/../../assets/css/custom.css');
+    $themes_dir = __DIR__ . '/../../assets/themes';
+    return is_dir($themes_dir) && count(glob($themes_dir . '/*/custom.css')) > 0;
 }

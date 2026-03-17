@@ -131,7 +131,7 @@
 
                 <!-- Theme switcher (hidden on small screens to prevent topnav wrapping) -->
                 <select class="form-select form-select-sm me-2 d-none d-lg-inline-block" id="themeSelector" style="width: auto;"
-                        data-custom-css="../assets/css/custom.css<?= file_exists(__DIR__ . '/../assets/css/custom.css') ? '?v=' . filemtime(__DIR__ . '/../assets/css/custom.css') : '' ?>"
+                        data-custom-css="<?= h(get_app_theme_css_url()) ?>"
                         data-has-custom="<?= has_custom_theme() ? '1' : '0' ?>"
                         data-registered-themes='<?= get_registered_themes_json() ?>'>
                     <option value="custom">Custom</option>

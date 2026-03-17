@@ -10,8 +10,7 @@ auth pages, include/common.php, template.php, JS assets, SCSS pipeline,
 Docker config, installer, and the full directory structure. Building from
 scratch will miss critical boilerplate and produce a broken app.
 
-After cloning, compile the theme: `npm install && npm run build:css`
-(SCSS source only — no pre-built CSS in the repo).
+After cloning, compile themes: `npm install && npm run build:css`
 
 **Preserve demo content** while building. The items, examples, game,
 DataTables, and D3 charts are working reference implementations of every
@@ -126,14 +125,39 @@ apiPost('actionName', {key: 'value'}, function(response) {
 modalView('modal=snippet_name&param=value')
 reloadModalThisForm('formId', 'modal=snippet_name&action=doThing')
 
-## SCSS theme pipeline
-assets/scss/custom.scss → imports _variables.scss → bootstrap → _bootswatch.scss
-_bootswatch.scss contains a glass() mixin for glassmorphism effects.
-All components have dark mode (base) + light mode ([data-bs-theme="light"]) styles.
+## Custom theme system
+Themes live in `assets/themes/{theme-name}/` — each folder is a self-contained theme with
+its own SCSS sources and compiled CSS. The folder name becomes the theme slug.
 
-Build: npm run build:css | npm run watch | npm run build:themes
+### Theme folder structure
+```
+assets/themes/glassmorphism/
+  _variables.scss      # Bootstrap variable overrides
+  custom.scss          # Entry point: imports _variables → bootstrap → _bootswatch
+  _bootswatch.scss     # Post-Bootstrap overrides, mixins, component styles
+  custom.css           # Compiled output (git-tracked, not gitignored)
+  custom.css.map       # Source map
+  CLAUDE.md            # Theme-specific rules and architecture docs
+```
 
-Themed components in _bootswatch.scss:
+### Creating a new theme
+1. Create `assets/themes/your-theme/` with `_variables.scss`, `custom.scss`, `_bootswatch.scss`
+2. `custom.scss` must import: `_variables` → `bootstrap/scss/bootstrap` → `_bootswatch`
+3. Add a build script to `package.json` or run sass directly
+4. Add a `CLAUDE.md` documenting the theme's design rules
+5. The theme auto-registers on next request via `themeRegistration.php`
+
+### Build commands
+- `npm run build:css` — compile the default theme (glassmorphism)
+- `npm run watch` — watch mode for development
+- Sass CLI: `sass assets/themes/{name}/custom.scss assets/themes/{name}/custom.css --style compressed --load-path=node_modules`
+
+### Theme rules (all themes must follow)
+- **Keep Bootstrap Bootstrap.** Override variables in `_variables.scss`, don't fight the framework
+- **Stay Bootswatch-compatible.** Follow the `_variables.scss` → bootstrap → `_bootswatch.scss` pattern
+- **Support dark + light mode.** Base styles for dark, `[data-bs-theme="light"]` overrides for light
+
+### Themed components (glassmorphism _bootswatch.scss)
 - Cards, tables, forms, modals, offcanvas, sidebar, navbar
 - DataTables controls (search input, pagination, length select)
 - Dashboard hero, breadcrumbs, D3 chart containers
@@ -268,15 +292,18 @@ Replace `draw()` with custom rendering for gamified/animated backgrounds.
 
 ## Theme registration
 `include/common/themeRegistration.php` runs on every request (idempotent).
-If `has_custom_theme()` returns true (i.e. `assets/css/custom.css` exists), it calls
-`register_theme('glassmorphism', 'Glassmorphism', 'child-app/assets/css/custom.css', [...])`.
-This writes to admin's theme registry via `ON DUPLICATE KEY UPDATE`.
+Auto-discovers themes by scanning `assets/themes/*/custom.css` via glob.
+Each discovered theme is registered with admin's theme registry via `register_theme()`
+using `ON DUPLICATE KEY UPDATE`. The folder name becomes the slug, e.g.
+`assets/themes/glassmorphism/custom.css` → slug `glassmorphism`.
 
 `get_app_theme_css_url()` in `appFunctions.php` resolves the active theme CSS:
-- If `custom.css` exists and cookie `wn_theme` is `custom` or empty → returns local custom.css
+- Reads `wn_theme` cookie for the active theme slug
+- If `assets/themes/{slug}/custom.css` exists → returns it with `?v=filemtime()` cache buster
+- If no cookie set, falls back to first discovered theme in `assets/themes/*/custom.css`
 - Otherwise falls back to admin's Bootswatch system via `get_theme_css_url()`
 
-`has_custom_theme()` checks `file_exists(assets/css/custom.css)`.
+`has_custom_theme()` checks `glob(assets/themes/*/custom.css)` for any compiled theme.
 
 ## Environment variables (Docker)
 When `config/config.php` is absent, `include/common.php` reads env vars:

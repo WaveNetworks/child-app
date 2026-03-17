@@ -13,10 +13,6 @@ vendor/
 # Node
 node_modules/
 
-# Compiled CSS (each developer builds locally via npm run build:css)
-assets/css/custom.css
-assets/css/custom.css.map
-
 # Logs and temp
 *.log
 /tmp/
