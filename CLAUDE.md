@@ -23,6 +23,13 @@ stack with its own admin databases. Rename ALL volume names in
 docker-compose.yml with your app prefix and use unique host ports.
 See wave-networks.json `docker_multi_app` for details.
 
+## Public-facing website
+To create a marketing/documentation website for your child app, clone the
+subtheme-website repo: `git clone https://github.com/WaveNetworks/subtheme-website.git`
+It uses `common_auth.php` (no session guard) for branding and is standalone PHP+HTML+CSS
+with no framework or build tools. See https://subtheme.com as the reference implementation.
+See wave-networks.json `public_website` for the full pattern.
+
 ## What this repo is
 Example child application for the Wave Networks ecosystem. Deployed at
 public_html/child-app/ as a sibling of public_html/admin/. Demonstrates the
