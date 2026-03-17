@@ -78,6 +78,9 @@ $pagination-hover-color:  #fff;
 $pagination-active-bg:    $primary;
 $pagination-active-color: #fff;
 
+// Contrast — Bootstrap's color-contrast() picks black for medium-blue primary at 4.5
+$min-contrast-ratio: 3;
+
 // Badges
 $badge-font-weight: 600;
 
