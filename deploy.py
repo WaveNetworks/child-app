@@ -232,6 +232,17 @@ def deploy(files_to_upload, files_to_delete=None, dry_run=False):
         transport.close()
 
 
+def get_build_artifacts():
+    """Get built files that aren't git-tracked but must be deployed (e.g. compiled CSS)."""
+    project_root = os.path.dirname(os.path.abspath(__file__))
+    artifacts = []
+    # Compiled SCSS output — always deploy if it exists
+    css_path = os.path.join(project_root, "assets", "css", "custom.css")
+    if os.path.isfile(css_path):
+        artifacts.append("assets/css/custom.css")
+    return artifacts
+
+
 def check_css_build():
     """Warn if assets/css/custom.css is missing (needs npm run build:css)."""
     project_root = os.path.dirname(os.path.abspath(__file__))
@@ -288,10 +299,10 @@ def main():
         files = get_vendor_files()
         deploy(files, dry_run=args.dry_run)
     elif args.all:
-        files = get_all_tracked_files() + get_vendor_files()
+        files = get_all_tracked_files() + get_vendor_files() + get_build_artifacts()
         deploy(files, dry_run=args.dry_run)
     else:
-        changed = get_changed_files()
+        changed = get_changed_files() + get_build_artifacts()
         deleted = get_deleted_files()
         deploy(changed, deleted, dry_run=args.dry_run)
 
