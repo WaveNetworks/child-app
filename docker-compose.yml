@@ -1,10 +1,8 @@
 # docker-compose.yml
 #
-# MULTI-APP SETUP: If running multiple apps on the same machine:
-#   1. Rename ALL volumes below with your app prefix
-#      (e.g., wn_db_main → yourapp_admin_main)
-#   2. Change host ports to avoid conflicts
-#      (e.g., 80:80 → 8081:80, 8025:8025 → 8026:8025)
+# MULTI-APP SETUP: When you clone child-app as your own app (e.g. payments/):
+#   1. Rename ALL child_app_ prefixes to your app name (payments_)
+#   2. Change host ports to avoid conflicts (80→8081, 8025→8026)
 #   3. Each app stack is fully independent — own admin, own databases
 #
 # See: https://subtheme.com/docs/setup#multi-app
@@ -16,15 +14,15 @@ services:
       - "80:80"  # Change if port in use (8081, 8082, etc.)
     environment:
       - ENVIRONMENT=development
-      # Admin core DB (consumed by admin's bootstrap when config.php absent)
-      - DB_HOST_MAIN=db
-      - DB_NAME_MAIN=wncore_main
+      # Admin core databases (namespaced by child app)
+      - DB_HOST_MAIN=db_admin
+      - DB_NAME_MAIN=child_app_admin_main
       - DB_USER=root
       - DB_PASSWORD=dev_root_password_123
-      - DB_HOST_SHARD=db_shard
-      - DB_NAME_SHARD=wncore_shard_1
-      - DB_HOST_SHARD2=db_shard2
-      - DB_NAME_SHARD2=wncore_shard_2
+      - DB_HOST_SHARD=db_admin_shard1
+      - DB_NAME_SHARD=child_app_admin_shard_1
+      - DB_HOST_SHARD2=db_admin_shard2
+      - DB_NAME_SHARD2=child_app_admin_shard_2
       - FILES_LOCATION=/var/files/
       - SMTP_HOST=mailhog
       - SMTP_PORT=1025
@@ -33,108 +31,110 @@ services:
       - APP_SECRET=dev_app_secret_64_chars_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
       - HIDDEN_HASH=dev_hidden_hash_xxxxxxxxxxxxxxxxxx
       - SEED_TEST_DATA=true
-      # Child app's own DBs
-      - CHILD_DB_HOST=db_child
-      - CHILD_DB_NAME=childapp_main
+      # Child app's own databases (namespaced by child app)
+      - CHILD_DB_HOST=db_app
+      - CHILD_DB_NAME=child_app_main
       - CHILD_DB_USER=root
       - CHILD_DB_PASS=dev_root_password_123
-      - CHILD_DB_HOST_SHARD=db_child_shard
-      - CHILD_DB_NAME_SHARD=childapp_shard_1
-      - CHILD_DB_HOST_SHARD2=db_child_shard2
-      - CHILD_DB_NAME_SHARD2=childapp_shard_2
+      - CHILD_DB_HOST_SHARD=db_app_shard1
+      - CHILD_DB_NAME_SHARD=child_app_shard_1
+      - CHILD_DB_HOST_SHARD2=db_app_shard2
+      - CHILD_DB_NAME_SHARD2=child_app_shard_2
     volumes:
-      - .:/var/www/public_html/child-app
-      - ../admin:/var/www/public_html/admin
+      # Source code read-only — Docker cannot modify your working directory
+      - .:/var/www/public_html/child-app:ro
+      - ../admin:/var/www/public_html/admin:ro
+      # Writable paths use named volumes
+      - admin_vendor:/var/www/public_html/admin/vendor
       - files_vol:/var/files
     depends_on:
-      db:
+      db_admin:
         condition: service_healthy
-      db_shard:
+      db_admin_shard1:
         condition: service_healthy
-      db_shard2:
+      db_admin_shard2:
         condition: service_healthy
-      db_child:
+      db_app:
         condition: service_healthy
-      db_child_shard:
+      db_app_shard1:
         condition: service_healthy
-      db_child_shard2:
+      db_app_shard2:
         condition: service_healthy
 
-  # Admin core databases — named volumes shared across all Wave Networks projects
-  # If admin was started first, these volumes already contain user data and will be reused.
-  db:
+  # Admin core databases — namespaced by child app name
+  db_admin:
     image: mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: dev_root_password_123
-      MYSQL_DATABASE: wncore_main
+      MYSQL_DATABASE: child_app_admin_main
     volumes:
-      - wn_db_main:/var/lib/mysql
+      - db_admin_main:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 5s
       timeout: 3s
       retries: 10
 
-  db_shard:
+  db_admin_shard1:
     image: mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: dev_root_password_123
-      MYSQL_DATABASE: wncore_shard_1
+      MYSQL_DATABASE: child_app_admin_shard_1
     volumes:
-      - wn_db_shard1:/var/lib/mysql
+      - db_admin_shard1:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 5s
       timeout: 3s
       retries: 10
 
-  db_shard2:
+  db_admin_shard2:
     image: mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: dev_root_password_123
-      MYSQL_DATABASE: wncore_shard_2
+      MYSQL_DATABASE: child_app_admin_shard_2
     volumes:
-      - wn_db_shard2:/var/lib/mysql
+      - db_admin_shard2:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 5s
       timeout: 3s
       retries: 10
 
-  # Child app's own databases
-  db_child:
+  # Child app's own databases — namespaced by child app name
+  db_app:
     image: mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: dev_root_password_123
-      MYSQL_DATABASE: childapp_main
+      MYSQL_DATABASE: child_app_main
     volumes:
-      - wn_db_child_main:/var/lib/mysql
+      - db_app_main:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 5s
       timeout: 3s
       retries: 10
 
-  db_child_shard:
+  db_app_shard1:
     image: mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: dev_root_password_123
-      MYSQL_DATABASE: childapp_shard_1
+      MYSQL_DATABASE: child_app_shard_1
     volumes:
-      - wn_db_child_shard1:/var/lib/mysql
+      - db_app_shard1:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 5s
       timeout: 3s
       retries: 10
 
-  db_child_shard2:
+  db_app_shard2:
     image: mysql:8.0
     environment:
       MYSQL_ROOT_PASSWORD: dev_root_password_123
-      MYSQL_DATABASE: childapp_shard_2
+      MYSQL_DATABASE: child_app_shard_2
     volumes:
-      - wn_db_child_shard2:/var/lib/mysql
+      - db_app_shard2:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 5s
@@ -146,20 +146,14 @@ services:
     ports:
       - "8025:8025"  # Change if port in use (8026, 8027, etc.)
 
-# MULTI-APP: Replace 'wn' prefix with your app name
-# Example: wn_db_main → payments_admin_main
+# MULTI-APP: Replace 'child_app' prefix with your app name
+# Example: child_app → payments (db names become payments_admin_main, etc.)
 volumes:
   files_vol:
-    name: wn_files
-  wn_db_main:
-    name: wn_db_main
-  wn_db_shard1:
-    name: wn_db_shard1
-  wn_db_shard2:
-    name: wn_db_shard2
-  wn_db_child_main:
-    name: wn_db_child_main
-  wn_db_child_shard1:
-    name: wn_db_child_shard1
-  wn_db_child_shard2:
-    name: wn_db_child_shard2
+  admin_vendor:
+  db_admin_main:
+  db_admin_shard1:
+  db_admin_shard2:
+  db_app_main:
+  db_app_shard1:
+  db_app_shard2:

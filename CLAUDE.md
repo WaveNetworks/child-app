@@ -215,8 +215,37 @@ if ($_POST['action'] == 'doThing') {
 
 ## Docker
 docker compose up — starts 8 services (app, 3 admin DBs, 3 child DBs, mailhog).
-Source code is volume-mounted: edit PHP → refresh browser → changes are live.
 Admin repo must be checked out as sibling: ../admin/
+
+### Filesystem isolation
+Source code is mounted read-only (`:ro`). Docker cannot modify your working directory.
+Edit PHP locally → refresh browser → changes are live. Writable paths use named volumes:
+- `admin_vendor` — admin's composer dependencies (installed by entrypoint on first run)
+- `files_vol` — uploaded files (`/var/files`)
+- All database volumes
+
+### Database naming convention
+All databases and volumes are namespaced by the child app name so multiple apps
+never collide. The pattern uses the child app directory name with hyphens → underscores:
+
+| Service | Database name | Volume |
+|---------|--------------|--------|
+| db_admin | child_app_admin_main | db_admin_main |
+| db_admin_shard1 | child_app_admin_shard_1 | db_admin_shard1 |
+| db_admin_shard2 | child_app_admin_shard_2 | db_admin_shard2 |
+| db_app | child_app_main | db_app_main |
+| db_app_shard1 | child_app_shard_1 | db_app_shard1 |
+| db_app_shard2 | child_app_shard_2 | db_app_shard2 |
+
+Every child app includes its own admin stack, so namespacing is on the child app,
+not the admin. When you clone this repo as `payments/`, rename all `child_app_`
+prefixes to `payments_` in docker-compose.yml.
+
+### Multi-app setup
+1. Clone as your app name: `git clone ... payments/`
+2. In docker-compose.yml, rename all `child_app_` prefixes to `payments_`
+3. Change host port: `80:80` → `8081:80`, `8025:8025` → `8026:8025`
+4. `docker compose up -d` — fully isolated stack, no collisions
 
 ## Modal system
 `app/modal_controller.php` is an AJAX endpoint that routes `modal` param to snippet files.
@@ -310,17 +339,22 @@ When `config/config.php` is absent, `include/common.php` reads env vars:
 
 | Env var | Default | Purpose |
 |---------|---------|---------|
-| `CHILD_DB_HOST` | `db_child` | Child main DB host |
-| `CHILD_DB_NAME` | `childapp_main` | Child main DB name |
-| `CHILD_DB_USER` | falls back to `DB_USER` then `root` | DB username |
-| `CHILD_DB_PASS` | falls back to `DB_PASSWORD` then empty | DB password |
-| `CHILD_DB_HOST_SHARD` | — | Child shard 1 host (enables shard1) |
-| `CHILD_DB_NAME_SHARD` | `childapp_shard_1` | Child shard 1 DB name |
-| `CHILD_DB_HOST_SHARD2` | — | Child shard 2 host (enables shard2) |
-| `CHILD_DB_NAME_SHARD2` | `childapp_shard_2` | Child shard 2 DB name |
+| `DB_HOST_MAIN` | `db_admin` | Admin main DB host (service name) |
+| `DB_NAME_MAIN` | `child_app_admin_main` | Admin main DB name |
+| `DB_HOST_SHARD` | `db_admin_shard1` | Admin shard 1 host |
+| `DB_NAME_SHARD` | `child_app_admin_shard_1` | Admin shard 1 DB name |
+| `DB_HOST_SHARD2` | `db_admin_shard2` | Admin shard 2 host |
+| `DB_NAME_SHARD2` | `child_app_admin_shard_2` | Admin shard 2 DB name |
+| `CHILD_DB_HOST` | `db_app` | Child main DB host (service name) |
+| `CHILD_DB_NAME` | `child_app_main` | Child main DB name |
+| `CHILD_DB_HOST_SHARD` | `db_app_shard1` | Child shard 1 host |
+| `CHILD_DB_NAME_SHARD` | `child_app_shard_1` | Child shard 1 DB name |
+| `CHILD_DB_HOST_SHARD2` | `db_app_shard2` | Child shard 2 host |
+| `CHILD_DB_NAME_SHARD2` | `child_app_shard_2` | Child shard 2 DB name |
 
-Shard user/pass reuse `CHILD_DB_USER`/`CHILD_DB_PASS`. Shards only created when their
-host env var is set.
+All DB services use `DB_USER`/`DB_PASSWORD` (shared root credentials for dev).
+DB names are prefixed with the child app name (`child_app_`) so multiple apps
+on the same Docker host never collide. When cloning as a new app, rename the prefix.
 
 ## Database schema
 
