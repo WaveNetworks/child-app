@@ -19,8 +19,8 @@
     <title><?= h($page_title ?? $b['site_name']) ?></title>
     <meta name="theme-color" content="<?= h($b['theme_color']) ?>">
     <?php if (!empty($b['favicon_path'])) { ?>
-    <link rel="icon" href="../../admin/uploads/<?= h($b['favicon_path']) ?>">
-    <link rel="apple-touch-icon" href="../../admin/uploads/<?= h($b['favicon_path']) ?>">
+    <link rel="icon" href="../../admin/branding/<?= h($b['favicon_path']) ?>">
+    <link rel="apple-touch-icon" href="../../admin/branding/<?= h($b['favicon_path']) ?>">
     <?php } ?>
     <!-- CSS: admin base → overrides → glassmorphism theme (correct load order) -->
     <link rel="stylesheet" href="../../admin/assets/css/style.css">
@@ -101,7 +101,7 @@
     <div class="auth-card">
         <div class="text-center mb-4">
             <?php if (!empty($b['logo_path'])) { ?>
-            <img src="../../admin/uploads/<?= h($b['logo_path']) ?>" alt="<?= h($b['site_name']) ?>" style="max-height: 64px;" class="mb-2"<?php if (!empty($b['logo_dark_path'])) { ?> data-logo-dark="../../admin/uploads/<?= h($b['logo_dark_path']) ?>" data-logo-light="../../admin/uploads/<?= h($b['logo_path']) ?>"<?php } ?>>
+            <img src="../../admin/branding/<?= h($b['logo_path']) ?>" alt="<?= h($b['site_name']) ?>" style="max-height: 64px;" class="mb-2"<?php if (!empty($b['logo_dark_path'])) { ?> data-logo-dark="../../admin/branding/<?= h($b['logo_dark_path']) ?>" data-logo-light="../../admin/branding/<?= h($b['logo_path']) ?>"<?php } ?>>
             <?php } ?>
             <h2><?= h($b['site_name']) ?></h2>
         </div>
