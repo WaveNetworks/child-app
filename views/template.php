@@ -85,7 +85,7 @@
     </div>
 
     <!-- Main content -->
-    <div class="flex-grow-1 d-flex flex-column min-vh-100">
+    <div class="flex-grow-1 d-flex flex-column min-vh-100" style="min-width:0">
 
         <!-- REGION: topnav -->
         <nav class="navbar navbar-expand-lg border-bottom border-secondary border-opacity-25 px-3 py-2 sticky-top">
