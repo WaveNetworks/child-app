@@ -17,6 +17,7 @@ services:
       context: .
       additional_contexts:
         admin: ../admin
+        website: ..
     ports:
       - "80:80"  # Change if port in use (8081, 8082, etc.)
     environment:

@@ -25,6 +25,11 @@ WORKDIR /var/www/public_html
 COPY --from=admin . /var/www/public_html/admin/
 COPY . /var/www/public_html/child-app/
 
+# Copy public-facing website (webroot-level files)
+COPY --from=website .htaccess index.php robots.txt sitemap.xml llms.txt /var/www/public_html/
+COPY --from=website agent.json wave-networks.json /var/www/public_html/
+COPY --from=website site/ /var/www/public_html/site/
+
 # Install admin composer dependencies at build time
 RUN cd /var/www/public_html/admin && composer install --no-dev --optimize-autoloader
 
