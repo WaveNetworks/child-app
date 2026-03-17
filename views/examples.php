@@ -36,7 +36,7 @@ $page_title = 'Examples';
         <hr>
 
         <h6>Usage</h6>
-        <pre class="bg-dark text-light p-3 rounded small"><code>&lt;!-- Open a modal --&gt;
+        <div class="bg-dark text-light p-3 rounded small" style="white-space: pre-wrap; word-break: break-word;"><code>&lt;!-- Open a modal --&gt;
 &lt;button onclick="modalView('modal=example_form')"&gt;Open&lt;/button&gt;
 
 &lt;!-- Pass parameters --&gt;
@@ -50,7 +50,7 @@ $modals = [
     'example_form' =&gt; __DIR__ . '/../snippets/modal_example_form.php',
 ];
 
-&lt;!-- Snippet includes feedback.php for session alerts + is-invalid for field errors --&gt;</code></pre>
+&lt;!-- Snippet includes feedback.php for session alerts + is-invalid for field errors --&gt;</code></div>
     </div>
 </div>
 
