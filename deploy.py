@@ -175,6 +175,7 @@ def deploy(files_to_upload, files_to_delete=None, dry_run=False):
 
     try:
         if config.REMOTE_ROOT and config.REMOTE_ROOT != ".":
+            ensure_remote_dir(sftp, config.REMOTE_ROOT)
             sftp.chdir(config.REMOTE_ROOT)
 
         uploaded = 0
@@ -231,16 +232,59 @@ def deploy(files_to_upload, files_to_delete=None, dry_run=False):
         transport.close()
 
 
+def check_css_build():
+    """Warn if assets/css/custom.css is missing (needs npm run build:css)."""
+    project_root = os.path.dirname(os.path.abspath(__file__))
+    css_path = os.path.join(project_root, "assets", "css", "custom.css")
+    if not os.path.isfile(css_path):
+        print("[DEPLOY] WARNING: assets/css/custom.css not found!")
+        print("         The glassmorphism theme has not been built.")
+        print("         Run: npm install && npm run build:css")
+        print("         Without this file, the app and any website using it will be unstyled.")
+        resp = input("         Continue anyway? [y/N] ").strip().lower()
+        if resp != 'y':
+            print("[DEPLOY] Aborted. Build CSS first.")
+            sys.exit(0)
+
+
+def get_include_files(paths):
+    """Get files from explicit --include paths (can be untracked)."""
+    project_root = os.path.dirname(os.path.abspath(__file__))
+    files = []
+    for p in paths:
+        full = os.path.join(project_root, p.replace("/", os.sep))
+        if os.path.isfile(full):
+            files.append(p.replace("\\", "/"))
+        elif os.path.isdir(full):
+            for root, dirs, filenames in os.walk(full):
+                for f in filenames:
+                    fp = os.path.join(root, f)
+                    rel = os.path.relpath(fp, project_root).replace("\\", "/")
+                    files.append(rel)
+        else:
+            print(f"[DEPLOY] WARNING: --include path not found: {p}")
+    return files
+
+
 def main():
     parser = argparse.ArgumentParser(description="Deploy child-app to server via SFTP")
     parser.add_argument("--all", action="store_true", help="Deploy all tracked files + vendor")
     parser.add_argument("--vendor", action="store_true", help="Deploy only vendor/ directory")
     parser.add_argument("--dry-run", action="store_true", help="Show what would be deployed")
+    parser.add_argument("--include", nargs="+", metavar="PATH", help="Include specific files/dirs (even if untracked)")
+    parser.add_argument("--no-css-check", action="store_true", help="Skip CSS build check")
     args = parser.parse_args()
 
     print(f"[DEPLOY] Deploying child-app to {config.SFTP_HOST}...")
 
-    if args.vendor:
+    # Check CSS build unless skipped
+    if not args.no_css_check and not args.vendor:
+        check_css_build()
+
+    if args.include:
+        files = get_include_files(args.include)
+        deploy(files, dry_run=args.dry_run)
+    elif args.vendor:
         files = get_vendor_files()
         deploy(files, dry_run=args.dry_run)
     elif args.all:
