@@ -17,8 +17,8 @@ function get_app_theme_css_url($admin_prefix = '../../admin/', $webroot_prefix =
     $custom_exists = file_exists(__DIR__ . '/../../assets/css/custom.css');
     $theme = $_COOKIE['wn_theme'] ?? '';
 
-    // "custom" explicitly selected, or no theme cookie and custom.css exists (default)
-    if ($custom_exists && ($theme === 'custom' || $theme === '')) {
+    // "custom" or registered theme name selected, or no theme cookie and custom.css exists (default)
+    if ($custom_exists && ($theme === 'custom' || $theme === '' || $theme === 'glassmorphism')) {
         $css_path = __DIR__ . '/../../assets/css/custom.css';
         $v = filemtime($css_path);
         return '../assets/css/custom.css?v=' . $v;
