@@ -5,6 +5,9 @@
  * This file adds child-app-specific variables.
  */
 
+// ─── VERSION ────────────────────────────────────────────────────────────────
+define('WN_CHILD_APP_VERSION', '1.0.0');
+
 // ─── CHILD APP SESSION VARIABLES ────────────────────────────────────────────
 // Add child-app-specific session vars here as needed.
 // Core session vars (user_id, shard_id, email, roles, flash messages) are
