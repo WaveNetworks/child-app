@@ -55,6 +55,16 @@ Bootstrap chain: child-app/include/common.php → admin/include/common.php
 Admin handles its own config, $db, helpers, migrations, and session guard.
 Child app then opens its own $child_db and runs its own migrations.
 
+## Version constant
+include/definition.php defines WN_CHILD_APP_VERSION (e.g. '1.0.0').
+Semantic versioning: MAJOR.MINOR.PATCH. Bump the constant + create a git tag
+(git tag -a v1.0.0 -m "Release") on each release.
+
+The admin dashboard auto-checks https://subtheme.com/api/versions for the latest
+version and shows a banner when outdated. If WN_CHILD_APP_VERSION is missing,
+admin reports "unknown". When cloning this template for a new app, set the
+constant to '1.0.0' as a starting point.
+
 ## Folder layout (critical)
 The repo root is child-app/ — deployed into public_html/child-app/.
 Admin core is a sibling at public_html/admin/ (separate repo).
