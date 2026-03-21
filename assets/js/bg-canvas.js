@@ -184,6 +184,10 @@
     var observer = new MutationObserver(function() { draw(); });
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-bs-theme'] });
 
-    // Expose draw() so pong-game.js can redraw the nebula each frame underneath the game
-    window.bgCanvasDraw = draw;
+    // Expose a safe redraw that does NOT fork the RAF loop.
+    // bg-canvas redraws itself when needed (resize, theme change).
+    // External callers should never invoke draw() directly.
+    window.bgCanvasDraw = function() {
+        // no-op: prevents RAF loop forking when called externally.
+    };
 })();
