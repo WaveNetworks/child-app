@@ -63,6 +63,14 @@
                 <i class="bi bi-person sidebar-icon"></i>
                 <span class="sidebar-text">Profile</span>
             </a>
+            <a class="nav-link <?= ($page ?? '') === 'feedback' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=feedback">
+                <i class="bi bi-chat-left-text sidebar-icon"></i>
+                <span class="sidebar-text">Feedback</span>
+            </a>
+            <a class="nav-link <?= ($page ?? '') === 'roadmap' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=roadmap">
+                <i class="bi bi-kanban sidebar-icon"></i>
+                <span class="sidebar-text">Roadmap</span>
+            </a>
             <a class="nav-link <?= ($page ?? '') === 'examples' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=examples">
                 <i class="bi bi-grid sidebar-icon"></i>
                 <span class="sidebar-text">Examples</span>
@@ -323,5 +331,6 @@
 <!-- REMOVABLE: Pong game — delete this line + assets/js/pong-game.js + views/game.php + sidebar link + route in app/index.php -->
 <script src="../assets/js/pong-game.js"></script>
 <script src="../assets/js/spa-nav.js"></script>
+<?php include(__DIR__ . '/../snippets/feedback_tab.php'); ?>
 </body>
 </html>
