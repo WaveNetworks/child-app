@@ -79,14 +79,15 @@ jobs:
       - name: Deploy via rsync
         run: |
           RSYNC_OPTS="-avz --delete-after --chmod=D755,F644"
+          EXCLUDE="--exclude='config/config.php' --exclude='config/.update_check_cache.json'"
           SSH_CMD="ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no"
 
           echo "Deploying admin..."
-          rsync $RSYNC_OPTS -e "$SSH_CMD" \
+          eval rsync $RSYNC_OPTS $EXCLUDE -e \"$SSH_CMD\" \
             staging/admin/ dswa.org@ssh.us.stackcp.com:public_html/admin/
 
           echo "Deploying elevateher..."
-          rsync $RSYNC_OPTS -e "$SSH_CMD" \
+          eval rsync $RSYNC_OPTS $EXCLUDE -e \"$SSH_CMD\" \
             staging/elevateher/ dswa.org@ssh.us.stackcp.com:public_html/elevateher/
 
           echo "Deploy complete."
