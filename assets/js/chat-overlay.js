@@ -405,12 +405,15 @@ function showContentBanner(item) {
 }
 
 function scrollToBottom() {
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-    // Also ensure the last element in the options area is visible
-    var lastOpt = optionsArea.lastElementChild;
-    if (lastOpt) {
-        lastOpt.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
+    // Defer to next frame so layout changes (zone resize, new elements) are applied first
+    requestAnimationFrame(function() {
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+        // Also ensure the last element in the options area is visible
+        var lastOpt = optionsArea.lastElementChild;
+        if (lastOpt) {
+            lastOpt.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+    });
 }
 
 // ─── Admin Debug Modal ──────────────────────────────────────────────────
@@ -1140,6 +1143,9 @@ function updateZoneLayout() {
         root.style.setProperty('--interactive-max', '40vh');
         root.style.setProperty('--lotus-reserve', '180px');
     }
+
+    // Keep chat scrolled to bottom after zone resize
+    messagesEl.scrollTop = messagesEl.scrollHeight;
 }
 
 // Observe options area for content changes
