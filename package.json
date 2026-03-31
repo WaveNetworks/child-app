@@ -3,7 +3,9 @@
   "private": true,
   "description": "Wave Networks child-app template — SCSS theme build pipeline",
   "scripts": {
-    "build:css": "sass assets/themes/glassmorphism/custom.scss assets/themes/glassmorphism/custom.css --style compressed --load-path=node_modules",
+    "build:glass": "sass assets/themes/glassmorphism/custom.scss assets/themes/glassmorphism/custom.css --style compressed --load-path=node_modules",
+    "build:dswa": "sass assets/themes/dswa/custom.scss assets/themes/dswa/custom.css --style compressed --load-path=node_modules",
+    "build:css": "npm run build:glass && npm run build:dswa",
     "watch": "sass --watch assets/themes/glassmorphism/custom.scss:assets/themes/glassmorphism/custom.css --style expanded --load-path=node_modules",
     "build": "npm run build:css"
   },

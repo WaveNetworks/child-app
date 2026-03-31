@@ -1,22 +1,18 @@
 <?php
 /**
  * modal_controller.php
- * AJAX modal content loader.
- * Returns HTML snippets for modals loaded via modalView() / reloadModalThisForm().
- *
- * When a form is submitted via reloadModalThisForm(), the action runs first
- * (via the normal action files included by common.php), then the modal
- * re-renders with validation errors or success messages.
+ * AJAX modal content loader for ElevateHER Learning Suite.
  */
 include(__DIR__ . '/../include/common.php');
 
 $modal = $_POST['modal'] ?? $_GET['modal'] ?? '';
 
-// Map modal names to snippet files
 $modals = [
     'item_detail'    => __DIR__ . '/../snippets/modal_item_detail.php',
     'confirm_delete' => __DIR__ . '/../snippets/modal_confirm_delete.php',
     'example_form'   => __DIR__ . '/../snippets/modal_example_form.php',
+    'seller_detail'  => __DIR__ . '/../snippets/modal_seller_detail.php',
+    'coach_note'     => __DIR__ . '/../snippets/modal_coach_note.php',
 ];
 
 if (isset($modals[$modal]) && file_exists($modals[$modal])) {

@@ -1,17 +1,12 @@
 <?php
 /**
  * app/index.php
- * Main app controller. Session-guarded by common.php.
- * Routes to view files based on ?page= parameter.
- *
- * Supports SPA-style navigation:
- *   ?reloadView=true  — returns just the view content (no template shell)
- *                        so the canvas background stays alive during navigation.
- *   (no reloadView)   — returns full page with template wrapper (initial load).
+ * ElevateHER Learning Suite — Main app controller.
+ * Session-guarded by common.php. Routes to view files based on ?page= parameter.
  */
 include(__DIR__ . '/../include/common.php');
 
-$page = $_GET['page'] ?? $_POST['page'] ?? 'dashboard';
+$page = $_GET['page'] ?? $_POST['page'] ?? 'assessment';
 
 // Redirect legacy privacy page into profile tabs
 if ($page === 'privacy') {
@@ -20,16 +15,96 @@ if ($page === 'privacy') {
     exit;
 }
 
+// Store pending invite token in session
+if (!empty($_GET['token']) && $page === 'invite-landing') {
+    $_SESSION['pending_invite'] = $_GET['token'];
+}
+
+// Get user roles and tier for sidebar visibility
+$user_roles = function_exists('get_user_role') ? get_user_role($_SESSION['user_id'] ?? 0) : ['seller'];
+$is_coach_user = in_array('coach', $user_roles) || in_array('org_lead', $user_roles);
+$is_org_lead_user = in_array('org_lead', $user_roles);
+$user_tier = function_exists('get_user_tier') ? get_user_tier($_SESSION['user_id'] ?? 0, $_SESSION['shard_id'] ?? '') : null;
+$is_pro_or_above = $user_tier && function_exists('is_tier_at_least') && is_tier_at_least($user_tier, 'pro');
+$is_elite = $user_tier && function_exists('is_tier_at_least') && is_tier_at_least($user_tier, 'elite');
+
+// ─── Pre-template redirects (must happen before any output) ─────────────
+$uid = $_SESSION['user_id'] ?? 0;
+$sid = $_SESSION['shard_id'] ?? '';
+$_redirect_to = null;
+
+if ($page === 'assessment') {
+    $inst = function_exists('get_user_instance') ? get_user_instance($uid, $sid, 'ai-assessment') : null;
+    if ($inst && ($inst['status'] ?? '') === 'completed') {
+        $_redirect_to = 'index.php?page=results';
+    }
+}
+
+if ($page === 'results') {
+    $inst = function_exists('get_user_instance') ? get_user_instance($uid, $sid, 'ai-assessment') : null;
+    if (!$inst || ($inst['status'] ?? '') !== 'completed') {
+        $_redirect_to = 'index.php?page=assessment';
+    }
+}
+
+if ($page === 'onboarding') {
+    $existing = function_exists('get_onboarding_profile') ? get_onboarding_profile($uid, $sid) : null;
+    if ($existing && !isset($_GET['edit'])) {
+        $_redirect_to = 'index.php?page=dashboard';
+    }
+}
+
+if ($page === 'team' && !($is_pro_or_above ?? false)) {
+    $_SESSION['error'] = 'Pro tier or above required to access team features.';
+    $_redirect_to = 'index.php?page=dashboard';
+}
+
+if ($page === 'invite' && !($is_pro_or_above ?? false)) {
+    $_SESSION['error'] = 'Pro tier or above required to invite sellers.';
+    $_redirect_to = 'index.php?page=dashboard';
+}
+
+if ($page === 'cohort' && !$is_org_lead_user) {
+    $_SESSION['error'] = 'Organization lead access required.';
+    $_redirect_to = 'index.php?page=dashboard';
+}
+
+if (in_array($page, ['admin-framework', 'admin-stages', 'admin-content', 'admin-proposals']) && !(function_exists('has_role') && has_role('admin'))) {
+    $_SESSION['error'] = 'Admin access required.';
+    $_redirect_to = 'index.php?page=dashboard';
+}
+
+if ($_redirect_to) {
+    $reloadCheck = $_GET['reloadView'] ?? $_POST['reloadView'] ?? null;
+    if ($reloadCheck === 'true') {
+        // SPA navigation: return JSON redirect so spa-nav.js can handle it
+        header('Content-Type: application/json');
+        echo json_encode(['redirect' => $_redirect_to]);
+        exit;
+    }
+    header('Location: ' . $_redirect_to);
+    exit;
+}
+
 // Map page names to view files
 $views = [
-    'dashboard' => __DIR__ . '/../views/dashboard.php',
-    'items'     => __DIR__ . '/../views/items.php',
-    'profile'   => __DIR__ . '/../views/profile.php',
-    'feedback'  => __DIR__ . '/../views/feedback.php',
-    'roadmap'   => __DIR__ . '/../views/roadmap.php',
-    'examples'  => __DIR__ . '/../views/examples.php',
-    'ui-guide'  => __DIR__ . '/../views/ui-guide.php',
-    'game'      => __DIR__ . '/../views/game.php',       // REMOVABLE: HTML5 Game demo
+    'dashboard'       => __DIR__ . '/../views/dashboard.php',
+    'assessment'      => __DIR__ . '/../views/assessment.php',
+    'results'         => __DIR__ . '/../views/results.php',
+    'content'         => __DIR__ . '/../views/content.php',
+    'content-detail'  => __DIR__ . '/../views/content_detail.php',
+    'coaches'         => __DIR__ . '/../views/coaches.php',
+    'team'            => __DIR__ . '/../views/team.php',
+    'invite'          => __DIR__ . '/../views/invite.php',
+    'invite-landing'  => __DIR__ . '/../views/invite_landing.php',
+    'cohort'          => __DIR__ . '/../views/cohort.php',
+    'admin-framework' => __DIR__ . '/../views/admin_framework.php',
+    'admin-stages'    => __DIR__ . '/../views/admin_stages.php',
+    'admin-content'   => __DIR__ . '/../views/admin_content.php',
+    'admin-proposals' => __DIR__ . '/../views/admin_proposals.php',
+    'onboarding'      => __DIR__ . '/../views/onboarding.php',
+    'profile'         => __DIR__ . '/../views/profile.php',
+    'feedback'        => __DIR__ . '/../views/feedback.php',
 ];
 
 if (isset($views[$page]) && file_exists($views[$page])) {
@@ -38,21 +113,14 @@ if (isset($views[$page]) && file_exists($views[$page])) {
     $current_page_file = __DIR__ . '/../views/404.php';
 }
 
-// Sidebar badge data
-$item_count = 0;
-$stmt = child_db_query_prepared("SELECT COUNT(*) FROM items WHERE user_id = ?", [$_SESSION['user_id']]);
-if ($stmt) { $item_count = (int) $stmt->fetchColumn(); }
-
-// SPA navigation: return just the view content without template shell
+// SPA navigation
 $reloadView = $_GET['reloadView'] ?? $_POST['reloadView'] ?? null;
 
 if ($reloadView === 'true') {
-    // Return JSON with view HTML + metadata for SPA navigation
     header('Content-Type: application/json');
-
-    // Capture view HTML
+    header('Cache-Control: no-store, no-cache, must-revalidate');
+    header('Pragma: no-cache');
     ob_start();
-    // Toast data (session flash messages)
     $toast_success = $_SESSION['success'] ?? '';
     $toast_error   = $_SESSION['error']   ?? '';
     $toast_warning = $_SESSION['warning'] ?? '';
@@ -68,11 +136,10 @@ if ($reloadView === 'true') {
     $html = ob_get_clean();
 
     echo json_encode([
-        'html'       => $html,
-        'page'       => $page,
-        'title'      => ($page_title ?? ucfirst($page)) . ' — ' . h(get_branding()['site_name']),
-        'item_count' => $item_count,
-        'toast'      => [
+        'html'  => $html,
+        'page'  => $page,
+        'title' => ($page_title ?? ucfirst($page)) . ' — ' . h(get_branding()['site_name']),
+        'toast' => [
             'success' => $toast_success,
             'error'   => $toast_error,
             'warning' => $toast_warning,

@@ -1,8 +1,7 @@
 <?php
 /**
  * views/template.php
- * Full HTML shell with sidebar + topnav + theme switcher.
- * References admin's shared assets. Child-app-specific CSS loaded if present.
+ * ElevateHER Learning Suite — Full HTML shell with sidebar + topnav.
  * $current_page_file is set by app/index.php.
  */
 ?><!DOCTYPE html>
@@ -10,15 +9,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script>
-    (function(){var s=localStorage.getItem('wn_color_mode');
-    var m=s||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
-    document.documentElement.setAttribute('data-bs-theme',m);})();
-    </script>
+    <script>document.documentElement.setAttribute('data-bs-theme','dark');</script>
     <?php $b = get_branding(); ?>
     <title><?= h($page_title ?? 'App') ?> — <?= h($b['site_name']) ?></title>
     <meta name="theme-color" content="<?= h($b['theme_color']) ?>">
-    <link rel="manifest" href="../../admin/manifest.php">
+    <!-- manifest omitted — admin manifest.php not accessible from Docker context -->
     <?php if (!empty($b['favicon_path'])) { ?>
     <link rel="icon" href="../../admin/branding/<?= h($b['favicon_path']) ?>">
     <link rel="apple-touch-icon" href="../../admin/branding/<?= h($b['favicon_path']) ?>">
@@ -27,63 +22,124 @@
     <link rel="stylesheet" href="../../admin/assets/css/bs-theme-overrides.css">
     <link rel="stylesheet" href="<?= h(get_app_theme_css_url()) ?>" id="themeStylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="../assets/css/elevateher.css?v=7">
 </head>
-<body>
+<body data-is-admin="<?= (function_exists('has_role') && has_role('admin')) ? '1' : '0' ?>">
 
-<!-- REGION: canvas background -- structural layer for gamified apps -->
-<canvas id="bgCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;"></canvas>
+<!-- Lotus canvas (persists across all pages, behind all UI) -->
+<canvas id="lotus-canvas" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none;"></canvas>
+<div id="lps-viewport" style="position:fixed;inset:0;width:100vw;height:100vh;overflow:hidden;pointer-events:none;z-index:1;"></div>
 
-<div class="d-flex" id="wrapper" style="position:relative;z-index:1;">
+<div class="d-flex" id="wrapper" style="position:relative;">
 
-    <!-- REGION: sidebar backdrop (real element — inside #wrapper stacking context so sidebar z-index works) -->
     <div id="sidebarBackdrop"></div>
 
-    <!-- REGION: sidebar -->
+    <!-- Sidebar -->
     <div class="d-flex flex-column" id="sidebar">
         <div class="sidebar-brand px-3 py-2">
             <?php if (!empty($b['logo_path'])) { ?>
             <span class="sidebar-brand-icon"><img src="../../admin/branding/<?= h($b['logo_path']) ?>" alt=""<?php if (!empty($b['logo_dark_path'])) { ?> data-logo-dark="../../admin/branding/<?= h($b['logo_dark_path']) ?>" data-logo-light="../../admin/branding/<?= h($b['logo_path']) ?>"<?php } ?>></span>
             <?php } else { ?>
-            <span class="sidebar-brand-icon"><i class="bi bi-app-indicator"></i></span>
+            <span class="sidebar-brand-icon"><i class="bi bi-flower1"></i></span>
             <?php } ?>
             <span class="sidebar-brand-text"><?= h($b['site_name']) ?></span>
         </div>
         <hr class="text-secondary my-0">
         <nav class="nav flex-column p-2 flex-grow-1">
+            <!-- All Users -->
             <a class="nav-link <?= ($page ?? '') === 'dashboard' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=dashboard">
                 <i class="bi bi-speedometer2 sidebar-icon"></i>
                 <span class="sidebar-text">Dashboard</span>
             </a>
-            <a class="nav-link <?= ($page ?? '') === 'items' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=items">
-                <i class="bi bi-collection sidebar-icon"></i>
-                <span class="sidebar-text">Items</span>
-                <span class="badge <?= ($page ?? '') === 'items' ? 'bg-light text-primary' : 'bg-primary' ?> sidebar-badge"><?= $item_count ?></span>
+            <a class="nav-link <?= in_array($page ?? '', ['assessment', 'results']) ? 'active bg-primary rounded' : '' ?>" href="index.php?page=assessment">
+                <i class="bi bi-chat-dots sidebar-icon"></i>
+                <span class="sidebar-text">My Assessment</span>
+            </a>
+            <a class="nav-link <?= ($page ?? '') === 'content' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=content">
+                <i class="bi bi-book sidebar-icon"></i>
+                <span class="sidebar-text">My Content</span>
+            </a>
+            <a class="nav-link <?= ($page ?? '') === 'coaches' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=coaches">
+                <i class="bi bi-people sidebar-icon"></i>
+                <span class="sidebar-text">My Coaches</span>
             </a>
             <a class="nav-link <?= ($page ?? '') === 'profile' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=profile">
                 <i class="bi bi-person sidebar-icon"></i>
                 <span class="sidebar-text">Profile</span>
             </a>
-            <a class="nav-link <?= ($page ?? '') === 'feedback' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=feedback">
+
+            <hr class="text-secondary my-2">
+            <?php
+                $alliance_active = in_array($page ?? '', ['team', 'invite']);
+                $alliance_unlocked = $is_pro_or_above ?? false;
+            ?>
+            <?php if ($alliance_unlocked) { ?>
+            <a class="nav-link sidebar-alliance-pro <?= $alliance_active ? 'active' : '' ?>" data-bs-toggle="collapse" href="#allianceProMenu" role="button" aria-expanded="<?= $alliance_active ? 'true' : 'false' ?>">
+                <i class="bi bi-rocket-takeoff sidebar-icon"></i>
+                <span class="sidebar-text">Alliance Pro</span>
+                <i class="bi bi-chevron-down sidebar-text sidebar-chevron ms-auto"></i>
+            </a>
+            <div class="collapse <?= $alliance_active ? 'show' : '' ?>" id="allianceProMenu">
+                <nav class="nav flex-column sidebar-submenu">
+                    <a class="nav-link <?= ($page ?? '') === 'team' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=team">
+                        <i class="bi bi-diagram-3 sidebar-icon"></i>
+                        <span class="sidebar-text">My Team</span>
+                    </a>
+                    <a class="nav-link <?= ($page ?? '') === 'invite' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=invite">
+                        <i class="bi bi-link-45deg sidebar-icon"></i>
+                        <span class="sidebar-text">Invite Sellers</span>
+                    </a>
+                </nav>
+            </div>
+            <?php } else { ?>
+            <a class="nav-link sidebar-alliance-pro sidebar-locked" href="#" onclick="event.preventDefault();" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Reach Stage 4 (Pro) to unlock Alliance Pro features">
+                <i class="bi bi-rocket-takeoff sidebar-icon"></i>
+                <span class="sidebar-text">Alliance Pro</span>
+                <i class="bi bi-lock-fill sidebar-lock-icon sidebar-text"></i>
+            </a>
+            <?php } ?>
+
+            <?php if ($is_elite ?? false) { ?>
+            <a class="nav-link sidebar-alliance-elite" href="#" onclick="event.preventDefault();">
+                <i class="bi bi-star-fill sidebar-icon"></i>
+                <span class="sidebar-text">Alliance Elite</span>
+            </a>
+            <?php } else { ?>
+            <a class="nav-link sidebar-alliance-elite sidebar-locked" href="#" onclick="event.preventDefault();" data-bs-toggle="tooltip" data-bs-placement="right" data-bs-title="Reach Stage 7 (Elite) to unlock Alliance Elite features">
+                <i class="bi bi-star-fill sidebar-icon"></i>
+                <span class="sidebar-text">Alliance Elite</span>
+                <i class="bi bi-lock-fill sidebar-lock-icon sidebar-text"></i>
+            </a>
+            <?php } ?>
+
+            <?php if ($is_org_lead_user) { ?>
+            <hr class="text-secondary my-2">
+            <a class="nav-link <?= ($page ?? '') === 'cohort' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=cohort">
+                <i class="bi bi-graph-up sidebar-icon"></i>
+                <span class="sidebar-text">Cohort Dashboard</span>
+            </a>
+            <?php } ?>
+
+            <?php if (function_exists('has_role') && has_role('admin')) { ?>
+            <hr class="text-secondary my-2">
+            <small class="text-muted text-uppercase px-3 sidebar-text" style="font-size:.65rem; letter-spacing:.05em;">Admin</small>
+            <a class="nav-link <?= ($page ?? '') === 'admin-stages' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=admin-stages">
+                <i class="bi bi-diagram-3 sidebar-icon"></i>
+                <span class="sidebar-text">Stages</span>
+            </a>
+            <a class="nav-link <?= ($page ?? '') === 'admin-content' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=admin-content">
+                <i class="bi bi-journal-text sidebar-icon"></i>
+                <span class="sidebar-text">Content Catalog</span>
+            </a>
+            <a class="nav-link <?= ($page ?? '') === 'admin-proposals' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=admin-proposals">
                 <i class="bi bi-chat-left-text sidebar-icon"></i>
-                <span class="sidebar-text">Feedback</span>
+                <span class="sidebar-text">Proposals</span>
             </a>
-            <a class="nav-link <?= ($page ?? '') === 'roadmap' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=roadmap">
-                <i class="bi bi-kanban sidebar-icon"></i>
-                <span class="sidebar-text">Roadmap</span>
+            <a class="nav-link <?= ($page ?? '') === 'admin-framework' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=admin-framework">
+                <i class="bi bi-database sidebar-icon"></i>
+                <span class="sidebar-text">Framework Sync</span>
             </a>
-            <a class="nav-link <?= ($page ?? '') === 'examples' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=examples">
-                <i class="bi bi-grid sidebar-icon"></i>
-                <span class="sidebar-text">Examples</span>
-            </a>
-            <a class="nav-link <?= ($page ?? '') === 'ui-guide' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=ui-guide">
-                <i class="bi bi-book sidebar-icon"></i>
-                <span class="sidebar-text">UI Guide</span>
-            </a>
-            <!-- REMOVABLE: HTML5 Game demo — delete this link + views/game.php + assets/js/pong-game.js + route in app/index.php -->
-            <a class="nav-link <?= ($page ?? '') === 'game' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=game">
-                <i class="bi bi-controller sidebar-icon"></i>
-                <span class="sidebar-text">HTML5 Game</span>
-            </a>
+            <?php } ?>
         </nav>
         <div class="sidebar-toggle-area text-center d-none d-sm-block p-2 border-top border-secondary border-opacity-25">
             <button class="btn btn-sm btn-outline-light rounded-circle" id="sidebarToggle" type="button">
@@ -95,26 +151,12 @@
     <!-- Main content -->
     <div class="flex-grow-1 d-flex flex-column min-vh-100" style="min-width:0">
 
-        <!-- REGION: topnav -->
+        <!-- Topnav -->
         <nav class="navbar navbar-expand-lg border-bottom border-secondary border-opacity-25 px-3 py-2 sticky-top">
-            <button class="btn btn-sm btn-outline-light me-2 d-md-none" id="sidebarToggleTop" type="button">
+            <button class="btn btn-sm btn-outline-light me-2 d-sm-none" id="sidebarToggleTop" type="button">
                 <i class="bi bi-list"></i>
             </button>
             <span class="navbar-brand mb-0 h6">&nbsp;</span>
-
-            <!-- Live search -->
-            <div class="nav-search position-relative d-none d-md-block me-auto" id="navSearch">
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text border-0 bg-transparent"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control form-control-sm border-0" id="navSearchInput"
-                           placeholder="Search items..." autocomplete="off" aria-label="Search">
-                </div>
-                <div class="nav-search-results dropdown-menu shadow" id="navSearchResults"></div>
-            </div>
-            <!-- Mobile search toggle -->
-            <button class="btn btn-sm btn-outline-light me-2 d-md-none" id="navSearchToggle" type="button" title="Search">
-                <i class="bi bi-search"></i>
-            </button>
 
             <div class="ms-auto d-flex align-items-center">
                 <!-- Notification bell -->
@@ -132,23 +174,10 @@
                     </div>
                 </div>
 
-                <!-- Color mode toggle -->
-                <button class="btn btn-sm btn-outline-light me-2" id="colorModeToggle" type="button" title="Toggle dark mode">
-                    <i class="bi bi-moon-fill"></i>
-                </button>
-
-                <!-- Theme switcher (hidden on small screens to prevent topnav wrapping) -->
-                <select class="form-select form-select-sm me-2 d-none d-lg-inline-block" id="themeSelector" style="width: auto;"
-                        data-custom-css="<?= h(get_app_theme_css_url()) ?>"
-                        data-has-custom="<?= has_custom_theme() ? '1' : '0' ?>"
-                        data-registered-themes='<?= get_registered_themes_json() ?>'>
-                    <option value="custom">Custom</option>
-                </select>
-
-                <!-- User dropdown -->
+                <!-- User dropdown (first name only) -->
                 <div class="dropdown me-2">
                     <a class="btn btn-sm btn-outline-light dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                        <?= h($_SESSION['first_name'] ?? '') ?><span class="d-none d-md-inline"> <?= h($_SESSION['last_name'] ?? '') ?></span>
+                        <?= h($_SESSION['first_name'] ?? '') ?>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li><span class="dropdown-item-text small text-muted"><?= h($_SESSION['email'] ?? '') ?></span></li>
@@ -164,7 +193,7 @@
                     </ul>
                 </div>
 
-                <!-- Right panel toggle (rightmost — closest to panel) -->
+                <!-- Right panel toggle -->
                 <button class="btn btn-sm btn-outline-light" type="button"
                         data-bs-toggle="offcanvas" data-bs-target="#rightPanel" title="Settings">
                     <i class="bi bi-three-dots-vertical"></i>
@@ -172,20 +201,7 @@
             </div>
         </nav>
 
-        <!-- Mobile search bar (shown via toggle) -->
-        <div class="nav-search-mobile d-md-none px-3 py-2 border-bottom border-secondary border-opacity-25" id="navSearchMobile" style="display:none;">
-            <div class="position-relative">
-                <div class="input-group input-group-sm">
-                    <span class="input-group-text border-0 bg-transparent"><i class="bi bi-search"></i></span>
-                    <input type="text" class="form-control form-control-sm border-0" id="navSearchInputMobile"
-                           placeholder="Search items..." autocomplete="off" aria-label="Search">
-                </div>
-                <div class="nav-search-results dropdown-menu shadow" id="navSearchResultsMobile"></div>
-            </div>
-        </div>
-
         <div class="container-fluid p-4 flex-grow-1">
-            <!-- REGION: toast data (read by toast.js on load, then session cleared) -->
             <?php
             $toast_success = $_SESSION['success'] ?? '';
             $toast_error   = $_SESSION['error']   ?? '';
@@ -198,14 +214,12 @@
                  data-warning="<?= h($toast_warning) ?>"
                  data-info="<?= h($toast_info) ?>"></div>
             <?php
-            // Clear session so feedback.php doesn't double-show as inline alerts
             $_SESSION['success'] = null;
             $_SESSION['error']   = null;
             $_SESSION['warning'] = null;
             $_SESSION['info']    = null;
             ?>
 
-            <!-- REGION: content (replaced by spa-nav.js during SPA navigation) -->
             <div id="content-dynamic">
             <?php if (isset($current_page_file) && file_exists($current_page_file)) {
                 include($current_page_file);
@@ -213,7 +227,7 @@
             </div>
         </div>
 
-        <!-- REGION: footer -->
+        <!-- Footer -->
         <footer class="app-footer px-4 py-2 d-flex align-items-center border-top border-secondary border-opacity-25">
             <nav class="small">
                 <a href="#" class="text-muted text-decoration-none me-3">Terms of Use</a>
@@ -222,21 +236,19 @@
                 <a href="../../admin/app/" class="badge bg-danger bg-opacity-75 text-decoration-none"><i class="bi bi-shield-lock me-1"></i>Admin</a>
                 <?php } ?>
             </nav>
-            <span class="small text-muted ms-auto">Intended use only &copy; <?= date('Y') ?> <?= h($b['site_name']) ?></span>
+            <span class="small text-muted ms-auto">&copy; <?= date('Y') ?> DSWA — ElevateHER Learning Suite</span>
         </footer>
     </div>
 </div>
 
-<!-- REGION: large modal (AJAX content via modalView()) -->
+<!-- Large modal -->
 <div class="modal fade" id="largeModal" tabindex="-1">
     <div class="modal-dialog modal-lg">
-        <div class="modal-content" id="modal-content">
-            <!-- Dynamic content loaded by modalView() -->
-        </div>
+        <div class="modal-content" id="modal-content"></div>
     </div>
 </div>
 
-<!-- REGION: right panel (offcanvas) -->
+<!-- Right panel -->
 <div class="offcanvas offcanvas-end" id="rightPanel" tabindex="-1" aria-labelledby="rightPanelLabel">
     <div class="offcanvas-header border-bottom border-secondary border-opacity-25">
         <h6 class="offcanvas-title" id="rightPanelLabel"><i class="bi bi-gear me-2"></i>Settings</h6>
@@ -246,9 +258,6 @@
         <ul class="nav nav-tabs px-3 pt-2" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#panelGeneral" type="button" role="tab">General</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" data-bs-toggle="tab" data-bs-target="#panelPrefs" type="button" role="tab">Preferences</button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" data-bs-toggle="tab" data-bs-target="#panelAbout" type="button" role="tab">About</button>
@@ -265,72 +274,50 @@
                     <input class="form-check-input" type="checkbox" id="notifPush">
                     <label class="form-check-label small" for="notifPush">Push notifications</label>
                 </div>
-                <hr class="border-secondary border-opacity-25">
-                <h6 class="small fw-bold text-uppercase text-muted mb-3">Display</h6>
-                <div class="mb-2">
-                    <label class="form-label small">Items per page</label>
-                    <select class="form-select form-select-sm">
-                        <option>10</option>
-                        <option selected>15</option>
-                        <option>25</option>
-                        <option>50</option>
-                    </select>
-                </div>
-            </div>
-            <div class="tab-pane fade" id="panelPrefs" role="tabpanel">
-                <h6 class="small fw-bold text-uppercase text-muted mb-3">Layout</h6>
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="radio" name="layout" id="layoutDefault" checked>
-                    <label class="form-check-label small" for="layoutDefault">Default sidebar</label>
-                </div>
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="radio" name="layout" id="layoutCompact">
-                    <label class="form-check-label small" for="layoutCompact">Compact sidebar</label>
-                </div>
-                <hr class="border-secondary border-opacity-25">
-                <h6 class="small fw-bold text-uppercase text-muted mb-3">Default View</h6>
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="radio" name="defaultView" id="viewDashboard" checked>
-                    <label class="form-check-label small" for="viewDashboard">Dashboard</label>
-                </div>
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="radio" name="defaultView" id="viewItems">
-                    <label class="form-check-label small" for="viewItems">Items</label>
-                </div>
             </div>
             <div class="tab-pane fade" id="panelAbout" role="tabpanel">
                 <h6 class="small fw-bold text-uppercase text-muted mb-3">Application</h6>
                 <dl class="small mb-0">
+                    <dt class="text-muted">App</dt>
+                    <dd>ElevateHER Learning Suite</dd>
                     <dt class="text-muted">Version</dt>
-                    <dd>1.0.0</dd>
-                    <dt class="text-muted">Environment</dt>
-                    <dd>Development</dd>
+                    <dd><?= defined('WN_CHILD_APP_VERSION') ? WN_CHILD_APP_VERSION : '1.0.0' ?></dd>
                     <dt class="text-muted">Framework</dt>
-                    <dd>Bootstrap 5.3 + PHP</dd>
+                    <dd>Bootstrap 5.3 + PHP 8.2</dd>
                     <dt class="text-muted">Theme</dt>
-                    <dd>Glassmorphism (Custom)</dd>
+                    <dd>DSWA</dd>
                 </dl>
             </div>
         </div>
     </div>
 </div>
 
-<!-- REGION: footer-scripts -->
+<!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../../admin/assets/js/bs-init.js"></script>
+<script src="../../admin/assets/js/bs-init.js?v=2"></script>
 <script src="../../admin/assets/js/error-reporter.js"></script>
 <script src="../../admin/assets/js/sidebar.js"></script>
 <script src="../../admin/assets/js/color-mode.js"></script>
 <script src="../assets/js/modal.js"></script>
 <script src="../assets/js/theme.js"></script>
 <script src="../assets/js/toast.js"></script>
-<script src="../assets/js/search.js"></script>
 <script src="../assets/js/page-nav.js"></script>
 <script src="../../admin/assets/js/notifications.js"></script>
-<script src="../assets/js/bg-canvas.js"></script>
-<!-- REMOVABLE: Pong game — delete this line + assets/js/pong-game.js + views/game.php + sidebar link + route in app/index.php -->
-<script src="../assets/js/pong-game.js"></script>
+<script src="../assets/js/lotus-canvas.js"></script>
+<script src="../assets/js/water-ripples.js"></script>
+<!-- chat-overlay.js loaded inside assessment.php for SPA compat -->
+<script src="../assets/js/explorer-view.js?v=5"></script>
 <script src="../assets/js/spa-nav.js"></script>
-<?php include(__DIR__ . '/../snippets/feedback_tab.php'); ?>
+<script>
+// Collapse sidebar by default for immersive lotus experience
+(function() {
+    if (!localStorage.getItem('wn_sidebar_state')) {
+        localStorage.setItem('wn_sidebar_state', 'collapsed');
+        var sb = document.getElementById('sidebar');
+        if (sb) sb.classList.add('collapsed');
+    }
+})();
+</script>
+<?php if (file_exists(__DIR__ . '/../snippets/feedback_tab.php')) { include(__DIR__ . '/../snippets/feedback_tab.php'); } ?>
 </body>
 </html>

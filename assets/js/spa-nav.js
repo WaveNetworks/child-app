@@ -51,16 +51,18 @@
 
     // ---- Core navigation function ----
 
-    function navigateTo(page, pushState) {
+    function navigateTo(page, pushState, extraParams) {
         if (pushState === undefined) pushState = true;
+        if (!extraParams) extraParams = '';
 
         showLoading();
 
-        var url = BASE_URL + '?page=' + encodeURIComponent(page) + '&reloadView=true';
+        var url = BASE_URL + '?page=' + encodeURIComponent(page) + extraParams + '&reloadView=true';
 
         fetch(url, {
             method: 'GET',
             credentials: 'same-origin',
+            cache: 'no-store',
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
         .then(function (res) {
@@ -71,10 +73,10 @@
             // Replace content
             contentEl.innerHTML = data.html;
 
-            // Update URL
+            // Update URL — include extra params so tabs/filters are reflected
             if (pushState) {
-                var newUrl = BASE_URL + '?page=' + encodeURIComponent(data.page);
-                history.pushState({ page: data.page }, data.title, newUrl);
+                var newUrl = BASE_URL + '?page=' + encodeURIComponent(data.page) + extraParams;
+                history.pushState({ page: data.page, extraParams: extraParams }, data.title, newUrl);
             }
 
             // Update document title
@@ -239,6 +241,22 @@
         return match ? decodeURIComponent(match[1]) : null;
     }
 
+    // ---- Helper: extract all query params except page as &key=val string ----
+
+    function extractExtraParams(href) {
+        if (!href) return '';
+        var extra = '';
+        try {
+            var params = new URLSearchParams(href.indexOf('?') !== -1 ? href.substring(href.indexOf('?')) : href);
+            params.forEach(function (val, key) {
+                if (key !== 'page' && key !== 'reloadView') {
+                    extra += '&' + encodeURIComponent(key) + '=' + encodeURIComponent(val);
+                }
+            });
+        } catch (ignored) {}
+        return extra;
+    }
+
     // ---- Event delegation: intercept nav clicks ----
 
     document.addEventListener('click', function (e) {
@@ -264,27 +282,49 @@
         // Skip if the link goes to a different path (not index.php)
         if (href.indexOf('index.php') === -1) return;
 
+        // Extract extra query params (tab, id, etc.) — everything except page
+        var extra = '';
+        try {
+            var linkUrl = new URL(link.href, window.location.origin);
+            linkUrl.searchParams.forEach(function (val, key) {
+                if (key !== 'page') {
+                    extra += '&' + encodeURIComponent(key) + '=' + encodeURIComponent(val);
+                }
+            });
+        } catch (ignored) {}
+
         // SPA navigate
         e.preventDefault();
-        navigateTo(page);
+        navigateTo(page, true, extra);
     });
 
     // ---- Browser back/forward ----
 
     window.addEventListener('popstate', function (e) {
         if (e.state && e.state.page) {
-            navigateTo(e.state.page, false);
+            navigateTo(e.state.page, false, e.state.extraParams || '');
         } else {
-            // Parse page from current URL
+            // Parse page and extra params from current URL
             var page = extractPage(window.location.search) || 'dashboard';
-            navigateTo(page, false);
+            var extra = extractExtraParams(window.location.search);
+            navigateTo(page, false, extra);
+        }
+    });
+
+    // ---- Handle bfcache restoration ----
+    // When browser restores page from back-forward cache (bfcache), force a real reload
+    // so stale SPA state doesn't persist. This fixes F5/refresh not working.
+    window.addEventListener('pageshow', function (e) {
+        if (e.persisted) {
+            window.location.reload();
         }
     });
 
     // ---- Set initial state ----
     // Store current page in history state so popstate works on first back
     var initialPage = extractPage(window.location.search) || 'dashboard';
-    history.replaceState({ page: initialPage }, document.title, window.location.href);
+    var initialExtra = extractExtraParams(window.location.search);
+    history.replaceState({ page: initialPage, extraParams: initialExtra }, document.title, window.location.href);
 
     // ---- Public API ----
     // Expose reloadView globally so action handlers can call it
@@ -292,7 +332,8 @@
         if (!page) {
             page = extractPage(window.location.search) || 'dashboard';
         }
-        navigateTo(page, false);
+        var extra = extractExtraParams(window.location.search);
+        navigateTo(page, false, extra);
     };
 
 })();

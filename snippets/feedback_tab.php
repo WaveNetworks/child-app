@@ -10,7 +10,7 @@ if (empty($_SESSION['user_id'])) return;
 <!-- Floating feedback trigger tab -->
 <button type="button" id="feedbackTabTrigger" class="btn btn-primary shadow"
         data-bs-toggle="offcanvas" data-bs-target="#feedbackOffcanvas"
-        style="position:fixed; right:0; top:50%; transform:translateX(calc(50% - 0.75em)) translateY(-50%) rotate(-90deg);
+        style="position:fixed; right:0; top:30%; transform:translateX(calc(50% - 0.75em)) translateY(-50%) rotate(-90deg);
                z-index:1040; border-radius:0.375rem 0.375rem 0 0; padding:0.2rem 1rem 1rem 1rem; font-size:0.85rem; letter-spacing:0.03em;">
     <i class="bi bi-chat-left-text me-1"></i>Feedback
 </button>
@@ -41,8 +41,8 @@ if (empty($_SESSION['user_id'])) return;
                 <textarea class="form-control" id="fbTabMessage" rows="5" placeholder="Tell us what you think..."></textarea>
             </div>
             <div class="mb-3">
-                <small class="text-muted">
-                    <i class="bi bi-info-circle me-1"></i>Page and user info captured automatically.
+                <small class="text-muted d-block">
+                    <i class="bi bi-geo-alt me-1"></i>Page: <span id="fbTabPageUrl" class="text-break"></span>
                 </small>
             </div>
             <button class="btn btn-primary w-100" id="fbTabSubmitBtn" onclick="submitFeedbackTab()">
@@ -59,6 +59,24 @@ if (empty($_SESSION['user_id'])) return;
 </div>
 
 <script>
+(function() {
+    // Show current page URL when offcanvas opens
+    function updateFbPageUrl() {
+        var el = document.getElementById('fbTabPageUrl');
+        if (el) {
+            var url = new URL(window.location.href);
+            var page = url.searchParams.get('page') || url.pathname.split('/').pop() || 'home';
+            el.textContent = page;
+            el.title = window.location.href;
+        }
+    }
+    var oc = document.getElementById('feedbackOffcanvas');
+    if (oc) {
+        oc.addEventListener('show.bs.offcanvas', updateFbPageUrl);
+    }
+    updateFbPageUrl();
+})();
+
 function submitFeedbackTab() {
     var message = document.getElementById('fbTabMessage').value.trim();
     if (!message) {
@@ -97,5 +115,13 @@ function resetFeedbackTab() {
     document.getElementById('fbTabTypeGeneral').checked = true;
     document.getElementById('fbTabFormContainer').style.display = '';
     document.getElementById('fbTabSuccessContainer').style.display = 'none';
+    // Refresh the page URL in case they navigated
+    var el = document.getElementById('fbTabPageUrl');
+    if (el) {
+        var url = new URL(window.location.href);
+        var page = url.searchParams.get('page') || url.pathname.split('/').pop() || 'home';
+        el.textContent = page;
+        el.title = window.location.href;
+    }
 }
 </script>

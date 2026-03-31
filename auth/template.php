@@ -10,11 +10,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script>
-    (function(){var s=localStorage.getItem('wn_color_mode');
-    var m=s||(window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
-    document.documentElement.setAttribute('data-bs-theme',m);})();
-    </script>
+    <script>document.documentElement.setAttribute('data-bs-theme','dark');</script>
     <?php $b = get_branding(); ?>
     <title><?= h($page_title ?? $b['site_name']) ?></title>
     <meta name="theme-color" content="<?= h($b['theme_color']) ?>">

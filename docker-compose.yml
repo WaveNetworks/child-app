@@ -1,61 +1,62 @@
-# docker-compose.yml
+# docker-compose.yml — ElevateHER Learning Suite
 #
 # Single MySQL server hosts all 6 namespaced databases.
-# Source code is COPIED into the image at build time — your working
-# directory is never mounted or modified by Docker.
-#
-# MULTI-APP SETUP: When you clone child-app as your own app (e.g. payments/):
-#   1. Rename ALL child_app_ prefixes to your app name (payments_)
-#   2. Change host ports to avoid conflicts (80→8081, 8025→8026)
-#   3. Each app stack is fully independent — own admin, own databases
-#
-# See: https://subtheme.com/docs/setup#multi-app
+# Source is BIND-MOUNTED from the host — edit files and refresh, no rebuild needed.
 
 services:
   app:
     build:
       context: .
-      additional_contexts:
-        admin: ../admin
-        website: ..
     ports:
-      - "80:80"  # Change if port in use (8081, 8082, etc.)
+      - "8085:80"
+    env_file:
+      - ../../.env
     environment:
       - ENVIRONMENT=development
-      # All databases live on a single MySQL server
+      # Admin databases
       - DB_HOST_MAIN=db
-      - DB_NAME_MAIN=child_app_admin_main
+      - DB_NAME_MAIN=elevateher_admin_main
       - DB_USER=root
       - DB_PASSWORD=dev_root_password_123
       - DB_HOST_SHARD=db
-      - DB_NAME_SHARD=child_app_admin_shard_1
+      - DB_NAME_SHARD=elevateher_admin_shard_1
       - DB_HOST_SHARD2=db
-      - DB_NAME_SHARD2=child_app_admin_shard_2
-      - FILES_LOCATION=/var/files/
+      - DB_NAME_SHARD2=elevateher_admin_shard_2
+      - FILES_LOCATION=/var/www/files/
       - SMTP_HOST=mailhog
       - SMTP_PORT=1025
       - MAIL_FROM=noreply@localhost
-      - MAIL_FROM_NAME=Wave Networks
+      - MAIL_FROM_NAME=ElevateHER
       - APP_SECRET=dev_app_secret_64_chars_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
       - HIDDEN_HASH=dev_hidden_hash_xxxxxxxxxxxxxxxxxx
       - SEED_TEST_DATA=true
-      # Child app's own databases (same server, different DB names)
+      # ElevateHER child app databases
       - CHILD_DB_HOST=db
-      - CHILD_DB_NAME=child_app_main
+      - CHILD_DB_NAME=elevateher_main
       - CHILD_DB_USER=root
       - CHILD_DB_PASS=dev_root_password_123
       - CHILD_DB_HOST_SHARD=db
-      - CHILD_DB_NAME_SHARD=child_app_shard_1
+      - CHILD_DB_NAME_SHARD=elevateher_shard_1
       - CHILD_DB_HOST_SHARD2=db
-      - CHILD_DB_NAME_SHARD2=child_app_shard_2
+      - CHILD_DB_NAME_SHARD2=elevateher_shard_2
+      # ElevateHER app config
+      - ELEVATEHER_AI_API_KEY=${ANTHROPIC_API_KEY}
+      - ELEVATEHER_AI_MODEL=claude-sonnet-4-20250514
+      - ELEVATEHER_FRAMEWORK_SOURCE=local
+      - ELEVATEHER_FRAMEWORK_PATH=/var/www/public_html/dswa-framework/framework
+      - ELEVATEHER_APP_URL=http://localhost:8085/elevateher/app
     volumes:
-      # Only persistent data — no source code mounts
-      - files_vol:/var/files
+      # Source code — bind-mounted for live editing (no rebuild needed)
+      - ../admin:/var/www/public_html/admin
+      - .:/var/www/public_html/elevateher
+      - ../dswa-framework:/var/www/public_html/dswa-framework
+      - ../DSWADemo:/var/www/public_html/DSWADemo
+      # Persistent data
+      - files_vol:/var/www/files
     depends_on:
       db:
         condition: service_healthy
 
-  # Single MySQL server — all 6 databases created by init script
   db:
     image: mysql:8.0
     environment:
@@ -72,10 +73,8 @@ services:
   mailhog:
     image: mailhog/mailhog
     ports:
-      - "8025:8025"  # Change if port in use (8026, 8027, etc.)
+      - "8025:8025"
 
-# MULTI-APP: Replace 'child_app' prefix with your app name
-# Example: child_app → payments (db names become payments_admin_main, etc.)
 volumes:
   files_vol:
   db_data:

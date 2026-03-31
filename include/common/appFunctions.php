@@ -13,27 +13,16 @@
  * @return string
  */
 function get_app_theme_css_url($admin_prefix = '../../admin/', $webroot_prefix = '../../') {
-    $theme = $_COOKIE['wn_theme'] ?? '';
-    $themes_dir = __DIR__ . '/../../assets/themes';
-
-    // Check if the active theme has a local compiled CSS
-    if ($theme !== '') {
-        $css_path = $themes_dir . '/' . $theme . '/custom.css';
-        if (file_exists($css_path)) {
-            $v = filemtime($css_path);
-            return '../assets/themes/' . $theme . '/custom.css?v=' . $v;
-        }
+    // Always use DSWA theme — no theme switching in this app
+    $css_path = __DIR__ . '/../../assets/themes/dswa/custom.css';
+    if (file_exists($css_path)) {
+        return '../assets/themes/dswa/custom.css?v=' . filemtime($css_path);
     }
-
-    // No cookie — use first available custom theme as default
-    if ($theme === '' && is_dir($themes_dir)) {
-        foreach (glob($themes_dir . '/*/custom.css') as $css_file) {
-            $slug = basename(dirname($css_file));
-            $v = filemtime($css_file);
-            return '../assets/themes/' . $slug . '/custom.css?v=' . $v;
-        }
+    // Fallback to glassmorphism
+    $css_path = __DIR__ . '/../../assets/themes/glassmorphism/custom.css';
+    if (file_exists($css_path)) {
+        return '../assets/themes/glassmorphism/custom.css?v=' . filemtime($css_path);
     }
-
     return get_theme_css_url($admin_prefix, $webroot_prefix);
 }
 
