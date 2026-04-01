@@ -1,24 +1,59 @@
 /**
- * water-ripples.js
- * Animated water ripple system from DSWADemo.
- * Drives body background-image, background-position, and background-size
+ * @module water-ripples
+ * @description Animated water ripple system ported from DSWADemo.
+ * Drives `body` background-image, background-position, and background-size
  * to create living water with radial ripple rings, caustic stripe shimmer,
  * and parallax sway tied to the lotus wind vector.
+ *
+ * Exposes {@link window.pulseRipple} for lotus pulse integration.
  */
 (function() {
 'use strict';
 
-// ─── Ripple Config ──────────────────────────────────────────────────────
+/**
+ * Ripple configuration shared across gradient builders.
+ * @typedef {Object} RippleConfig
+ * @property {number} topHue  - Base hue for the water palette (degrees, 0-360).
+ * @property {number} litTop  - Base lightness offset for the water palette.
+ */
+
+/** @type {RippleConfig} */
 var _rippleConfig = { topHue: 223, litTop: 28 };
+
+/** @type {string} Static base gradient layer (bottom-most background-image). */
 var _staticBgLayers = 'linear-gradient(180deg, hsla(223,65%,37%,1) 0%, hsla(169,60%,33%,1) 100%)';
+
+/** @type {number} Current ripple pulse alpha multiplier (1.0 = steady state). */
 var _ripplePulseAlpha = 1.0;
+
+/** @type {number|null} RAF handle for the pulse decay animation. */
 var _ripplePulseTimer = null;
+
+/** @type {number} Quantised phase from last frame, used for 30 fps throttle. */
 var _lastQPhase = -1;
+
+/** @type {string} Cached composite background-image value. */
 var _cachedBgImage = '';
+
+/** @type {number|null} RAF handle for the main sway loop. */
 var _swayId = null;
+
+/** @type {{x: number, y: number}} Current wind vector (updated from LPS if available). */
 var _windVector = { x: 0.3, y: 0.15 };  // default gentle wind
 
-// ─── Ripple Gradient Builder ────────────────────────────────────────────
+/**
+ * Builds a radial-gradient CSS string representing concentric ripple rings.
+ * Each ring is a smooth bell-curve opacity bump in one of three rotating hues.
+ *
+ * Optimised to collect all colour-stop strings into an array and join once
+ * rather than concatenating in the hot loop.
+ *
+ * @param {number} topHue    - Base hue (degrees).
+ * @param {number} litTop    - Base lightness.
+ * @param {number} time      - Current time in seconds (fractional).
+ * @param {number} [lotusEdge=210] - Pixel radius at which the first ripple starts.
+ * @returns {string} A complete `radial-gradient(...)` CSS value.
+ */
 function buildRippleGradient(topHue, litTop, time, lotusEdge) {
     var edge  = lotusEdge || 210;
     var power = 1.85;
@@ -51,17 +86,32 @@ function buildRippleGradient(topHue, litTop, time, lotusEdge) {
         var c = colors[i % 3];
         var inner = Math.max(prevEnd, r - hw * 2.5);
 
-        stops.push('transparent ' + inner.toFixed(1) + 'px');
-        stops.push(c + ',' + shoulder.toFixed(4) + ') ' + (r - hw * 1.2).toFixed(1) + 'px');
-        stops.push(c + ',' + mid.toFixed(4) + ') ' + (r - hw * 0.5).toFixed(1) + 'px');
-        stops.push(c + ',' + peak.toFixed(4) + ') ' + r.toFixed(1) + 'px');
-        stops.push(c + ',' + mid.toFixed(4) + ') ' + (r + hw * 0.5).toFixed(1) + 'px');
-        stops.push(c + ',' + shoulder.toFixed(4) + ') ' + (r + hw * 1.2).toFixed(1) + 'px');
-        stops.push('transparent ' + (r + hw * 2.5).toFixed(1) + 'px');
+        // Pre-format fixed-point values to avoid repeated toFixed inside concat
+        var fInner    = inner.toFixed(1);
+        var fShoulder = shoulder.toFixed(4);
+        var fMid      = mid.toFixed(4);
+        var fPeak     = peak.toFixed(4);
+        var fRmHw12   = (r - hw * 1.2).toFixed(1);
+        var fRmHw05   = (r - hw * 0.5).toFixed(1);
+        var fR        = r.toFixed(1);
+        var fRpHw05   = (r + hw * 0.5).toFixed(1);
+        var fRpHw12   = (r + hw * 1.2).toFixed(1);
+        var fOuter    = (r + hw * 2.5).toFixed(1);
+
+        stops.push(
+            'transparent ' + fInner + 'px',
+            c + ',' + fShoulder + ') ' + fRmHw12 + 'px',
+            c + ',' + fMid      + ') ' + fRmHw05 + 'px',
+            c + ',' + fPeak     + ') ' + fR      + 'px',
+            c + ',' + fMid      + ') ' + fRpHw05 + 'px',
+            c + ',' + fShoulder + ') ' + fRpHw12 + 'px',
+            'transparent ' + fOuter + 'px'
+        );
         prevEnd = r + hw * 2.5;
     }
 
     stops.push('transparent ' + maxR + 'px');
+
     // Center ripples in content area (offset by sidebar)
     var sidebar = document.getElementById('sidebar');
     var sW = sidebar ? sidebar.offsetWidth : 0;
@@ -69,7 +119,16 @@ function buildRippleGradient(topHue, litTop, time, lotusEdge) {
     return 'radial-gradient(circle at ' + cx + 'px 100vh, ' + stops.join(', ') + ')';
 }
 
-// ─── Dynamic Stripe Builder (caustic shimmer) ───────────────────────────
+/**
+ * Builds three overlapping repeating-linear-gradient CSS layers that
+ * simulate caustic light shimmer on the water surface.  Each layer
+ * oscillates in opacity over time so the pattern breathes.
+ *
+ * @param {number} topHue - Base hue (degrees).
+ * @param {number} litTop - Base lightness.
+ * @param {number} time   - Current time in seconds (fractional).
+ * @returns {string} Three comma-separated `repeating-linear-gradient(...)` values.
+ */
 function buildDynamicStripes(topHue, litTop, time) {
     var a1 = 0.016 + 0.014 * Math.sin(time * 0.31);
     var a1s = a1 * 0.48;
@@ -98,7 +157,11 @@ function buildDynamicStripes(topHue, litTop, time) {
         'transparent 95px, transparent 115px)';
 }
 
-// ─── Pulse Ripple ───────────────────────────────────────────────────────
+/**
+ * Triggers a ripple pulse by temporarily boosting `_ripplePulseAlpha`
+ * to 3.0 and decaying it back to 1.0 over 800 ms using an ease-out
+ * cubic curve.  Called externally via {@link window.pulseRipple}.
+ */
 function pulseRipple() {
     _ripplePulseAlpha = 3.0;
     _lastQPhase = -1;
@@ -114,12 +177,27 @@ function pulseRipple() {
     })();
 }
 
-// ─── Main Sway Loop ────────────────────────────────────────────────────
+/**
+ * Starts the main animation loop that drives background-image,
+ * background-size, and background-position every frame.
+ *
+ * The loop is gated at ~30 fps via a quantised-phase check so
+ * the expensive gradient rebuild only happens when the visual
+ * result would actually change (or during an active pulse).
+ *
+ * Wind vector is pulled from the LotusProgressSystem canvas if
+ * available, otherwise falls back to the default gentle breeze.
+ */
 function startSwayLoop() {
     if (_swayId) return;
 
     var lps = window.lps || null;
 
+    /**
+     * Per-frame callback.  Rebuilds gradients at throttled rate,
+     * applies breathing background-size, and computes parallax
+     * sway offsets for each background layer.
+     */
     function loop() {
         _swayId = requestAnimationFrame(loop);
         var now = performance.now();
@@ -139,7 +217,7 @@ function startSwayLoop() {
             lotusEdge = maxPetalExtent(lps.canvas.R) * 0.63;
         }
 
-        // Rebuild ripple gradient at ~30fps
+        // Rebuild ripple gradient at ~30fps (quantised phase check)
         var phase = (t * 0.12) % 1.0;
         var qPhase = (phase * 240) | 0;
         var pulseActive = _ripplePulseAlpha !== 1.0;
@@ -158,7 +236,7 @@ function startSwayLoop() {
         var sz3 = 100 + 3 * Math.sin(t * 0.15 + 2.5);
         document.body.style.backgroundSize = 'auto, ' + sz1 + '% ' + sz1 + '%, ' + sz2 + '% ' + sz2 + '%, ' + sz3 + '% ' + sz3 + '%, 100% 100%';
 
-        // Parallax sway
+        // Parallax sway offsets per layer
         var driftAngle = t * 0.04;
         var driftIntX = 75 * Math.sin(driftAngle);
         var driftIntY = -75 * Math.cos(driftAngle);
@@ -186,7 +264,7 @@ function startSwayLoop() {
     _swayId = requestAnimationFrame(loop);
 }
 
-// ─── Visibility Handling ────────────────────────────────────────────────
+// Pause the loop when the tab is hidden, restart when visible.
 document.addEventListener('visibilitychange', function() {
     if (document.hidden) {
         if (_swayId) { cancelAnimationFrame(_swayId); _swayId = null; }
@@ -195,10 +273,13 @@ document.addEventListener('visibilitychange', function() {
     }
 });
 
-// ─── Expose pulseRipple globally for lotus pulse integration ────────────
+/**
+ * Trigger a visual ripple pulse from external code (e.g. lotus heartbeat).
+ * @function window.pulseRipple
+ */
 window.pulseRipple = pulseRipple;
 
-// ─── Start ──────────────────────────────────────────────────────────────
+// Start on DOM ready or immediately if already loaded.
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', startSwayLoop);
 } else {

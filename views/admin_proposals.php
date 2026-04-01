@@ -9,10 +9,10 @@ $filter_type = $_GET['type'] ?? '';
 $filters = [];
 if ($filter_status) $filters['status'] = $filter_status;
 if ($filter_type) $filters['target_type'] = $filter_type;
-$proposals = get_proposals($filters);
+$proposals = get_proposals($filters) ?: [];
 
 // Count by status
-$all_proposals = get_proposals([]);
+$all_proposals = get_proposals([]) ?: [];
 $status_counts = ['submitted' => 0, 'approved' => 0, 'applied' => 0, 'rejected' => 0];
 foreach ($all_proposals as $p) {
     $s = $p['status'] ?? '';

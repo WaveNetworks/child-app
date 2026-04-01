@@ -18,12 +18,13 @@ foreach ($progress_rows as $row) {
     $progress_map[$row['catalog_item_id']] = $row;
 }
 
-// Filter: show everything except locked
+// Filter: show everything except locked (admins see all)
+$is_admin = function_exists('has_role') && has_role('admin');
 $visible = [];
 $in_progress_count = 0;
 $completed_count = 0;
 foreach ($all_content as $entry) {
-    if ($entry['state'] === 'locked') continue;
+    if ($entry['state'] === 'locked' && !$is_admin) continue;
     $item_id = $entry['item']['id'] ?? '';
     $db_status = $progress_map[$item_id]['status'] ?? null;
     $entry['db_status'] = $db_status;
@@ -104,7 +105,7 @@ $quote = get_contextual_quote(
         $type_color = ($type === 'activity') ? 'primary' : (($type === 'resource') ? 'info' : (($type === 'short-course') ? 'warning' : 'secondary'));
     ?>
     <div class="col-md-6 col-lg-4">
-        <div class="card h-100 content-card <?= $is_completed ? 'content-card--completed' : '' ?>">
+        <div class="card h-100 content-card <?= $is_completed ? 'content-card--completed' : '' ?><?= ($entry['state'] === 'locked') ? ' opacity-50' : '' ?>">
             <?php if ($thumb_url) { ?>
             <a href="index.php?page=content-detail&id=<?= urlencode($item_id) ?>" data-no-spa class="content-card__thumb-link">
                 <img src="<?= h($thumb_url) ?>" alt="" class="card-img-top content-card__thumb">
@@ -116,7 +117,12 @@ $quote = get_contextual_quote(
             <?php } ?>
             <div class="card-body pb-2">
                 <div class="d-flex justify-content-between align-items-start mb-2">
-                    <span class="badge bg-<?= $type_color ?>"><?= h($type) ?></span>
+                    <div>
+                        <span class="badge bg-<?= $type_color ?>"><?= h($type) ?></span>
+                        <?php if ($entry['state'] === 'locked') { ?>
+                        <span class="badge bg-dark"><i class="bi bi-lock-fill me-1"></i>Locked</span>
+                        <?php } ?>
+                    </div>
                     <?php if (!empty($item['estimatedDuration'])) { ?>
                     <small class="text-muted"><i class="bi bi-clock me-1"></i><?= h($item['estimatedDuration']) ?></small>
                     <?php } ?>

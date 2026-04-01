@@ -1,12 +1,16 @@
 /**
- * search.js — Live search in the top navigation bar.
- * Debounced input → apiPost('liveSearch') → renders dropdown results.
+ * @module search
+ * @description Live search in the top navigation bar.
+ * Debounced input fires apiPost('liveSearch') and renders dropdown results.
  * Works on both desktop (#navSearchInput) and mobile (#navSearchInputMobile).
  */
 (function () {
     'use strict';
 
+    /** @constant {number} Debounce delay in milliseconds */
     var DEBOUNCE_MS = 300;
+
+    /** @constant {number} Minimum characters before triggering a search */
     var MIN_CHARS   = 2;
 
     // Desktop elements
@@ -19,7 +23,7 @@
     var mobileBar     = document.getElementById('navSearchMobile');
     var mobileToggle  = document.getElementById('navSearchToggle');
 
-    // Mobile toggle
+    // Mobile toggle — show/hide the mobile search bar
     if (mobileToggle && mobileBar) {
         mobileToggle.addEventListener('click', function () {
             var visible = mobileBar.style.display !== 'none';
@@ -28,17 +32,34 @@
         });
     }
 
+    /**
+     * Build an HTML status badge for an item's status.
+     * @param {string} status - The item status ('active', 'draft', 'archived')
+     * @returns {string} HTML string for the Bootstrap badge
+     */
     function statusBadge(status) {
         var cls = {active: 'bg-success', draft: 'bg-warning text-dark', archived: 'bg-secondary'};
         return '<span class="badge ' + (cls[status] || 'bg-light text-dark') + ' ms-auto">' + escHtml(status) + '</span>';
     }
 
+    /**
+     * Escape a string for safe HTML insertion using textContent assignment.
+     * Uses a single reusable element to avoid DOM allocation on every call.
+     * @param {string} str - The raw string to escape
+     * @returns {string} The HTML-escaped string
+     */
+    var _escDiv = document.createElement('div');
     function escHtml(str) {
-        var div = document.createElement('div');
-        div.textContent = str;
-        return div.innerHTML;
+        _escDiv.textContent = str;
+        return _escDiv.innerHTML;
     }
 
+    /**
+     * Render search results into the dropdown container.
+     * @param {HTMLElement} container - The dropdown element to populate
+     * @param {Object} data - Response object with a results array
+     * @param {Array} [data.results] - Array of result items
+     */
     function renderResults(container, data) {
         if (!data.results || data.results.length === 0) {
             container.innerHTML = '<div class="px-3 py-2 text-muted small">No results found</div>';
@@ -61,13 +82,24 @@
         container.classList.add('show');
     }
 
+    /**
+     * Hide the results dropdown.
+     * @param {HTMLElement} container - The dropdown element to hide
+     */
     function hideResults(container) {
         container.classList.remove('show');
     }
 
+    /**
+     * Bind live search behavior to an input/results pair.
+     * Attaches input, click-outside, escape, and focus handlers.
+     * @param {HTMLInputElement|null} inputEl - The search input element
+     * @param {HTMLElement|null} resultsEl - The results dropdown element
+     */
     function bindSearch(inputEl, resultsEl) {
         if (!inputEl || !resultsEl) return;
 
+        /** @type {number|null} Debounce timer ID */
         var timer = null;
 
         inputEl.addEventListener('input', function () {
@@ -101,7 +133,7 @@
             }
         });
 
-        // Reopen on focus if there's text
+        // Reopen on focus if there are existing results
         inputEl.addEventListener('focus', function () {
             if (inputEl.value.trim().length >= MIN_CHARS && resultsEl.innerHTML) {
                 resultsEl.classList.add('show');

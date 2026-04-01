@@ -6,7 +6,7 @@
 $page_title = 'Dashboard';
 $uid = $_SESSION['user_id'];
 $sid = $_SESSION['shard_id'];
-$roles = get_user_role($uid);
+$roles = isset($user_roles) ? $user_roles : (function_exists('get_user_role') ? get_user_role($uid) : ['seller']);
 $instance = get_user_instance($uid, $sid, 'ai-assessment');
 $placement = $instance ? ($instance['instance_data']['placement'] ?? null) : null;
 $all_scores = $instance ? ($instance['instance_data']['scores'] ?? null) : null;
@@ -119,6 +119,43 @@ if ($instance && $placement && $current_stage_id !== null) {
             'all_stage_kpis' => $all_stage_kpis,
             'content_by_belief' => $content_by_belief,
         ];
+    }
+}
+
+// Build stage-by-stage assessment summary: all stages with resolved (true) items
+$stage_summary = [];
+if ($instance) {
+    $inst_data_sum = $instance['instance_data'];
+    $responses_sum = (array)($inst_data_sum['responses'] ?? []);
+    $all_stages = get_all_stages();
+    foreach ($all_stages as $skey => $sdata) {
+        $stage_num = (int)ltrim(str_replace('stage_', '', $skey), '0');
+        $stage_id = sprintf('%02d', $stage_num);
+        $diag = get_stage_diagnostic_items($sdata);
+        $resolved = [];
+        $unresolved = [];
+        foreach ($diag as $item) {
+            if ($item['deprecated'] ?? false) continue;
+            $id = $item['id'] ?? '';
+            if (isset($responses_sum[$id])) {
+                $val = read_response_value($responses_sum[$id]);
+                if ($val === true) {
+                    $resolved[] = $item;
+                } else {
+                    $unresolved[] = $item;
+                }
+            }
+        }
+        if (!empty($resolved) || !empty($unresolved)) {
+            $stage_summary[] = [
+                'id' => $stage_id,
+                'name' => $sdata['name'] ?? 'Stage ' . $stage_id,
+                'resolved' => $resolved,
+                'unresolved' => $unresolved,
+                'total' => count($diag),
+                'is_current' => ($stage_id === $current_stage_id),
+            ];
+        }
     }
 }
 
@@ -585,37 +622,26 @@ if ($instance && $scores && function_exists('get_user_progress_timeline')) {
                             $kpi_id = $kpi['id'] ?? '';
                             $cur = $kpi['_current_level'] ?? 'unanswered';
                             $meets = $kpi['_meets'] ?? false;
+                            $is_non_neg = !empty($kpi['nonNeg']);
+                            $cur_color = $cur === 'unanswered' ? 'secondary' : ($cur === 'beginner' ? 'danger' : ($cur === 'developing' ? 'warning' : 'success'));
                         ?>
-                        <div class="card bg-transparent border mb-3" id="kpiCard_<?= h($kpi_id) ?>">
-                            <div class="card-body p-3">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <span class="fw-semibold"><?= h($kpi['metric'] ?? $kpi_id) ?></span>
-                                    <span class="badge bg-<?= $meets ? 'success' : ($cur === 'unanswered' ? 'secondary' : 'danger') ?>">
+                        <div class="card bg-transparent border mb-2 kpi-row-card" id="kpiCard_<?= h($kpi_id) ?>"
+                             style="cursor:pointer; transition: all 0.15s ease;"
+                             onclick="openKpiDetail('<?= h($kpi_id) ?>', '<?= h($stage_id) ?>')">
+                            <div class="card-body px-3 py-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="flex-grow-1 d-flex align-items-center gap-2">
+                                        <i class="bi bi-<?= $meets ? 'check-circle-fill text-success' : ($cur === 'unanswered' ? 'circle text-secondary' : 'exclamation-circle-fill text-danger') ?>"></i>
+                                        <span class="fw-semibold small"><?= h($kpi['metric'] ?? $kpi_id) ?></span>
+                                        <?php if ($is_non_neg) { ?>
+                                        <span class="badge bg-danger bg-opacity-25 text-danger border border-danger border-opacity-25" style="font-size:0.65rem;">Non-Neg</span>
+                                        <?php } ?>
+                                    </div>
+                                    <span class="badge bg-<?= $meets ? 'success' : ($cur === 'unanswered' ? 'secondary' : $cur_color) ?>" style="font-size:0.72rem;">
                                         <?= h(ucfirst($cur)) ?>
                                     </span>
+                                    <i class="bi bi-chevron-right text-muted small"></i>
                                 </div>
-                                <p class="small text-muted mb-2" style="font-size:0.8rem; line-height:1.5;">
-                                    <i class="bi bi-chat-square-quote me-1"></i><em>Be honest with yourself — read each level below and pick the one that most accurately describes where you are right now, not where you want to be.</em>
-                                </p>
-                                <?php foreach (['beginner', 'developing', 'mastery'] as $lvl) {
-                                    $lvl_color = $lvl === 'beginner' ? 'danger' : ($lvl === 'developing' ? 'warning' : 'success');
-                                    $is_current = ($cur === $lvl);
-                                ?>
-                                <div class="rounded mb-2 p-0 <?= $is_current ? 'border border-2 border-' . $lvl_color : 'border border-secondary border-opacity-25' ?>"
-                                     style="cursor:pointer; <?= $is_current ? 'background:rgba(var(--bs-' . $lvl_color . '-rgb),0.12);' : 'opacity:0.8;' ?>"
-                                     onclick="<?= !$is_current ? "saveKpiLevel('" . h($kpi_id) . "', '" . $lvl . "', this)" : '' ?>">
-                                    <div class="d-flex align-items-stretch">
-                                        <div class="d-flex align-items-center justify-content-center flex-shrink-0 px-3 py-2 text-white fw-bold"
-                                             style="min-width:110px; background:var(--bs-<?= $lvl_color ?>); font-size:0.8rem; letter-spacing:0.02em;<?= !$is_current ? 'opacity:0.7;' : '' ?>">
-                                            <?php if ($is_current) { ?><i class="bi bi-check-circle-fill me-1"></i><?php } ?>
-                                            <?= ucfirst($lvl) ?>
-                                        </div>
-                                        <div class="px-3 py-2 small" style="line-height:1.5;">
-                                            <?= h($kpi[$lvl] ?? '') ?>
-                                        </div>
-                                    </div>
-                                </div>
-                                <?php } ?>
                             </div>
                         </div>
                         <?php } ?>
@@ -623,6 +649,70 @@ if ($instance && $scores && function_exists('get_user_progress_timeline')) {
                     <?php } ?>
                 </div>
                 <?php } ?>
+            </div>
+        </div>
+    </div>
+    <?php } ?>
+
+    <!-- Assessment History — All Assessed Stages -->
+    <?php if (!empty($stage_summary)) { ?>
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-journal-check me-2"></i>Assessment History</h6>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <?php foreach ($stage_summary as $ss) {
+                        $resolved_count = count($ss['resolved']);
+                        $unresolved_count = count($ss['unresolved']);
+                        $assessed_count = $resolved_count + $unresolved_count;
+                        $pct = $ss['total'] > 0 ? round(($resolved_count / $ss['total']) * 100) : 0;
+                        // Group resolved items by dimension
+                        $resolved_by_dim = [];
+                        foreach ($ss['resolved'] as $ri) {
+                            $dim = $ri['dimension'] ?? 'other';
+                            $resolved_by_dim[$dim][] = $ri;
+                        }
+                        $dim_icons = ['mindset' => 'bi-lightbulb', 'toolset' => 'bi-tools', 'skillset' => 'bi-trophy'];
+                        $dim_colors = ['mindset' => '#b388d9', 'toolset' => '#6ca6d9', 'skillset' => '#6bc96b'];
+                    ?>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card bg-transparent border h-100 <?= $ss['is_current'] ? 'border-primary' : 'border-secondary border-opacity-25' ?>">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div>
+                                        <span class="badge bg-<?= $ss['is_current'] ? 'primary' : 'secondary' ?> me-1">Stage <?= h($ss['id']) ?></span>
+                                        <?php if ($ss['is_current']) { ?><span class="badge bg-primary bg-opacity-25 text-primary-emphasis" style="font-size:0.65rem;">Current</span><?php } ?>
+                                    </div>
+                                    <span class="small text-muted"><?= $resolved_count ?>/<?= $ss['total'] ?> resolved</span>
+                                </div>
+                                <h6 class="fw-semibold mb-2" style="font-size:0.9rem;"><?= h($ss['name']) ?></h6>
+                                <div class="progress mb-3" style="height:6px;">
+                                    <div class="progress-bar bg-success" style="width:<?= $pct ?>%"></div>
+                                </div>
+                                <?php if (!empty($resolved_by_dim)) { ?>
+                                <?php foreach ($resolved_by_dim as $dim => $items) { ?>
+                                <div class="mb-2">
+                                    <div class="small fw-semibold mb-1" style="color:<?= $dim_colors[$dim] ?? '#aaa' ?>;">
+                                        <i class="bi <?= $dim_icons[$dim] ?? 'bi-circle' ?> me-1"></i><?= ucfirst($dim) ?>
+                                    </div>
+                                    <?php foreach ($items as $ri) { ?>
+                                    <div class="d-flex align-items-start gap-1 mb-1">
+                                        <i class="bi bi-check-circle-fill text-success flex-shrink-0" style="font-size:0.7rem;margin-top:3px;"></i>
+                                        <span class="small" style="font-size:0.78rem;color:rgba(255,255,255,0.7);"><?= h($ri['text'] ?? $ri['id'] ?? '') ?></span>
+                                    </div>
+                                    <?php } ?>
+                                </div>
+                                <?php } ?>
+                                <?php } else { ?>
+                                <p class="small text-muted mb-0">No resolved items yet — keep going!</p>
+                                <?php } ?>
+                            </div>
+                        </div>
+                    </div>
+                    <?php } ?>
+                </div>
             </div>
         </div>
     </div>
@@ -1008,6 +1098,30 @@ function recomputeScores(btn) {
     });
 }
 
+var _currentStage = '<?= h($current_stage_id ?? '') ?>';
+
+function checkStageAdvancement(json) {
+    if (!json.placement) return;
+    var newStage = json.placement.placedStage || json.placement.currentStage || '';
+    if (newStage && newStage !== _currentStage) {
+        var stageName = json.placement.stageName || ('Stage ' + newStage);
+        // Show celebration overlay
+        var overlay = document.createElement('div');
+        overlay.innerHTML = '<div style="position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);animation:fadeIn 0.3s;">' +
+            '<div style="text-align:center;animation:scaleIn 0.4s;">' +
+            '<div style="font-size:3rem;">🎉</div>' +
+            '<h3 style="color:#6bc96b;margin:12px 0 4px;">Stage Advanced!</h3>' +
+            '<p style="color:rgba(255,255,255,0.8);margin:0 0 4px;">You\'ve moved to</p>' +
+            '<div style="font-size:2rem;font-weight:700;color:#a3cef0;">' + stageName + '</div>' +
+            '<p style="color:rgba(255,255,255,0.5);margin:12px 0 0;font-size:0.85rem;">Refreshing dashboard...</p>' +
+            '</div></div>';
+        document.body.appendChild(overlay);
+        setTimeout(function() { window.location.reload(); }, 2000);
+        return true;
+    }
+    return false;
+}
+
 function saveKpiLevel(kpiId, level, rowEl) {
     var card = document.getElementById('kpiCard_' + kpiId);
     if (!card) return;
@@ -1015,6 +1129,10 @@ function saveKpiLevel(kpiId, level, rowEl) {
     // Disable all clickable rows in this KPI card
     var rows = card.querySelectorAll('[onclick]');
     rows.forEach(function(r) { r.style.pointerEvents = 'none'; r.style.opacity = '0.5'; });
+
+    // Highlight selected row immediately
+    rowEl.style.opacity = '1';
+    rowEl.style.background = 'rgba(107,201,107,0.15)';
 
     // Show spinner in the label block of the clicked row
     var labelBlock = rowEl.querySelector('.flex-shrink-0');
@@ -1029,16 +1147,65 @@ function saveKpiLevel(kpiId, level, rowEl) {
     }, function(json) {
         if (json.error) {
             try { if (typeof showToast === 'function') showToast('danger', json.error); } catch(e) {}
-            // Restore
             rows.forEach(function(r) { r.style.pointerEvents = ''; r.style.opacity = ''; });
+            rowEl.style.background = '';
             if (labelBlock) labelBlock.innerHTML = originalLabel;
             return;
         }
 
-        try { if (typeof showToast === 'function') showToast('success', json.message || 'KPI updated!'); } catch(e) {}
+        // Check for stage advancement — if so, celebration + reload handles everything
+        if (checkStageAdvancement(json)) return;
 
-        // Refresh the page to show updated blockers and placement
-        setTimeout(function() { window.location.reload(); }, 800);
+        // Update the selected row's label to show check + selected level
+        if (labelBlock) {
+            labelBlock.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i>' + level.charAt(0).toUpperCase() + level.slice(1);
+        }
+
+        // Update badge on the card
+        var badge = card.querySelector('.badge');
+        if (badge) {
+            badge.className = 'badge bg-success';
+            badge.textContent = level.charAt(0).toUpperCase() + level.slice(1);
+        }
+
+        // Re-enable rows so user can change their answer
+        rows.forEach(function(r) {
+            r.style.pointerEvents = '';
+            r.style.opacity = '';
+            r.removeAttribute('onclick');
+        });
+
+        // Set up new click handlers for all rows (allow re-selection)
+        var allRows = card.querySelectorAll('.rounded.mb-2.p-0');
+        allRows.forEach(function(r) {
+            // Reset styles
+            r.style.background = '';
+            r.className = r.className.replace(/border-\d/g, '').replace(/border-(success|warning|danger|primary)/g, 'border-secondary');
+            r.style.opacity = '0.8';
+            r.style.cursor = 'pointer';
+        });
+
+        // Highlight the selected row
+        var lvlColor = level === 'beginner' ? 'danger' : (level === 'developing' ? 'warning' : 'success');
+        rowEl.style.background = 'rgba(var(--bs-' + lvlColor + '-rgb),0.12)';
+        rowEl.style.opacity = '1';
+        rowEl.className = rowEl.className.replace(/border-secondary/g, 'border-' + lvlColor);
+        if (!rowEl.className.includes('border-2')) rowEl.className += ' border-2';
+
+        // Re-bind click handlers for different levels
+        allRows.forEach(function(r) {
+            r.onclick = function() {
+                // Determine which level this row is
+                var lbl = r.querySelector('.flex-shrink-0');
+                if (!lbl) return;
+                var txt = lbl.textContent.trim().toLowerCase().replace(/[^a-z]/g, '');
+                if (txt.includes('beginner')) saveKpiLevel(kpiId, 'beginner', r);
+                else if (txt.includes('developing')) saveKpiLevel(kpiId, 'developing', r);
+                else if (txt.includes('mastery')) saveKpiLevel(kpiId, 'mastery', r);
+            };
+        });
+
+        try { if (typeof showToast === 'function') showToast('success', json.message || 'KPI updated!'); } catch(e) {}
     });
 }
 
@@ -1049,6 +1216,9 @@ function saveBeliefResponse(itemId, value, btnEl) {
     // Disable buttons in this row
     var btns = row.querySelectorAll('.belief-buttons button');
     btns.forEach(function(b) { b.disabled = true; b.style.opacity = '0.5'; });
+    // Highlight the clicked button
+    btnEl.style.opacity = '1';
+    btnEl.style.background = value ? 'rgba(107,201,107,0.3)' : 'rgba(255,255,255,0.1)';
 
     // Show spinner
     var btnGroup = row.querySelector('.belief-buttons');
@@ -1065,20 +1235,35 @@ function saveBeliefResponse(itemId, value, btnEl) {
             return;
         }
 
-        // Show confirmation briefly
+        // Check for stage advancement
+        if (checkStageAdvancement(json)) return;
+
+        // Show confirmation badge but keep the item visible
         if (value) {
-            btnGroup.innerHTML = '<span style="font-size:0.75rem;color:#6bc96b;"><i class="bi bi-check-circle me-1"></i>Resolved!</span>';
+            btnGroup.innerHTML = '<span style="font-size:0.75rem;color:#6bc96b;"><i class="bi bi-check-circle-fill me-1"></i>Resolved!</span>';
+            row.style.opacity = '0.5';
         } else {
             btnGroup.innerHTML = '<span style="font-size:0.75rem;color:rgba(255,255,255,0.5);"><i class="bi bi-check me-1"></i>Saved</span>';
         }
 
-        try { if (typeof showToast === 'function') showToast('success', json.message || 'Updated!'); } catch(e) {}
+        // After a brief pause, restore buttons so they can change their answer
+        setTimeout(function() {
+            btnGroup.innerHTML = '<span class="text-muted me-1" style="font-size:0.65rem;">True for me?</span>' +
+                '<button type="button" class="btn btn-sm ' + (value ? 'btn-success' : 'btn-outline-success') + ' py-0 px-2" style="font-size:0.7rem;line-height:1.6;" onclick="saveBeliefResponse(\'' + itemId + '\', true, this)">Yes</button> ' +
+                '<button type="button" class="btn btn-sm ' + (!value ? 'btn-secondary' : 'btn-outline-secondary') + ' py-0 px-2" style="font-size:0.7rem;line-height:1.6;" onclick="saveBeliefResponse(\'' + itemId + '\', false, this)">No</button>';
+            row.style.opacity = value ? '0.6' : '1';
+        }, 1500);
 
-        // Refresh to show updated scores and lists
-        setTimeout(function() { window.location.reload(); }, 900);
+        try { if (typeof showToast === 'function') showToast('success', json.message || 'Updated!'); } catch(e) {}
     });
 }
 </script>
+<style>
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes scaleIn { from { transform: scale(0.7); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.kpi-row-card:hover { background: rgba(var(--bs-primary-rgb), 0.06); border-color: rgba(var(--bs-primary-rgb), 0.3) !important; }
+.kpi-modal-level:hover { background: rgba(var(--bs-primary-rgb), 0.06); transform: translateX(2px); }
+</style>
 
 <?php if ($instance) { ?>
 <div class="modal fade" id="resetAssessmentModal" tabindex="-1" aria-labelledby="resetAssessmentModalLabel" aria-hidden="true">

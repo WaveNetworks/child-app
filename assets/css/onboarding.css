@@ -1,0 +1,430 @@
+/**
+ * onboarding.css — Pre-auth first-time user onboarding panels
+ * 4 swipeable full-screen panels with DSWA brand gradient
+ */
+
+/* ── Base layout: flex column so footer never overlaps ── */
+.onboarding-container {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #fff;
+    background: #0a0a1a;
+    display: flex;
+    flex-direction: column;
+}
+
+.onboarding-bg {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #1a0533 0%, #0d1b3e 30%, #0a1628 50%, #1a0533 100%);
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Animated gradient orbs */
+.onboarding-bg::before,
+.onboarding-bg::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.4;
+    animation: orbFloat 12s ease-in-out infinite alternate;
+}
+.onboarding-bg::before {
+    width: 60vw; height: 60vw;
+    max-width: 600px; max-height: 600px;
+    top: -10%; left: -10%;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.6), transparent 70%);
+}
+.onboarding-bg::after {
+    width: 50vw; height: 50vw;
+    max-width: 500px; max-height: 500px;
+    bottom: -10%; right: -10%;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.5), transparent 70%);
+    animation-delay: -6s;
+}
+
+@keyframes orbFloat {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(30px, -20px) scale(1.1); }
+}
+
+/* ── Panel track: takes all remaining space above footer ── */
+.onboarding-track {
+    flex: 1 1 0;
+    min-height: 0;
+    display: flex;
+    width: 400%;
+    transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    z-index: 1;
+}
+
+.onboarding-panel {
+    width: 25%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 24px;
+    box-sizing: border-box;
+    text-align: center;
+    overflow-y: auto;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease 0.15s, transform 0.6s ease 0.15s;
+}
+.onboarding-panel.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Content block */
+.panel-content {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 400px;
+    width: 100%;
+}
+
+/* ── Footer: dots + nav, in-flow below track ── */
+.onboarding-footer {
+    flex: 0 0 auto;
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 24px 32px;
+}
+
+/* ── Panel content ── */
+.panel-brand-logo {
+    height: auto;
+    width: clamp(140px, 45vw, 260px);
+    margin-bottom: 8px;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.3));
+    opacity: 0.85;
+}
+
+.panel-icon {
+    width: clamp(60px, 12vh, 100px);
+    height: clamp(60px, 12vh, 100px);
+    margin-bottom: 16px;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.panel-title {
+    font-size: clamp(1.15rem, 3.5vw, 1.65rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+    line-height: 1.2;
+}
+
+.panel-subtitle {
+    font-size: clamp(0.8rem, 2.2vw, 0.95rem);
+    color: rgba(255, 255, 255, 0.7);
+    max-width: 360px;
+    line-height: 1.5;
+    margin: 0 auto;
+}
+
+/* ── Navigation dots ── */
+.onboarding-dots {
+    display: flex;
+    gap: 12px;
+}
+.onboarding-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    padding: 0;
+}
+.onboarding-dot.active {
+    background: rgba(139, 92, 246, 0.9);
+    box-shadow: 0 0 12px rgba(139, 92, 246, 0.5);
+    transform: scale(1.2);
+}
+
+/* ── Navigation buttons ── */
+.onboarding-nav {
+    display: flex;
+    gap: 16px;
+}
+.onboarding-btn {
+    padding: 12px 32px;
+    border-radius: 12px;
+    border: none;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    letter-spacing: 0.01em;
+}
+.onboarding-btn-secondary {
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.onboarding-btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+}
+.onboarding-btn-primary {
+    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+}
+.onboarding-btn-primary:hover {
+    box-shadow: 0 6px 24px rgba(99, 102, 241, 0.5);
+    transform: translateY(-1px);
+}
+
+/* Skip link */
+.onboarding-skip {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 10000;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.85rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.2s;
+    padding: 8px 12px;
+}
+.onboarding-skip:hover {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* ── Feature highlights ── */
+.panel-features {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-width: 340px;
+    margin: 12px auto 0;
+    text-align: left;
+}
+.panel-feature {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: clamp(0.75rem, 2vw, 0.88rem);
+    color: rgba(255, 255, 255, 0.8);
+}
+.panel-feature-icon {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: rgba(139, 92, 246, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+}
+
+/* ── Panel 1: Lotus bloom ── */
+.lotus-icon {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+.lotus-petal {
+    position: absolute;
+    width: 24px;
+    height: 48px;
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    left: 50%;
+    bottom: 30%;
+    transform-origin: bottom center;
+    opacity: 0;
+    animation: petalBloom 1.2s ease-out forwards;
+}
+.lotus-petal:nth-child(1) { background: rgba(139, 92, 246, 0.8); --r: -40deg; animation-delay: 0.1s; }
+.lotus-petal:nth-child(2) { background: rgba(168, 85, 247, 0.8); --r: -20deg; animation-delay: 0.2s; }
+.lotus-petal:nth-child(3) { background: rgba(192, 132, 252, 0.9); --r: 0deg; animation-delay: 0.3s; }
+.lotus-petal:nth-child(4) { background: rgba(168, 85, 247, 0.8); --r: 20deg; animation-delay: 0.4s; }
+.lotus-petal:nth-child(5) { background: rgba(139, 92, 246, 0.8); --r: 40deg; animation-delay: 0.5s; }
+.lotus-center {
+    position: absolute;
+    width: 20px; height: 20px;
+    background: radial-gradient(circle, #fbbf24, #f59e0b);
+    border-radius: 50%;
+    left: 50%; bottom: 28%;
+    transform: translate(-50%, 0) scale(0);
+    animation: centerPop 0.4s ease-out 0.7s forwards;
+}
+@keyframes petalBloom {
+    0% { opacity: 0; transform: translateX(-50%) rotate(var(--r, 0deg)) scaleY(0); }
+    100% { opacity: 1; transform: translateX(-50%) rotate(var(--r, 0deg)) scaleY(1); }
+}
+@keyframes centerPop {
+    0% { transform: translate(-50%, 0) scale(0); }
+    100% { transform: translate(-50%, 0) scale(1); }
+}
+
+/* ── Panel 2: Chat bubbles ── */
+.chat-bubbles-icon {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+    height: 100%;
+    justify-content: center;
+}
+.bubble {
+    border-radius: 16px;
+    padding: 6px 14px;
+    font-size: 0.65rem;
+    font-weight: 500;
+    opacity: 0;
+    animation: bubbleIn 0.5s ease-out forwards;
+    white-space: nowrap;
+    width: fit-content;
+}
+.bubble-left {
+    background: rgba(99, 102, 241, 0.3);
+    border: 1px solid rgba(99, 102, 241, 0.4);
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+}
+.bubble-right {
+    background: rgba(139, 92, 246, 0.3);
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+}
+.bubble:nth-child(1) { animation-delay: 0.2s; }
+.bubble:nth-child(2) { animation-delay: 0.5s; }
+.bubble:nth-child(3) { animation-delay: 0.8s; }
+@keyframes bubbleIn {
+    0% { opacity: 0; transform: translateY(10px) scale(0.9); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Panel 3: Dimension bars ── */
+.dimension-bars-icon {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 100%;
+    padding-bottom: 8px;
+}
+.dim-bar {
+    width: 12px;
+    border-radius: 6px 6px 3px 3px;
+    opacity: 0;
+    animation: barGrow 0.6s ease-out forwards;
+}
+.dim-bar:nth-child(1) { height: 35%; background: linear-gradient(180deg, #8b5cf6, #6d28d9); animation-delay: 0.1s; }
+.dim-bar:nth-child(2) { height: 55%; background: linear-gradient(180deg, #6366f1, #4f46e5); animation-delay: 0.2s; }
+.dim-bar:nth-child(3) { height: 75%; background: linear-gradient(180deg, #a78bfa, #7c3aed); animation-delay: 0.3s; }
+.dim-bar:nth-child(4) { height: 45%; background: linear-gradient(180deg, #818cf8, #6366f1); animation-delay: 0.4s; }
+.dim-bar:nth-child(5) { height: 85%; background: linear-gradient(180deg, #c084fc, #9333ea); animation-delay: 0.5s; }
+.dim-bar:nth-child(6) { height: 40%; background: linear-gradient(180deg, #8b5cf6, #6d28d9); animation-delay: 0.6s; }
+.dim-bar:nth-child(7) { height: 65%; background: linear-gradient(180deg, #a78bfa, #7c3aed); animation-delay: 0.7s; }
+@keyframes barGrow {
+    0% { opacity: 0; transform: scaleY(0); transform-origin: bottom; }
+    100% { opacity: 1; transform: scaleY(1); transform-origin: bottom; }
+}
+
+/* ── Panel 4: Ready — falling petals bg + lotus at bottom ── */
+.panel-ready {
+    position: relative;
+}
+.ready-petals-bg {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+}
+.ready-petals-bg .falling-petal {
+    position: absolute;
+    width: 14px;
+    height: 20px;
+    border-radius: 50% 0 50% 0;
+    opacity: 0;
+    animation: petalFall 4s ease-in-out infinite;
+}
+.ready-petals-bg .falling-petal:nth-child(1) { background: rgba(192, 132, 252, 0.5); left: 10%; animation-delay: 0s; }
+.ready-petals-bg .falling-petal:nth-child(2) { background: rgba(139, 92, 246, 0.4); left: 25%; animation-delay: 0.6s; }
+.ready-petals-bg .falling-petal:nth-child(3) { background: rgba(168, 85, 247, 0.5); left: 42%; animation-delay: 1.2s; }
+.ready-petals-bg .falling-petal:nth-child(4) { background: rgba(192, 132, 252, 0.35); left: 58%; animation-delay: 1.8s; }
+.ready-petals-bg .falling-petal:nth-child(5) { background: rgba(139, 92, 246, 0.4); left: 72%; animation-delay: 2.4s; }
+.ready-petals-bg .falling-petal:nth-child(6) { background: rgba(168, 85, 247, 0.45); left: 88%; animation-delay: 0.3s; }
+.ready-petals-bg .falling-petal:nth-child(7) { background: rgba(192, 132, 252, 0.3); left: 35%; animation-delay: 1.5s; }
+.ready-petals-bg .falling-petal:nth-child(8) { background: rgba(139, 92, 246, 0.35); left: 55%; animation-delay: 2.8s; }
+@keyframes petalFall {
+    0% { top: -10%; opacity: 0; transform: rotate(0deg) translateX(0); }
+    15% { opacity: 0.7; }
+    85% { opacity: 0.5; }
+    100% { top: 95%; opacity: 0; transform: rotate(200deg) translateX(15px); }
+}
+
+/* Lotus at bottom of ready panel content */
+.ready-lotus {
+    position: relative;
+    width: 80px;
+    height: 70px;
+    margin-top: 24px;
+    flex-shrink: 0;
+}
+.ready-lotus .lotus-petal {
+    position: absolute;
+    width: 20px;
+    height: 40px;
+    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+    left: 50%;
+    bottom: 10%;
+    transform-origin: bottom center;
+    opacity: 0;
+    animation: petalBloom 1.2s ease-out forwards;
+}
+.ready-lotus .lotus-petal:nth-child(1) { background: rgba(139, 92, 246, 0.8); --r: -40deg; animation-delay: 0.3s; }
+.ready-lotus .lotus-petal:nth-child(2) { background: rgba(168, 85, 247, 0.8); --r: -20deg; animation-delay: 0.4s; }
+.ready-lotus .lotus-petal:nth-child(3) { background: rgba(192, 132, 252, 0.9); --r: 0deg; animation-delay: 0.5s; }
+.ready-lotus .lotus-petal:nth-child(4) { background: rgba(168, 85, 247, 0.8); --r: 20deg; animation-delay: 0.6s; }
+.ready-lotus .lotus-petal:nth-child(5) { background: rgba(139, 92, 246, 0.8); --r: 40deg; animation-delay: 0.7s; }
+.ready-lotus .lotus-center {
+    position: absolute;
+    width: 16px; height: 16px;
+    background: radial-gradient(circle, #fbbf24, #f59e0b);
+    border-radius: 50%;
+    left: 50%; bottom: 8%;
+    transform: translate(-50%, 0) scale(0);
+    animation: centerPop 0.4s ease-out 0.9s forwards;
+}
+
+/* ── Responsive: small screens ── */
+@media (max-height: 600px) {
+    .panel-brand-logo { width: clamp(100px, 35vw, 180px); margin-bottom: 4px; }
+    .panel-icon { width: 50px; height: 50px; margin-bottom: 8px; }
+    .panel-title { margin-bottom: 4px; }
+    .panel-subtitle { line-height: 1.35; }
+    .onboarding-footer { gap: 10px; padding: 10px 24px 20px; }
+    .onboarding-btn { padding: 10px 24px; font-size: 0.85rem; }
+}
+
+@media (max-width: 576px) {
+    .onboarding-panel { padding: 16px 20px; }
+    .onboarding-btn { padding: 10px 24px; font-size: 0.85rem; }
+    .onboarding-footer { padding: 12px 20px 24px; }
+}

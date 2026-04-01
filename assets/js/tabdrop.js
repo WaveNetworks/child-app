@@ -1,6 +1,6 @@
 /**
- * tabdrop.js
- * Responsive tab overflow — tabs that don't fit collapse into a "More" dropdown.
+ * @module tabdrop
+ * @description Responsive tab overflow -- tabs that don't fit collapse into a "More" dropdown.
  *
  * Usage: add data-tabdrop to any .nav-tabs element.
  *   <ul class="nav nav-tabs" data-tabdrop role="tablist"> ... </ul>
@@ -13,6 +13,12 @@
 (function () {
     'use strict';
 
+    /**
+     * Initialize tabdrop behavior on a single nav element.
+     * Builds the "More" dropdown, measures tab widths, and sets up
+     * resize and tab-switch listeners.
+     * @param {HTMLElement} nav - The .nav-tabs element with [data-tabdrop]
+     */
     function initTabdrop(nav) {
         // Build the "More" dropdown (hidden until needed)
         var dropdown = document.createElement('li');
@@ -29,11 +35,19 @@
         var label = dropdown.querySelector('.tabdrop-label');
         var items = Array.from(nav.querySelectorAll(':scope > li.nav-item:not(.tabdrop-more)'));
 
-        // Cache natural widths (measured once when all tabs are visible)
+        /** @type {number[]|null} Cached natural widths of each tab item */
         var naturalWidths = null;
 
+        /** @type {number|null} Cached nav horizontal padding (left + right) */
+        var cachedNavPadding = null;
+
+        /**
+         * Measure the natural (uncollapsed) width of each tab item.
+         * Temporarily sets overflow visible and removes hidden state so
+         * clipped items report their true width.
+         * @private
+         */
         function measureNaturalWidths() {
-            // Temporarily allow overflow so clipped items report true width
             var savedOverflow = nav.style.overflow;
             nav.style.overflow = 'visible';
             items.forEach(function (li) { li.classList.remove('tabdrop-hidden'); li.style.flexShrink = '0'; });
@@ -42,26 +56,40 @@
             nav.style.overflow = savedOverflow;
         }
 
+        /**
+         * Cache the nav element's horizontal padding from getComputedStyle.
+         * Only recomputed when naturalWidths are invalidated (on resize).
+         * @private
+         */
+        function cacheNavPadding() {
+            var cs = getComputedStyle(nav);
+            cachedNavPadding = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+        }
+
+        /**
+         * Recalculate which tabs fit and which overflow into the dropdown.
+         * Uses cached natural widths and padding to avoid unnecessary reflows.
+         * @private
+         */
         function layout() {
-            // Ensure we have natural widths
+            // Ensure we have natural widths and cached padding
             if (!naturalWidths) measureNaturalWidths();
+            if (cachedNavPadding === null) cacheNavPadding();
 
             // Reset: show all real tabs, hide dropdown
             items.forEach(function (li) { li.classList.remove('tabdrop-hidden'); });
             dropdown.style.display = 'none';
             menu.innerHTML = '';
 
-            // Measure available inner width (subtract padding) and dropdown toggle width
-            var cs = getComputedStyle(nav);
-            var navWidth = nav.offsetWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+            // Measure available inner width (subtract cached padding)
+            var navWidth = nav.offsetWidth - cachedNavPadding;
+
+            // Briefly show dropdown to measure its toggle width
             dropdown.style.display = '';
             var dropdownWidth = dropdown.offsetWidth;
             dropdown.style.display = 'none';
 
-            var usedWidth = 0;
             var totalWidth = 0;
-            var overflowing = [];
-
             for (var i = 0; i < items.length; i++) {
                 totalWidth += naturalWidths[i];
             }
@@ -70,7 +98,10 @@
             // Use 1px buffer to account for subpixel rounding
             if (totalWidth < navWidth - 1) return;
 
-            // Tabs overflow — figure out which ones need to go into dropdown
+            // Tabs overflow -- figure out which ones go into the dropdown
+            var usedWidth = 0;
+            var overflowing = [];
+
             for (var i = 0; i < items.length; i++) {
                 usedWidth += naturalWidths[i];
                 if (usedWidth >= navWidth - dropdownWidth) {
@@ -121,7 +152,7 @@
                 menu.appendChild(menuItem);
             });
 
-            // Style the dropdown toggle
+            // Style the dropdown toggle based on whether the active tab is inside it
             if (activeInDropdown) {
                 toggle.classList.add('active');
             } else {
@@ -141,12 +172,14 @@
             });
         });
 
-        // Debounced resize — remeasure natural widths on resize
+        // Debounced resize -- invalidate caches and re-layout
+        /** @type {number|undefined} */
         var resizeTimer;
         window.addEventListener('resize', function () {
             clearTimeout(resizeTimer);
             resizeTimer = setTimeout(function () {
                 naturalWidths = null;
+                cachedNavPadding = null;
                 layout();
             }, 100);
         });
@@ -161,7 +194,10 @@
         requestAnimationFrame(function () { requestAnimationFrame(layout); });
     }
 
-    // Auto-init all [data-tabdrop] elements
+    /**
+     * Auto-initialize all elements with the [data-tabdrop] attribute.
+     * @private
+     */
     function initAll() {
         document.querySelectorAll('[data-tabdrop]').forEach(initTabdrop);
     }

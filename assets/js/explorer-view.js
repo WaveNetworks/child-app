@@ -1,26 +1,107 @@
 /**
- * explorer-view.js
- * ElevateHER Explorer View — Stage tiles grid with dimension bars, hard wall dividers.
- * Integrates with LotusProgressSystem view state machine.
+ * @module explorer-view
+ * @description ElevateHER Explorer View -- stage tiles grid with dimension
+ * progress bars, hard wall dividers, stage detail drill-down, content detail,
+ * KPI breakdowns, field wisdom, and self-assessment reflection capture.
+ *
+ * Integrates with the LotusProgressSystem (LPS) view state machine and the
+ * water-ripple pulse system for visual feedback on API interactions.
+ *
+ * All DOM is built programmatically inside `#chat-overlay-mount` (or `body`
+ * as fallback).  No external templates are used.
  */
 (function() {
 'use strict';
 
+/** @type {HTMLDivElement|null} Root explorer container element. */
 var container = null;
-var lps = window.lps || null;
-var frameworkSummary = null;
-var userState = null;
-var currentStageId = '00'; // Module-scope current stage for detail view access
 
-// Dimension colors
+/** @type {Object|null} Reference to the LotusProgressSystem instance. */
+var lps = window.lps || null;
+
+/** @type {Object|null} Cached framework summary from the API. */
+var frameworkSummary = null;
+
+/** @type {Object|null} Cached user state (placement, scores, etc.). */
+var userState = null;
+
+/** @type {string} Module-scope current stage ID for detail view access. */
+var currentStageId = '00';
+
+/**
+ * Dimension colour definitions used for progress bars and content badges.
+ * @type {Object.<string, {gradient: string, label: string, color: string}>}
+ */
 var DIM_COLORS = {
     mindset:  { gradient: 'linear-gradient(90deg, #b388d9, #d4b8f0)', label: 'M', color: '#b388d9' },
     toolset:  { gradient: 'linear-gradient(90deg, #6ca6d9, #a3cef0)', label: 'T', color: '#6ca6d9' },
     skillset: { gradient: 'linear-gradient(90deg, #6bc96b, #a8e6a8)', label: 'S', color: '#6bc96b' },
 };
 
-// ─── Toggle Button ───────────────────────────────────────────────────────
+// =====================================================================
+//  Shared helpers
+// =====================================================================
 
+/**
+ * Returns the primary colour hex string for a dimension name.
+ * Falls back to toolset blue if the dimension is unrecognised.
+ * @param {string} dim - One of "mindset", "toolset", "skillset".
+ * @returns {string} Hex colour.
+ */
+function dimColor(dim) {
+    var d = (dim || '').toLowerCase();
+    if (d === 'mindset')  return '#b388d9';
+    if (d === 'skillset') return '#6bc96b';
+    return '#6ca6d9';
+}
+
+/**
+ * Toggles an accordion-style expand/collapse within a parent section.
+ * Closes any currently-open row/entry pair, then opens the clicked one
+ * (unless it was already open, in which case it just closes).
+ *
+ * @param {HTMLElement} row            - The clickable row element.
+ * @param {HTMLElement} entry          - The collapsible content panel.
+ * @param {HTMLElement} section        - The parent section to scope the search.
+ * @param {string}      expandedClass - CSS class toggled on the row.
+ */
+function toggleAccordion(row, entry, section, expandedClass) {
+    var isOpen = row.classList.contains(expandedClass);
+    if (section) {
+        section.querySelectorAll('.' + expandedClass).forEach(function(el) {
+            el.classList.remove(expandedClass);
+        });
+        section.querySelectorAll('.stage-detail-entry--open').forEach(function(el) {
+            el.classList.remove('stage-detail-entry--open');
+        });
+    }
+    if (!isOpen) {
+        row.classList.add(expandedClass);
+        entry.classList.add('stage-detail-entry--open');
+    }
+}
+
+/**
+ * HTML-escapes a string for safe insertion into innerHTML.
+ * @param {string} str - Raw string.
+ * @returns {string} Escaped HTML string.
+ */
+function esc(str) {
+    if (!str) return '';
+    var div = document.createElement('div');
+    div.textContent = String(str);
+    return div.innerHTML;
+}
+
+// =====================================================================
+//  Toggle Button
+// =====================================================================
+
+/**
+ * Creates (or returns the existing) floating toggle button that
+ * opens/closes the explorer overlay.
+ * @returns {HTMLButtonElement} The toggle button element.
+ */
 function createToggleButton() {
     var existing = document.getElementById('explorerToggle');
     if (existing) return existing;
@@ -40,8 +121,16 @@ function createToggleButton() {
     return btn;
 }
 
+/** @type {boolean} Whether the explorer overlay is currently visible. */
 var explorerOpen = false;
 
+/**
+ * Toggles the explorer overlay open or closed.
+ * When opening: builds the explorer DOM if needed, hides chat elements,
+ * and transitions LPS to EXPLORER_OVERVIEW.
+ * When closing: restores chat visibility, transitions LPS back to
+ * LOTUS_VIEW, and relays any pending reflections to chat.
+ */
 function toggleExplorer() {
     if (!container) buildExplorer();
 
@@ -89,8 +178,14 @@ function toggleExplorer() {
     }
 }
 
-// ─── Build Explorer DOM ──────────────────────────────────────────────────
+// =====================================================================
+//  Build Explorer DOM
+// =====================================================================
 
+/**
+ * Creates the explorer container element, appends it to
+ * `#chat-overlay-mount` (or `body`), and triggers data loading.
+ */
 function buildExplorer() {
     container = document.createElement('div');
     container.id = 'explorer-container';
@@ -99,7 +194,7 @@ function buildExplorer() {
     var inner = document.createElement('div');
     inner.style.cssText = 'max-width:800px;margin:0 auto;display:flex;flex-direction:column;gap:12px;';
 
-    // Header — centered branding like the demo
+    // Header -- centered branding
     var header = document.createElement('div');
     header.style.cssText = 'text-align:center;margin-bottom:16px;position:relative;';
     header.innerHTML =
@@ -123,10 +218,9 @@ function buildExplorer() {
 
     document.getElementById('explorerClose').addEventListener('click', toggleExplorer);
 
-    // Click outside inner content → close explorer or go back to overview
+    // Click outside inner content -> close explorer or go back to overview
     container.addEventListener('click', function(e) {
         if (e.target === container) {
-            // Check if we're in a detail view (inner has a back button)
             var backBtn = container.querySelector('.stage-detail-back');
             if (backBtn) {
                 backBtn.click(); // Go back to explorer overview
@@ -137,8 +231,12 @@ function buildExplorer() {
     });
 }
 
+/**
+ * Fetches framework summary and user state from the API (or uses
+ * cached data), then renders the stage tiles into `inner`.
+ * @param {HTMLElement} inner - The inner scrollable container.
+ */
 function loadDataAndRender(inner) {
-    // Use cached data if available
     if (frameworkSummary) {
         renderStages(inner, frameworkSummary, userState);
         return;
@@ -158,22 +256,29 @@ function loadDataAndRender(inner) {
     });
 }
 
+/**
+ * Renders the overview grid of stage tiles with dimension bars,
+ * KPI summaries, and hard-wall dividers.
+ *
+ * @param {HTMLElement} inner   - Container to append tiles into.
+ * @param {Object}      summary - Framework summary from the API.
+ * @param {Object|null}  state  - User state (placement, scores, etc.).
+ */
 function renderStages(inner, summary, state) {
     var stages = summary.stages || [];
     var hardWalls = summary.hardWalls || [];
     var placement = (state && state.placement) || {};
     var currentStage = (state && state.currentStage) || placement.placedStage || '00';
-    currentStageId = currentStage; // Store at module scope for detail view
+    currentStageId = currentStage;
     var wallBlocking = placement.hardWallBlocking || null;
 
-    // Build wall lookup
+    // Build wall lookup: stage-id -> wall object
     var wallAfterStage = {};
     hardWalls.forEach(function(w) {
         if (w.from) wallAfterStage[w.from] = w;
     });
 
     stages.forEach(function(stg) {
-        var stageNum = parseInt(stg.id, 10);
         var isCurrent = stg.id === currentStage;
         var isPast = parseInt(stg.id, 10) < parseInt(currentStage, 10);
         var isFuture = parseInt(stg.id, 10) > parseInt(currentStage, 10);
@@ -227,7 +332,6 @@ function renderStages(inner, summary, state) {
             var fill = document.createElement('div');
             fill.className = 'explorer-dim-fill';
             fill.style.background = DIM_COLORS[dim].gradient;
-            // Get score for this dimension from per-stage scores
             var pct = 0;
             if (state && state.scores && state.scores[stg.id]) {
                 var stageScores = state.scores[stg.id];
@@ -251,7 +355,7 @@ function renderStages(inner, summary, state) {
 
         tile.appendChild(dims);
 
-        // KPI details on tile
+        // KPI summary rows on tile
         if (stg.kpis && stg.kpis.length > 0) {
             var kpiWrap = document.createElement('div');
             kpiWrap.className = 'explorer-kpi-summary';
@@ -263,13 +367,11 @@ function renderStages(inner, summary, state) {
                 var row = document.createElement('div');
                 row.className = 'explorer-kpi-row';
                 var lvl = (k.currentLevel || 'unanswered').toLowerCase();
-                // Past stages: show actual level if answered, but upgrade unanswered to "passed"
-                // since user has already advanced beyond this stage
                 if (isPast && (lvl === 'unanswered')) {
                     lvl = 'passed';
                 }
                 var lvlClass = lvl === 'mastery' ? 'kpi-lvl-mastery' : lvl === 'developing' ? 'kpi-lvl-developing' : lvl === 'beginner' ? 'kpi-lvl-beginner' : lvl === 'passed' ? 'kpi-lvl-passed' : 'kpi-lvl-unanswered';
-                var lvlText = lvl === 'unanswered' ? '—' : lvl === 'passed' ? '✓' : lvl;
+                var lvlText = lvl === 'unanswered' ? '\u2014' : lvl === 'passed' ? '\u2713' : lvl;
                 row.innerHTML =
                     '<span class="explorer-kpi-metric">' + esc(k.metric) + '</span>' +
                     '<span class="explorer-kpi-level ' + lvlClass + '">' + esc(lvlText) + '</span>';
@@ -278,7 +380,7 @@ function renderStages(inner, summary, state) {
             tile.appendChild(kpiWrap);
         }
 
-        // Click to drill (placeholder for stage detail)
+        // Click to drill into stage detail
         tile.addEventListener('click', function() {
             showStageDetail(stg);
         });
@@ -293,22 +395,21 @@ function renderStages(inner, summary, state) {
 
             var line1 = document.createElement('div');
             line1.className = 'explorer-wall-line';
-            var label = document.createElement('div');
-            label.className = 'explorer-wall-label';
-            label.textContent = '\uD83C\uDFDB ' + (wall.label || 'Hard Wall');
+            var wLabel = document.createElement('div');
+            wLabel.className = 'explorer-wall-label';
+            wLabel.textContent = '\uD83C\uDFDB ' + (wall.label || 'Hard Wall');
             var line2 = document.createElement('div');
             line2.className = 'explorer-wall-line';
 
             divider.appendChild(line1);
-            divider.appendChild(label);
+            divider.appendChild(wLabel);
             divider.appendChild(line2);
 
-            // Wall status
             var status = document.createElement('div');
             status.className = 'explorer-wall-status';
             if (wallBlocking && wallBlocking.label === wall.label) {
                 status.className += ' wall-blocking';
-                status.textContent = '\u23F8 Blocking — develop this area to advance';
+                status.textContent = '\u23F8 Blocking \u2014 develop this area to advance';
             } else if (parseInt(currentStage, 10) > parseInt(stg.id, 10)) {
                 status.className += ' wall-crossed';
                 status.textContent = '\u2714 Crossed';
@@ -323,11 +424,20 @@ function renderStages(inner, summary, state) {
     });
 }
 
-// ─── Stage Detail ────────────────────────────────────────────────────────
+// =====================================================================
+//  Stage Detail
+// =====================================================================
 
-// Track pending reflections for chat relay (WP7)
+/** @type {Array<{itemId: string, text: string}>} Pending reflections for chat relay (WP7). */
 var pendingReflections = [];
 
+/**
+ * Fetches full stage data from the API and renders the stage detail view,
+ * replacing the overview grid.  Includes diagnostic items grouped by
+ * dimension, KPI breakdowns, field wisdom quotes, and content cards.
+ *
+ * @param {Object} stageSummary - Stage summary object from the overview (must have `.id`).
+ */
 function showStageDetail(stageSummary) {
     if (!container) return;
     var inner = container.querySelector('div');
@@ -346,7 +456,6 @@ function showStageDetail(stageSummary) {
 
     if (lps) try { lps.setViewState('STAGE_DETAIL'); } catch(e) {}
 
-    // Fetch full stage data from API
     explorerApiPost('get_stage_detail', { stage: stageSummary.id }, function(resp) {
         inner.innerHTML = '';
 
@@ -364,7 +473,7 @@ function showStageDetail(stageSummary) {
         selfReported = resp.results.selfReported || {};
         questionLookup = resp.results.questionLookup || {};
 
-        // ── Back Button ──
+        // -- Back Button --
         var back = document.createElement('button');
         back.className = 'stage-detail-back';
         back.innerHTML = '&#8592; All Stages';
@@ -376,7 +485,7 @@ function showStageDetail(stageSummary) {
         });
         inner.appendChild(back);
 
-        // ── Header Card ──
+        // -- Header Card --
         var header = document.createElement('div');
         header.className = 'stage-detail-header';
         header.innerHTML =
@@ -390,7 +499,7 @@ function showStageDetail(stageSummary) {
             '<div class="stage-detail-desc">' + esc(stage.description) + '</div>';
         inner.appendChild(header);
 
-        // ── About This Stage (behavior, belief, stuck, unlocks) ──
+        // -- About This Stage (behavior, belief, stuck, unlocks) --
         var aboutSection = document.createElement('div');
         aboutSection.className = 'stage-detail-section';
         aboutSection.innerHTML = '<div class="stage-detail-section-title section-meta">About This Stage</div>';
@@ -411,7 +520,7 @@ function showStageDetail(stageSummary) {
         });
         inner.appendChild(aboutSection);
 
-        // ── Diagnostic Items by Dimension (WP2) ──
+        // -- Diagnostic Items by Dimension (WP2) --
         ['mindset', 'toolset', 'skillset'].forEach(function(dim) {
             var dimItems = (stage.items || []).filter(function(it) { return it.dimension === dim; });
             if (dimItems.length === 0) return;
@@ -447,62 +556,22 @@ function showStageDetail(stageSummary) {
                 row.appendChild(chevron);
 
                 // Expandable entry panel
-                var entry = document.createElement('div');
-                entry.className = 'stage-detail-entry';
+                var entry = buildReflectionEntry(item, isResolved, responseMeta, selfReported, questionLookup);
 
-                if (isResolved) {
-                    // Resolved: show observation + "What worked well?" textarea
-                    var obs = (responseMeta[item.id] || {}).observation || '';
-                    entry.innerHTML =
-                        (obs ? '<div class="stage-detail-entry__question">' + esc(obs) + '</div>' : '') +
-                        '<div class="stage-detail-entry__question">What worked well? Any challenges along the way?</div>' +
-                        '<div class="stage-detail-entry__thanks" data-item="' + esc(item.id) + '">Thank you for sharing your reflection!</div>' +
-                        '<div class="stage-detail-entry__actions">' +
-                            '<textarea class="stage-detail-entry__input" placeholder="Share your reflection\u2026" data-item="' + esc(item.id) + '">' +
-                                esc((selfReported[item.id] || {}).text || '') + '</textarea>' +
-                            '<button class="stage-detail-entry__save-btn" data-item="' + esc(item.id) + '">&#9654;</button>' +
-                        '</div>' +
-                        '<span class="stage-detail-entry__saved">Saved \u2714</span>';
-                } else {
-                    // Unresolved: show question from matrix + textarea
-                    var question = questionLookup[item.id] || 'How do you feel about this area of your development?';
-                    entry.innerHTML =
-                        '<div class="stage-detail-entry__question">' + esc(question) + '</div>' +
-                        '<div class="stage-detail-entry__thanks" data-item="' + esc(item.id) + '">Thank you for sharing your thoughts!</div>' +
-                        '<div class="stage-detail-entry__actions">' +
-                            '<textarea class="stage-detail-entry__input" placeholder="Share your thoughts\u2026" data-item="' + esc(item.id) + '">' +
-                                esc((selfReported[item.id] || {}).text || '') + '</textarea>' +
-                            '<button class="stage-detail-entry__save-btn" data-item="' + esc(item.id) + '">&#9654;</button>' +
-                        '</div>' +
-                        '<span class="stage-detail-entry__saved">Saved \u2714</span>';
-                }
-
-                // Toggle expand/collapse
+                // Toggle expand/collapse via shared helper
                 row.addEventListener('click', function() {
-                    var isOpen = row.classList.contains('stage-detail-item--expanded');
-                    // Close all other entries in this section
-                    section.querySelectorAll('.stage-detail-item--expanded').forEach(function(el) {
-                        el.classList.remove('stage-detail-item--expanded');
-                    });
-                    section.querySelectorAll('.stage-detail-entry--open').forEach(function(el) {
-                        el.classList.remove('stage-detail-entry--open');
-                    });
-                    if (!isOpen) {
-                        row.classList.add('stage-detail-item--expanded');
-                        entry.classList.add('stage-detail-entry--open');
-                    }
+                    toggleAccordion(row, entry, section, 'stage-detail-item--expanded');
                 });
 
                 section.appendChild(row);
                 section.appendChild(entry);
             });
 
-            // Bind save buttons in this section
             bindSaveButtons(section);
             inner.appendChild(section);
         });
 
-        // ── KPIs (WP3) ──
+        // -- KPIs (WP3) --
         if (stage.kpis && stage.kpis.length > 0) {
             var kpiSection = document.createElement('div');
             kpiSection.className = 'stage-detail-section';
@@ -512,7 +581,6 @@ function showStageDetail(stageSummary) {
             stage.kpis.forEach(function(kpi) {
                 var level = (typeof kpi.currentLevel === 'object' && kpi.currentLevel)
                     ? (kpi.currentLevel.level || 'none') : (kpi.currentLevel || 'none');
-                // Past stages: upgrade unanswered KPIs to "passed"
                 if (detailIsPast && (level === 'none' || level === 'unanswered')) {
                     level = 'passed';
                 }
@@ -523,7 +591,7 @@ function showStageDetail(stageSummary) {
 
                 var kpiContent = document.createElement('div');
                 kpiContent.style.flex = '1';
-                var displayLevel = level === 'passed' ? '✓ PASSED' : level.toUpperCase();
+                var displayLevel = level === 'passed' ? '\u2713 PASSED' : level.toUpperCase();
                 kpiContent.innerHTML =
                     '<div class="stage-detail-kpi-label">' + esc(kpi.metric) + '</div>' +
                     '<span class="stage-detail-kpi-level ' + levelClass + '">' + displayLevel + '</span>';
@@ -544,17 +612,7 @@ function showStageDetail(stageSummary) {
                     '<div class="stage-detail-entry__question"><strong style="color:rgba(107,201,107,0.7);">Mastery:</strong> ' + esc(kpi.mastery) + '</div>';
 
                 kpiRow.addEventListener('click', function() {
-                    var isOpen = kpiRow.classList.contains('stage-detail-kpi--expanded');
-                    kpiSection.querySelectorAll('.stage-detail-kpi--expanded').forEach(function(el) {
-                        el.classList.remove('stage-detail-kpi--expanded');
-                    });
-                    kpiSection.querySelectorAll('.stage-detail-entry--open').forEach(function(el) {
-                        el.classList.remove('stage-detail-entry--open');
-                    });
-                    if (!isOpen) {
-                        kpiRow.classList.add('stage-detail-kpi--expanded');
-                        kpiEntry.classList.add('stage-detail-entry--open');
-                    }
+                    toggleAccordion(kpiRow, kpiEntry, kpiSection, 'stage-detail-kpi--expanded');
                 });
 
                 kpiSection.appendChild(kpiRow);
@@ -564,7 +622,7 @@ function showStageDetail(stageSummary) {
             inner.appendChild(kpiSection);
         }
 
-        // ── Field Wisdom (WP4) ──
+        // -- Field Wisdom (WP4) --
         if (stage.fieldWisdom && stage.fieldWisdom.length > 0) {
             stage.fieldWisdom.forEach(function(fw) {
                 var wisdomDiv = document.createElement('div');
@@ -582,7 +640,7 @@ function showStageDetail(stageSummary) {
             });
         }
 
-        // ── Content & Training (WP5) ──
+        // -- Content & Training (WP5) --
         if (stage.content && stage.content.length > 0) {
             var contentSection = document.createElement('div');
             contentSection.className = 'stage-detail-section';
@@ -591,25 +649,20 @@ function showStageDetail(stageSummary) {
             var grid = contentSection.querySelector('.stage-detail-content-grid');
 
             stage.content.forEach(function(ci) {
-                var dimColor = '#6ca6d9'; // default blue
                 var dims = (ci.dimensions || []);
-                if (dims.length > 0) {
-                    var d = dims[0].toLowerCase();
-                    if (d === 'mindset') dimColor = '#b388d9';
-                    else if (d === 'skillset') dimColor = '#6bc96b';
-                }
+                var dc = dims.length > 0 ? dimColor(dims[0]) : '#6ca6d9';
 
                 var card = document.createElement('div');
                 card.className = 'stage-detail-content-card';
                 card.innerHTML =
-                    '<div class="stage-detail-content-card__accent" style="background:' + dimColor + ';"></div>' +
+                    '<div class="stage-detail-content-card__accent" style="background:' + dc + ';"></div>' +
                     '<div class="stage-detail-content-card__thumb">' +
                         (ci.thumbnail ? '<img src="' + esc(ci.thumbnail) + '" alt="">' : '<div style="width:100%;height:100%;background:rgba(255,255,255,0.04);border-radius:4px;"></div>') +
                     '</div>' +
                     '<div class="stage-detail-content-card__info">' +
                         '<div class="stage-detail-content-card__title">' + esc(ci.title || '') + '</div>' +
                         '<div class="stage-detail-content-card__meta">' +
-                            (dims.length ? '<span class="stage-detail-content-card__badge" style="background:' + dimColor + '22;color:' + dimColor + ';">' + esc(dims[0]) + '</span>' : '') +
+                            (dims.length ? '<span class="stage-detail-content-card__badge" style="background:' + dc + '22;color:' + dc + ';">' + esc(dims[0]) + '</span>' : '') +
                             '<span class="stage-detail-content-card__duration">' + esc(ci.type || '') +
                                 (ci.estimatedDuration ? ' \u00B7 ' + esc(ci.estimatedDuration) : '') + '</span>' +
                         '</div>' +
@@ -639,8 +692,63 @@ function showStageDetail(stageSummary) {
     });
 }
 
-// ── Content Detail Overlay (WP6) ─────────────────────────────────────────
+/**
+ * Builds the expandable reflection/self-assessment entry panel for a
+ * diagnostic item.  Resolved items show the observation and a "what
+ * worked well?" prompt; unresolved items show the question from the
+ * question matrix.
+ *
+ * @param {Object}  item           - Diagnostic item with `id`, `label`, `sub`.
+ * @param {boolean} isResolved     - Whether the item is developing/mastery.
+ * @param {Object}  responseMeta   - Response metadata keyed by item ID.
+ * @param {Object}  selfReported   - Previously saved self-reported text keyed by item ID.
+ * @param {Object}  questionLookup - Question text keyed by item ID.
+ * @returns {HTMLDivElement} The entry panel element.
+ */
+function buildReflectionEntry(item, isResolved, responseMeta, selfReported, questionLookup) {
+    var entry = document.createElement('div');
+    entry.className = 'stage-detail-entry';
 
+    if (isResolved) {
+        var obs = (responseMeta[item.id] || {}).observation || '';
+        entry.innerHTML =
+            (obs ? '<div class="stage-detail-entry__question">' + esc(obs) + '</div>' : '') +
+            '<div class="stage-detail-entry__question">What worked well? Any challenges along the way?</div>' +
+            '<div class="stage-detail-entry__thanks" data-item="' + esc(item.id) + '">Thank you for sharing your reflection!</div>' +
+            '<div class="stage-detail-entry__actions">' +
+                '<textarea class="stage-detail-entry__input" placeholder="Share your reflection\u2026" data-item="' + esc(item.id) + '">' +
+                    esc((selfReported[item.id] || {}).text || '') + '</textarea>' +
+                '<button class="stage-detail-entry__save-btn" data-item="' + esc(item.id) + '">&#9654;</button>' +
+            '</div>' +
+            '<span class="stage-detail-entry__saved">Saved \u2714</span>';
+    } else {
+        var question = questionLookup[item.id] || 'How do you feel about this area of your development?';
+        entry.innerHTML =
+            '<div class="stage-detail-entry__question">' + esc(question) + '</div>' +
+            '<div class="stage-detail-entry__thanks" data-item="' + esc(item.id) + '">Thank you for sharing your thoughts!</div>' +
+            '<div class="stage-detail-entry__actions">' +
+                '<textarea class="stage-detail-entry__input" placeholder="Share your thoughts\u2026" data-item="' + esc(item.id) + '">' +
+                    esc((selfReported[item.id] || {}).text || '') + '</textarea>' +
+                '<button class="stage-detail-entry__save-btn" data-item="' + esc(item.id) + '">&#9654;</button>' +
+            '</div>' +
+            '<span class="stage-detail-entry__saved">Saved \u2714</span>';
+    }
+
+    return entry;
+}
+
+// =====================================================================
+//  Content Detail Overlay (WP6)
+// =====================================================================
+
+/**
+ * Renders a full content-item detail view (thumbnail, description,
+ * learning objectives, tags, CTA link) replacing the stage detail.
+ *
+ * @param {Object}      content     - Content item object from the API.
+ * @param {HTMLElement}  parentInner - The inner container (used for back navigation).
+ * @param {Object}       stage      - The parent stage object.
+ */
 function showContentDetail(content, parentInner, stage) {
     if (!container) return;
     var inner = container.querySelector('div');
@@ -675,9 +783,7 @@ function showContentDetail(content, parentInner, stage) {
     detailHeader.className = 'stage-detail-header';
     var dims = content.dimensions || [];
     var dimBadges = dims.map(function(d) {
-        var col = '#6ca6d9';
-        if (d.toLowerCase() === 'mindset') col = '#b388d9';
-        else if (d.toLowerCase() === 'skillset') col = '#6bc96b';
+        var col = dimColor(d);
         return '<span class="stage-detail-content-card__badge" style="background:' + col + '22;color:' + col + ';padding:2px 8px;">' + esc(d) + '</span>';
     }).join(' ');
     var stageBadges = (content.stages || []).map(function(s) {
@@ -726,7 +832,7 @@ function showContentDetail(content, parentInner, stage) {
         inner.appendChild(tagDiv);
     }
 
-    // CTA — link to DSWA Community
+    // CTA -- link to DSWA Community
     var cta = document.createElement('div');
     cta.style.cssText = 'margin-top:20px;text-align:center;';
     if (content.url) {
@@ -742,13 +848,24 @@ function showContentDetail(content, parentInner, stage) {
     container.scrollTop = 0;
 }
 
-// ── Save Button Binding ──────────────────────────────────────────────────
+// =====================================================================
+//  Save Button Binding
+// =====================================================================
 
+/**
+ * Binds click and Enter-key handlers to all `.stage-detail-entry__save-btn`
+ * elements within a container.  Each save posts the reflection text via
+ * the explorer API, shows a thank-you message, and queues the reflection
+ * for chat relay.
+ *
+ * @param {HTMLElement} container - Parent element to search for save buttons.
+ */
 function bindSaveButtons(container) {
     container.querySelectorAll('.stage-detail-entry__save-btn').forEach(function(btn) {
-        // Enter key on textarea triggers save
         var entry = btn.closest('.stage-detail-entry');
         var textarea = entry ? entry.querySelector('textarea') : null;
+
+        // Enter key (without Shift) triggers save
         if (textarea) {
             textarea.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter' && !e.shiftKey) {
@@ -773,12 +890,10 @@ function bindSaveButtons(container) {
                 btn.disabled = false;
                 btn.innerHTML = '&#9654;';
                 if (resp.results && resp.results.saved) {
-                    // Show thank-you bubble (persists)
                     var thanks = entry.querySelector('.stage-detail-entry__thanks[data-item="' + itemId + '"]');
                     if (thanks) {
                         thanks.classList.add('stage-detail-entry__thanks--visible');
                     }
-                    // Track for chat relay
                     pendingReflections.push({ itemId: itemId, text: text });
                 }
             });
@@ -786,10 +901,17 @@ function bindSaveButtons(container) {
     });
 }
 
-// ── Rebind Helpers ───────────────────────────────────────────────────────
+// =====================================================================
+//  Rebind Helpers
+// =====================================================================
 
+/**
+ * Rebuilds the explorer overview from scratch after back-navigation.
+ * Forces a data re-fetch so scores and state are fresh.
+ *
+ * @param {HTMLElement} inner - The inner scrollable container.
+ */
 function rebindTileClicks(inner) {
-    // Re-fetch and rebuild explorer on back to ensure fresh data + event listeners
     inner.innerHTML = '';
     var header = document.createElement('div');
     header.style.cssText = 'text-align:center;margin-bottom:16px;position:relative;';
@@ -807,8 +929,16 @@ function rebindTileClicks(inner) {
     loadDataAndRender(inner);
 }
 
+/**
+ * Re-binds all interactive event handlers on a stage detail view after
+ * an `innerHTML` restore (content card clicks, save buttons, item and
+ * KPI expand/collapse toggles).
+ *
+ * @param {HTMLElement} inner - The inner container holding the restored HTML.
+ * @param {Object}       stage - The stage object (needed for content card clicks).
+ */
 function rebindContentClicks(inner, stage) {
-    // Re-bind content card click handlers after innerHTML restore
+    // Re-bind content card click handlers
     inner.querySelectorAll('.stage-detail-content-card').forEach(function(card, idx) {
         if (stage.content && stage.content[idx]) {
             card.addEventListener('click', function() {
@@ -816,82 +946,71 @@ function rebindContentClicks(inner, stage) {
             });
         }
     });
+
     // Re-bind save buttons
     bindSaveButtons(inner);
-    // Re-bind item expand/collapse
+
+    // Re-bind item expand/collapse via shared helper
     inner.querySelectorAll('.stage-detail-item--interactive').forEach(function(row) {
         var entry = row.nextElementSibling;
         if (entry && entry.classList.contains('stage-detail-entry')) {
             row.addEventListener('click', function() {
-                var isOpen = row.classList.contains('stage-detail-item--expanded');
-                var section = row.closest('.stage-detail-section');
-                if (section) {
-                    section.querySelectorAll('.stage-detail-item--expanded').forEach(function(el) { el.classList.remove('stage-detail-item--expanded'); });
-                    section.querySelectorAll('.stage-detail-entry--open').forEach(function(el) { el.classList.remove('stage-detail-entry--open'); });
-                }
-                if (!isOpen) {
-                    row.classList.add('stage-detail-item--expanded');
-                    entry.classList.add('stage-detail-entry--open');
-                }
+                toggleAccordion(row, entry, row.closest('.stage-detail-section'), 'stage-detail-item--expanded');
             });
         }
     });
-    // Re-bind KPI expand/collapse
+
+    // Re-bind KPI expand/collapse via shared helper
     inner.querySelectorAll('.stage-detail-kpi--interactive').forEach(function(row) {
         var entry = row.nextElementSibling;
         if (entry && entry.classList.contains('stage-detail-entry')) {
             row.addEventListener('click', function() {
-                var isOpen = row.classList.contains('stage-detail-kpi--expanded');
-                var section = row.closest('.stage-detail-section');
-                if (section) {
-                    section.querySelectorAll('.stage-detail-kpi--expanded').forEach(function(el) { el.classList.remove('stage-detail-kpi--expanded'); });
-                    section.querySelectorAll('.stage-detail-entry--open').forEach(function(el) { el.classList.remove('stage-detail-entry--open'); });
-                }
-                if (!isOpen) {
-                    row.classList.add('stage-detail-kpi--expanded');
-                    entry.classList.add('stage-detail-entry--open');
-                }
+                toggleAccordion(row, entry, row.closest('.stage-detail-section'), 'stage-detail-kpi--expanded');
             });
         }
     });
 }
 
-// ── HTML escape utility ──────────────────────────────────────────────────
+// =====================================================================
+//  WP7: Relay Reflections to Chat
+// =====================================================================
 
-function esc(str) {
-    if (!str) return '';
-    var div = document.createElement('div');
-    div.textContent = String(str);
-    return div.innerHTML;
-}
-
-// ─── WP7: Relay Reflections to Chat ──────────────────────────────────────
-
+/**
+ * Sends all pending explorer reflections to the chat as a single
+ * batched message via the `assessment_chat` API endpoint.
+ * Clears the pending queue after sending.
+ */
 function relayReflectionsToChat() {
     if (pendingReflections.length === 0) return;
-    var reflections = pendingReflections.slice(); // copy
+    var reflections = pendingReflections.slice();
     pendingReflections = [];
 
-    // Build a summary message to send to the chat
     var summary = reflections.map(function(r) {
         return '[Self-assessment: ' + r.itemId + '] ' + r.text;
     }).join('\n');
 
-    // Send to chat via the assessment_chat endpoint as a user message
     if (typeof chatApiPost === 'function') {
         chatApiPost('assessment_chat', {
             message: '[explorer-reflections]\n' + summary
-        }, function(resp) {
-            // AI will respond with "Here's what I noticed from your self-assessment" message
-            // The chat-overlay handles rendering the response
+        }, function() {
+            // AI responds via the chat overlay
         });
     }
 }
 
-// ─── WP9: Pulse wrapper for explorer API calls ──────────────────────────
+// =====================================================================
+//  WP9: Pulse wrapper for explorer API calls
+// =====================================================================
 
+/**
+ * Wraps `apiPost` with a lotus pulse and water-ripple trigger so every
+ * explorer API interaction produces visual feedback.
+ *
+ * @param {string}   action   - API action name.
+ * @param {Object}   data     - Payload data.
+ * @param {Function} callback - Response handler.
+ */
 function explorerApiPost(action, data, callback) {
-    // Trigger lotus pulse + ripple on every explorer API interaction
     if (window.lps) {
         try { window.lps.pulse(); } catch(e) {}
         if (window.pulseRipple) try { window.pulseRipple(); } catch(e) {}
@@ -899,17 +1018,21 @@ function explorerApiPost(action, data, callback) {
     apiPost(action, data, callback);
 }
 
-// ─── Initialize ──────────────────────────────────────────────────────────
+// =====================================================================
+//  Initialize
+// =====================================================================
 
+/**
+ * Initialises the explorer toggle button and compass click zone on
+ * applicable pages (dashboard and assessment).
+ */
 function init() {
-    // Only show toggle on assessment and dashboard pages
     var page = new URLSearchParams(window.location.search).get('page') || 'assessment';
     if (page === 'dashboard' || page === 'assessment') {
         createToggleButton();
         addCompassClickZone();
     }
 
-    // Get LPS reference when ready
     if (window.lps) {
         lps = window.lps;
     } else {
@@ -919,7 +1042,10 @@ function init() {
     }
 }
 
-// Clickable zone over the compass/lotus center to toggle explorer
+/**
+ * Creates a transparent click zone over the compass/lotus center that
+ * toggles the explorer when clicked.
+ */
 function addCompassClickZone() {
     var existing = document.getElementById('compassClickZone');
     if (existing) return;
@@ -948,7 +1074,6 @@ if (document.readyState === 'loading') {
 
 // Reinitialize on SPA navigation
 window.addEventListener('spa-nav:loaded', function() {
-    // Remove old toggle and compass zone if page changed
     var existing = document.getElementById('explorerToggle');
     if (existing) existing.remove();
     var czExisting = document.getElementById('compassClickZone');

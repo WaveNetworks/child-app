@@ -1,53 +1,105 @@
 /**
  * chat-overlay.js
  * ElevateHER Assessment Chat Overlay
+ *
  * Connects to the assessment_chat API action.
  * Renders MC choices, cascading petal drops, and content banners with thumbnails.
+ *
+ * Sections:
+ *  1. Initialization & Configuration
+ *  2. DOM References
+ *  3. Auto-start / Resume Flow
+ *  4. API Wrapper
+ *  5. Splash Overlay
+ *  6. Chat Message Rendering
+ *  7. Options & Content Banners
+ *  8. Scroll Management
+ *  9. Admin Debug Modal
+ * 10. Cascading Petal Drops
+ * 11. Profile Field Modal
+ * 12. Profile Card
+ * 13. Deferred Questions
+ * 14. Send Message
+ * 15. API Response Handler
+ * 16. Content Recommendations
+ * 17. Input Handlers
+ * 18. Cleanup / SPA Navigation
+ * 19. Dynamic 4-Zone Layout
  */
 (function() {
 'use strict';
 
+/* =========================================================================
+ * 1. INITIALIZATION & CONFIGURATION
+ * Mount element lookup, session data, admin flag, dimension colour palette.
+ * ========================================================================= */
+
 var mount = document.getElementById('chat-overlay-mount');
 if (!mount) { console.error('[chat] #chat-overlay-mount not found — chat-overlay.js aborting'); return; }
 
-console.group('[chat] ── Chat Overlay Init ──');
-console.log('[chat] mount element found:', mount);
-
+/** @type {string} Active session ID (set on auto-start or from data attribute) */
 var sessionId = mount.getAttribute('data-session-id') || '';
+
+/** @type {string} Current assessment phase (profile, assessment, score) */
 var phase = mount.getAttribute('data-phase') || 'profile';
+
+/** @type {boolean} Whether a session already exists on page load */
 var hasSession = !!sessionId;
+
+/** @type {string} Logo URL for branding */
 var logoUrl = mount.getAttribute('data-logo-url') || '';
+
+/** @type {string} Site name for branding */
 var siteName = mount.getAttribute('data-site-name') || 'ElevateHER';
 
-console.log('[chat] data-session-id:', sessionId || '(empty — will auto-start)');
-console.log('[chat] data-phase:', phase);
-console.log('[chat] data-has-profile:', mount.getAttribute('data-has-profile'));
-console.log('[chat] data-auto-start:', mount.getAttribute('data-auto-start'));
-console.log('[chat] hasSession:', hasSession);
-
-// ─── Dimension Colors (matching DSWADemo) ────────────────────────────────
-
+/** @type {boolean} True when the logged-in user is an admin (enables debug UI) */
 var isAdmin = document.body.getAttribute('data-is-admin') === '1';
-var _debugStore = []; // Stores debug data per bot message index
 
+/** @type {Array<Object>} Debug payloads indexed per bot message (admin only) */
+var _debugStore = [];
+
+/**
+ * Conditional debug logger — only outputs when the current user is an admin.
+ * Replaces scattered console.log calls in production paths.
+ * @param {...*} args - Arguments forwarded to console.log
+ */
+function dbg() { if (isAdmin) console.log.apply(console, arguments); }
+
+/**
+ * Dimension colour map — accent, background, and text colours keyed by
+ * lowercase dimension name. Lookup uses `dim.toLowerCase()`.
+ * @type {Object<string, {accent: string, bg: string, text: string}>}
+ */
 var dimColors = {
     mindset:  { accent: '#b388d9', bg: 'rgba(179,136,217,0.15)', text: '#d4b8f0' },
     toolset:  { accent: '#6ca6d9', bg: 'rgba(108,166,217,0.15)', text: '#a3cef0' },
     skillset: { accent: '#6bc96b', bg: 'rgba(107,201,107,0.15)', text: '#a8e6a8' },
-    Mindset:  { accent: '#b388d9', bg: 'rgba(179,136,217,0.15)', text: '#d4b8f0' },
-    Toolset:  { accent: '#6ca6d9', bg: 'rgba(108,166,217,0.15)', text: '#a3cef0' },
-    Skillset: { accent: '#6bc96b', bg: 'rgba(107,201,107,0.15)', text: '#a8e6a8' },
 };
 
-// ─── DOM References (elements defined in assessment.php) ─────────────────
+/* =========================================================================
+ * 2. DOM REFERENCES
+ * All elements are defined in assessment.php and must exist at init time.
+ * ========================================================================= */
 
+/** @type {HTMLElement} Scrollable message container */
 var messagesEl = document.getElementById('chatMessages');
+
+/** @type {HTMLElement} Typing / thinking indicator bubble */
 var typingEl = document.getElementById('chatTyping');
+
+/** @type {HTMLElement} Bottom input bar wrapper */
 var inputBar = document.getElementById('chatInputBar');
+
+/** @type {HTMLElement} Area below messages for MC choices / content banners */
 var optionsArea = document.getElementById('chatOptionsArea');
+
+/** @type {HTMLElement} Phase badge label (profile / assessment / score) */
 var phaseBadge = document.getElementById('chatPhaseBadge');
 
+/** @type {HTMLInputElement} Free-text chat input */
 var chatInput = document.getElementById('chatInput');
+
+/** @type {HTMLButtonElement} Send button */
 var chatSendBtn = document.getElementById('chatSendBtn');
 
 // Verify all DOM elements found
@@ -57,43 +109,43 @@ var _domMissing = Object.keys(_domCheck).filter(function(k) { return !_domCheck[
 if (_domMissing.length) {
     console.error('[chat] MISSING DOM elements:', _domMissing.join(', '));
 } else {
-    console.log('[chat] All DOM elements found ✓');
+    dbg('[chat] All DOM elements found');
 }
-console.groupEnd();
 
-// ─── Auto-start or Resume ────────────────────────────────────────────────
+/* =========================================================================
+ * 3. AUTO-START / RESUME FLOW
+ * If no session exists, call assessment_start then send [start].
+ * If a session exists, load chat history and restore choices.
+ * ========================================================================= */
 
 // Clear stale content from previous session on load
 messagesEl.innerHTML = '';
 optionsArea.innerHTML = '';
 
 if (!hasSession) {
-    console.group('[chat] ── Auto-Start Flow (no existing session) ──');
-    console.log('[chat] Disabling input, will auto-start in 1500ms...');
+    dbg('[chat] No existing session — will auto-start');
     chatInput.disabled = true;
     chatSendBtn.disabled = true;
 
+    /**
+     * Kicks off a new assessment session via the assessment_start API action,
+     * then sends the [start] command to begin the chat flow.
+     */
     function doAutoStart() {
-        console.log('[chat] Calling assessment_start...');
-        var _t0 = performance.now();
+        dbg('[chat] Calling assessment_start...');
         chatApiPost('assessment_start', {}, function(resp) {
-            var _elapsed = Math.round(performance.now() - _t0);
-            console.log('[chat] assessment_start response (' + _elapsed + 'ms):', JSON.stringify(resp).substring(0, 500));
             if (resp.error) {
                 console.error('[chat] assessment_start FAILED:', resp.error);
                 addBotMessage('<span style="color:#e07878;">' + resp.error + '</span>');
                 chatInput.disabled = false;
                 chatSendBtn.disabled = false;
-                console.groupEnd();
                 return;
             }
             sessionId = resp.results.session_id;
             hasSession = true;
-            console.log('[chat] Session created:', sessionId, '| phase:', resp.results.phase, '| resuming:', resp.results.resuming);
+            dbg('[chat] Session created:', sessionId, '| phase:', resp.results.phase, '| resuming:', resp.results.resuming);
             chatInput.disabled = false;
             chatSendBtn.disabled = false;
-            console.log('[chat] Sending [start] message to kick off assessment_chat...');
-            console.groupEnd();
             sendMessage('[start]');
         });
     }
@@ -101,16 +153,12 @@ if (!hasSession) {
     setTimeout(doAutoStart, 100);
 } else {
     // Existing session — load chat history from DB (no AI call needed)
-    console.group('[chat] ── Resume Flow (session: ' + sessionId + ') ──');
-    console.log('[chat] Loading chat history...');
+    dbg('[chat] Resume flow — session:', sessionId);
     (function() {
-        var _t0 = performance.now();
         chatApiPost('get_chat_history', {session_id: sessionId}, function(resp) {
-            var _elapsed = Math.round(performance.now() - _t0);
-            console.log('[chat] get_chat_history response (' + _elapsed + 'ms):', resp.error ? 'ERROR: ' + resp.error : 'OK');
             dismissSplash();
             var history = (resp.results && resp.results.history) || [];
-            console.log('[chat] History messages:', history.length, '| phase:', (resp.results && resp.results.phase) || '(none)');
+            dbg('[chat] History messages:', history.length, '| phase:', (resp.results && resp.results.phase) || '(none)');
             if (history.length > 0) {
                 // Show only last N messages; collapse older ones behind a button
                 var VISIBLE_TAIL = 6;
@@ -171,20 +219,15 @@ if (!hasSession) {
 
                 if (nextChoices && nextChoices.length) {
                     // Question matrix has a next MC question — show question prompt + choices
-                    console.log('[chat] Showing', nextChoices.length, 'choices from next matrix question:',
+                    dbg('[chat] Showing', nextChoices.length, 'choices from next matrix question:',
                         resp.results.next_question_id || '(unknown)');
                     if (resp.results.next_question_prompt) {
                         addBotMessage(resp.results.next_question_prompt, null, {question: true});
                     }
                     showOptions(nextChoices, 'matrix');
-                } else if (lastBot && lastBot.choices && lastBot.choices.length) {
-                    // Fall back to whatever the last bot message had
-                    var lastSource = lastBot.choices_source || 'ai';
-                    console.log('[chat] Restoring', lastBot.choices.length, 'choices from last bot message (source: ' + lastSource + ')');
-                    showOptions(lastBot.choices, lastSource);
                 } else if (resp.results.next_question_prompt) {
                     // Free-form question — show the question prompt directly, no AI call needed
-                    console.log('[chat] Free-form question available:',
+                    dbg('[chat] Free-form question available:',
                         resp.results.next_question_id || '(unknown)', '— showing prompt directly');
                     var promptDiv = document.createElement('div');
                     promptDiv.className = 'chat-bubble chat-bubble--bot';
@@ -192,13 +235,15 @@ if (!hasSession) {
                     messagesEl.appendChild(promptDiv);
                 } else {
                     // No question available at all — re-engage AI as last resort
-                    console.log('[chat] No question available — sending [resume] to re-engage AI');
-                    console.groupEnd();
+                    dbg('[chat] No question available — sending [resume] to re-engage AI');
                     sendMessage('[resume]');
                     return; // sendMessage handles scrolling
                 }
 
                 scrollToBottom();
+                // Ensure scroll happens after layout settles (choices/options may change layout)
+                setTimeout(scrollToBottom, 100);
+                setTimeout(scrollToBottom, 400);
                 // Update phase badge
                 if (resp.results.phase) {
                     phase = resp.results.phase;
@@ -206,31 +251,38 @@ if (!hasSession) {
                     var cz = document.getElementById('compassClickZone');
                     if (cz) cz.style.pointerEvents = (phase === 'profile') ? 'none' : 'auto';
                 }
-                console.log('[chat] History replay complete');
-                console.groupEnd();
+                dbg('[chat] History replay complete');
             } else {
                 // No history yet — fall back to resume
-                console.log('[chat] No history found — sending [resume]');
-                console.groupEnd();
+                dbg('[chat] No history found — sending [resume]');
                 sendMessage('[resume]');
             }
         });
     })();
 }
 
-// ─── API wrapper ─────────────────────────────────────────────────────────
+/* =========================================================================
+ * 4. API WRAPPER
+ * Single POST helper for all backend communication. Handles JSON parsing,
+ * HTTP errors, and network failures uniformly.
+ * ========================================================================= */
 
+/**
+ * Send a POST request to the assessment API.
+ * @param {string}   action   - The API action name (e.g. 'assessment_chat')
+ * @param {Object}   data     - Key/value pairs to send as FormData
+ * @param {Function} callback - Called with the parsed JSON response (or an error object)
+ */
 function chatApiPost(action, data, callback) {
     var formData = new FormData();
     formData.append('action', action);
     for (var key in data) { formData.append(key, data[key]); }
 
-    console.log('[chat] API >> POST', action, Object.keys(data).length ? data : '(no params)');
-    var _t0 = performance.now();
+    dbg('[chat] API >> POST', action, Object.keys(data).length ? data : '(no params)');
 
     fetch('../api/index.php', { method: 'POST', body: formData })
         .then(function(r) {
-            console.log('[chat] API << HTTP', r.status, r.statusText, 'for', action, '(' + Math.round(performance.now() - _t0) + 'ms)');
+            dbg('[chat] API << HTTP', r.status, r.statusText, 'for', action);
             if (!r.ok) {
                 return r.text().then(function(body) {
                     console.error('[chat] API << Non-OK response body (first 500 chars):', body.substring(0, 500));
@@ -250,8 +302,7 @@ function chatApiPost(action, data, callback) {
             if (json.error) {
                 console.warn('[chat] API << ERROR from', action + ':', json.error);
             } else {
-                var keys = json.results ? Object.keys(json.results) : [];
-                console.log('[chat] API << OK for', action, '| result keys:', keys.join(', ') || '(empty)');
+                dbg('[chat] API << OK for', action);
             }
             callback(json);
         })
@@ -261,10 +312,18 @@ function chatApiPost(action, data, callback) {
         });
 }
 
-// ─── Splash Overlay ─────────────────────────────────────────────────────
+/* =========================================================================
+ * 5. SPLASH OVERLAY
+ * Full-screen loading splash dismissed once the first real content arrives.
+ * ========================================================================= */
 
+/** @type {HTMLElement|null} Splash overlay element (removed after dismiss) */
 var splashEl = document.getElementById('chatSplash');
 
+/**
+ * Fade out and remove the splash overlay.
+ * Safe to call multiple times — no-ops after the first dismiss.
+ */
 function dismissSplash() {
     if (!splashEl) return;
     splashEl.classList.add('chat-splash--hidden');
@@ -274,8 +333,18 @@ function dismissSplash() {
     }, 700);
 }
 
-// ─── Chat Functions ──────────────────────────────────────────────────────
+/* =========================================================================
+ * 6. CHAT MESSAGE RENDERING
+ * Functions to append bot and user message bubbles to the chat stream.
+ * ========================================================================= */
 
+/**
+ * Append a bot message bubble to the chat stream.
+ * Optionally attaches an admin debug button if debug data is provided.
+ * @param {string}      html      - HTML content for the bubble
+ * @param {Object|null} debugData - AI debug payload (admin only, optional)
+ * @param {Object}      [opts]    - Options: {question: boolean} adds question styling
+ */
 function addBotMessage(html, debugData, opts) {
     dismissSplash();
     typingEl.style.display = 'none';
@@ -285,7 +354,7 @@ function addBotMessage(html, debugData, opts) {
     div.className = 'chat-bubble chat-bubble--bot' + (opts.question ? ' chat-bubble--question' : '');
     div.innerHTML = html;
 
-    // Admin debug icon
+    // Admin debug icon — shows vendor, model, token count, and cost on hover
     if (isAdmin && debugData) {
         var idx = _debugStore.length;
         _debugStore.push(debugData);
@@ -307,12 +376,18 @@ function addBotMessage(html, debugData, opts) {
     messagesEl.appendChild(div);
     scrollToBottom();
 
+    // Pulse the lotus on every bot message
     if (window.lps) {
         try { window.lps.pulse(); } catch(e) {}
         if (window.pulseRipple) try { window.pulseRipple(); } catch(e) {}
     }
 }
 
+/**
+ * Append a user message bubble to the chat stream.
+ * Uses textContent (not innerHTML) to prevent XSS from user input.
+ * @param {string} text - Plain text message from the user
+ */
 function addUserMessage(text) {
     var div = document.createElement('div');
     div.className = 'chat-bubble chat-bubble--user';
@@ -321,6 +396,19 @@ function addUserMessage(text) {
     scrollToBottom();
 }
 
+/* =========================================================================
+ * 7. OPTIONS & CONTENT BANNERS
+ * Renders MC choice buttons and content recommendation banners in the
+ * interactive zone below the chat stream.
+ * ========================================================================= */
+
+/**
+ * Render multiple-choice option buttons in the options area.
+ * Clears any existing options first. Each button fades out siblings on click
+ * before sending the selected value.
+ * @param {Array<Object|string>} choices - Array of {label, value} objects or plain strings
+ * @param {string}               source  - Origin of choices ('matrix' or 'ai')
+ */
 function showOptions(choices, source) {
     optionsArea.innerHTML = '';
     if (!choices || !choices.length) return;
@@ -354,6 +442,9 @@ function showOptions(choices, source) {
 
 /**
  * Show a content recommendation banner with thumbnail — matching DSWADemo style.
+ * Banner is clickable and navigates to the content detail page or external URL.
+ * @param {Object} item - Content item with id, title, description, thumbnail,
+ *                         dimensions[], type, estimatedDuration, reason, url
  */
 function showContentBanner(item) {
     if (!item) return;
@@ -404,20 +495,39 @@ function showContentBanner(item) {
     optionsArea.appendChild(banner);
 }
 
+/* =========================================================================
+ * 8. SCROLL MANAGEMENT
+ * Debounced scroll-to-bottom using requestAnimationFrame so multiple rapid
+ * calls (e.g. addBotMessage + showOptions + cascadeDrops) collapse into one.
+ * ========================================================================= */
+
+/** @type {number|null} Pending rAF handle for debounced scroll */
+var _scrollRafId = null;
+
+/**
+ * Scroll the message container to the bottom.
+ * Uses rAF-based debouncing so multiple rapid calls in the same frame
+ * collapse into a single scroll operation.
+ */
 function scrollToBottom() {
-    // Defer to next frame so layout changes (zone resize, new elements) are applied first
-    requestAnimationFrame(function() {
-        messagesEl.scrollTop = messagesEl.scrollHeight;
-        // Also ensure the last element in the options area is visible
-        var lastOpt = optionsArea.lastElementChild;
-        if (lastOpt) {
-            lastOpt.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
+    if (_scrollRafId) return; // already scheduled
+    _scrollRafId = requestAnimationFrame(function() {
+        _scrollRafId = null;
+        messagesEl.scrollTop = messagesEl.scrollHeight + 200;
     });
 }
 
-// ─── Admin Debug Modal ──────────────────────────────────────────────────
+/* =========================================================================
+ * 9. ADMIN DEBUG MODAL
+ * Populates and shows the Bootstrap modal with AI debug data (system prompt,
+ * raw response, token counts, cost, phase transitions).
+ * ========================================================================= */
 
+/**
+ * Show the admin debug modal with details about an AI response.
+ * @param {Object} d - Debug data object (vendor, model, tokens, cost_usd,
+ *                     phase_before, phase_after, phase_signal, question_id, etc.)
+ */
 function showDebugModal(d) {
     if (!d) return;
     var modal = document.getElementById('aiDebugModal');
@@ -435,7 +545,7 @@ function showDebugModal(d) {
     document.getElementById('aiDbgPhase').textContent = (d.phase_before || '?') + ' → ' + (d.phase_after || '?');
     document.getElementById('aiDbgSignal').textContent = d.phase_signal || 'continue';
 
-    // Badges row
+    // Badges row — dynamic badges for resolved MCs, questions, inferred items, etc.
     var badges = document.getElementById('aiDebugBadges');
     var badgeHtml = '';
     if (d.mc_resolved) badgeHtml += '<span class="badge bg-info me-1">MC Resolved</span>';
@@ -468,6 +578,11 @@ function showDebugModal(d) {
     bsModal.show();
 }
 
+/**
+ * Escape a string for safe HTML insertion (prevents XSS).
+ * @param {string} str - Raw string to escape
+ * @returns {string} HTML-escaped string
+ */
 function escHtml(str) {
     if (!str) return '';
     var d = document.createElement('div');
@@ -475,8 +590,17 @@ function escHtml(str) {
     return d.innerHTML;
 }
 
-// ─── Cascading Petal Drops ───────────────────────────────────────────────
+/* =========================================================================
+ * 10. CASCADING PETAL DROPS
+ * Triggers animated petal drops on the lotus visualisation for each
+ * resolved assessment item (dimension + stage + progress).
+ * ========================================================================= */
 
+/**
+ * Trigger cascading petal drop animations with staggered timing.
+ * Each item drops onto the lotus at 300 ms intervals.
+ * @param {Array<Object>} items - Items with {dimension, stage, progress, id}
+ */
 function cascadeDrops(items) {
     if (!items || !items.length || !window.lps) return;
     var delay = 0;
@@ -490,10 +614,19 @@ function cascadeDrops(items) {
     });
 }
 
-// ─── Profile Field Modal (Getting to Know You card) ─────────────────────
+/* =========================================================================
+ * 11. PROFILE FIELD MODAL
+ * "Getting to Know You" card — lets the user pick a profile value from a
+ * modal built from server-provided choices, then submits via profile_field_update.
+ * ========================================================================= */
 
-var _profileChoices = null; // Cached choices by field
+/** @type {Object|null} Cached profile choices by field key */
+var _profileChoices = null;
 
+/**
+ * Load profile choices from the server (cached after first call).
+ * @param {Function} cb - Callback receiving the choices object (or null)
+ */
 function loadProfileChoices(cb) {
     if (_profileChoices) { if (cb) cb(_profileChoices); return; }
     chatApiPost('get_profile_choices', {}, function(resp) {
@@ -504,15 +637,26 @@ function loadProfileChoices(cb) {
     });
 }
 
+/**
+ * Open a modal for the user to select a profile field value.
+ * Builds radio-button options from cached choices, with optional note textarea.
+ * On submit, calls profile_field_update and either advances the chat (if the
+ * field matches the active question) or confirms inline.
+ *
+ * @param {string} fieldKey     - Profile field identifier (e.g. 'primaryMotivation')
+ * @param {string} fieldLabel   - Human-readable field name for the modal header
+ * @param {string} currentValue - Currently selected value (for pre-selection), or empty
+ */
 function openProfileFieldModal(fieldKey, fieldLabel, currentValue) {
     loadProfileChoices(function(choices) {
         var fieldData = choices ? choices[fieldKey] : null;
         if (!fieldData) { console.warn('[chat] No choices for field:', fieldKey); return; }
 
-        // Remove existing modal
+        // Remove existing modal if open
         var old = document.getElementById('profileFieldModal');
         if (old) old.remove();
 
+        // ── Build radio-button option labels ──
         var optionsHtml = '';
         (fieldData.choices || []).forEach(function(c) {
             // Extract display value from "field:value" format
@@ -526,20 +670,27 @@ function openProfileFieldModal(fieldKey, fieldLabel, currentValue) {
                 '</label>';
         });
 
+        // ── Assemble modal DOM ──
+        // Structure: overlay > modal card > header, prompt, options, textarea, footer
         var modal = document.createElement('div');
         modal.id = 'profileFieldModal';
         modal.className = 'profile-modal-overlay';
         modal.innerHTML =
             '<div class="profile-modal">' +
+            /* --- Header with title and close button --- */
             '<div class="profile-modal__header">' +
             '<h6>' + fieldLabel + '</h6>' +
             '<button class="profile-modal__close" onclick="document.getElementById(\'profileFieldModal\').remove()">&times;</button>' +
             '</div>' +
+            /* --- Prompt text from field config --- */
             '<div class="profile-modal__prompt">' + (fieldData.prompt || '') + '</div>' +
+            /* --- Radio-button options --- */
             '<div class="profile-modal__options">' + optionsHtml + '</div>' +
+            /* --- Optional note textarea --- */
             '<div class="profile-modal__message">' +
             '<textarea id="profileFieldMessage" placeholder="Add a note (optional)..." rows="2"></textarea>' +
             '</div>' +
+            /* --- Footer with cancel / save buttons --- */
             '<div class="profile-modal__footer">' +
             '<button class="profile-modal__cancel" onclick="document.getElementById(\'profileFieldModal\').remove()">Cancel</button>' +
             '<button class="profile-modal__submit" id="profileFieldSubmit">Save</button>' +
@@ -548,12 +699,12 @@ function openProfileFieldModal(fieldKey, fieldLabel, currentValue) {
 
         document.body.appendChild(modal);
 
-        // Close on overlay click
+        // Close on overlay click (outside the modal card)
         modal.addEventListener('click', function(e) {
             if (e.target === modal) modal.remove();
         });
 
-        // Highlight selected option
+        // Highlight selected option on click
         modal.querySelectorAll('.profile-modal__option').forEach(function(opt) {
             opt.addEventListener('click', function() {
                 modal.querySelectorAll('.profile-modal__option').forEach(function(o) { o.classList.remove('selected'); });
@@ -561,7 +712,7 @@ function openProfileFieldModal(fieldKey, fieldLabel, currentValue) {
             });
         });
 
-        // Submit handler
+        // ── Submit handler ──
         document.getElementById('profileFieldSubmit').addEventListener('click', function() {
             var selected = modal.querySelector('input[name="profileFieldValue"]:checked');
             if (!selected) return;
@@ -571,7 +722,7 @@ function openProfileFieldModal(fieldKey, fieldLabel, currentValue) {
             // Get the selected choice label for display
             var selectedLabel = selected.closest('.profile-modal__option').querySelector('span').textContent;
 
-            // Disable button
+            // Disable button to prevent double-submit
             this.disabled = true;
             this.textContent = 'Saving...';
 
@@ -621,6 +772,18 @@ function openProfileFieldModal(fieldKey, fieldLabel, currentValue) {
     });
 }
 
+/* =========================================================================
+ * 12. PROFILE CARD
+ * Renders the "Getting to Know You" progress card with expandable item list,
+ * progress bar, and click-to-edit bindings.
+ * ========================================================================= */
+
+/**
+ * Render or update the profile progress card in the chat stream.
+ * Shows collected/total fields, a progress bar, and expandable item list
+ * with click-to-edit capability.
+ * @param {Object} pp - Profile progress data: {collected, total, needed, items[]}
+ */
 function updateProfileCard(pp) {
     var collected = pp.collected || 0;
     var total = pp.total || 5;
@@ -628,6 +791,7 @@ function updateProfileCard(pp) {
     var pct = Math.round((collected / total) * 100);
     var ready = collected >= needed;
 
+    // ── Build individual field items ──
     var itemsHtml = '';
     (pp.items || []).forEach(function(item) {
         var statusIcon = item.collected
@@ -647,6 +811,7 @@ function updateProfileCard(pp) {
             '</div>';
     });
 
+    // ── Assemble the card ──
     var cardHtml =
         '<div class="chat-kpi-card">' +
         '<div class="chat-kpi-card__header" style="cursor:pointer;" onclick="var g=this.closest(\'.chat-kpi-card\').querySelector(\'.chat-kpi-group\');g.classList.toggle(\'open\');var b=g.querySelector(\'.chat-kpi-group__body\');b.style.display=g.classList.contains(\'open\')?\'block\':\'none\';this.querySelector(\'.chat-kpi-group__arrow\').style.transform=g.classList.contains(\'open\')?\'rotate(180deg)\':\'\';">' +
@@ -672,6 +837,7 @@ function updateProfileCard(pp) {
         '</div>' +
         '</div>';
 
+    // Insert or update the card element
     var ppEl = document.getElementById('chatProfileProgress');
     if (ppEl) {
         ppEl.innerHTML = cardHtml;
@@ -688,6 +854,10 @@ function updateProfileCard(pp) {
     scrollToBottom();
 }
 
+/**
+ * Attach click-to-edit handlers on each profile card item row.
+ * Opens the profile field modal pre-populated with the current value.
+ */
 function bindProfileItemClicks() {
     var ppEl = document.getElementById('chatProfileProgress');
     if (!ppEl) return;
@@ -701,8 +871,16 @@ function bindProfileItemClicks() {
     });
 }
 
-// ─── Deferred Question (shown after content banner is acknowledged) ──────
+/* =========================================================================
+ * 13. DEFERRED QUESTIONS
+ * When a content banner is shown, the next question is held in _deferredQuestion
+ * and served only after the user clicks "Continue Assessment".
+ * ========================================================================= */
 
+/**
+ * Append a "Continue Assessment" button after content banners.
+ * Clicking it serves the deferred question.
+ */
 function appendContinueButton() {
     var btn = document.createElement('button');
     btn.className = 'content-continue-btn';
@@ -714,41 +892,86 @@ function appendContinueButton() {
     scrollToBottom();
 }
 
+/**
+ * Serve a deferred question — either resume from backend or show cached choices.
+ * Clears content banners and the continue button first.
+ */
 function serveDeferredQuestion() {
     if (!_deferredQuestion) return;
     var dq = _deferredQuestion;
     _deferredQuestion = null;
     // Clear content banners and continue button
     optionsArea.querySelectorAll('.content-banner, .content-continue-btn, .growth-content-header').forEach(function(el) { el.remove(); });
-    if (dq.bubble) addBotMessage(dq.bubble, null, {question: true});
-    showOptions(dq.choices, dq.source);
-    scrollToBottom();
+    if (dq.resume) {
+        // Backend suppressed the question — send [resume] to get it fresh
+        sendMessage('[resume]');
+    } else {
+        if (dq.bubble) addBotMessage(dq.bubble, null, {question: true});
+        showOptions(dq.choices, dq.source);
+        scrollToBottom();
+    }
 }
 
-// ─── Send Message ────────────────────────────────────────────────────────
+/* =========================================================================
+ * 14. SEND MESSAGE
+ * Two entry points: sendMessage (user-typed) and sendMessageRaw (MC choice).
+ * Both share prepareSend() for common setup: clearing input, showing typing
+ * indicator, and scrolling to bottom.
+ * ========================================================================= */
 
-function sendMessageRaw(text, displayLabel) {
-    if (!text.trim()) { console.warn('[chat] sendMessageRaw: empty text, ignoring'); return; }
-    if (!sessionId) { console.error('[chat] sendMessageRaw: no sessionId! Cannot send:', text); return; }
-    // If a deferred question is waiting, serve it instead of calling the API
-    if (_deferredQuestion) {
-        addUserMessage(displayLabel || text);
-        serveDeferredQuestion();
-        return;
-    }
-    console.log('[chat] sendMessageRaw:', text.substring(0, 80));
+/** @type {number} Current retry count for failed API calls */
+var _retryCount = 0;
+
+/** @type {string} Last message sent (used for retry logic) */
+var _lastMessage = '';
+
+/** @type {Object|null} Deferred question held while content banner is shown */
+var _deferredQuestion = null;
+
+/**
+ * Common setup for both sendMessage and sendMessageRaw.
+ * Clears the text input, stores the message for retry, resets retry count,
+ * shows the typing indicator, and scrolls to bottom.
+ * @param {string} text - The message being sent
+ */
+function prepareSend(text) {
     _lastMessage = text;
     _retryCount = 0;
     chatInput.value = '';
-    // Show thinking bubble immediately
     typingEl.style.display = 'block';
     messagesEl.appendChild(typingEl);
     scrollToBottom();
+}
+
+/**
+ * Send a raw message value to the backend (used by MC choice buttons).
+ * Does NOT add a user bubble — the caller is responsible for that.
+ * Optionally sends a display_label for history rendering if it differs from the value.
+ * @param {string} text         - Raw value to send (e.g. 'primaryMotivation:financial_goals')
+ * @param {string} displayLabel - Human-readable label for chat history (optional)
+ */
+function sendMessageRaw(text, displayLabel) {
+    if (!text.trim()) { console.warn('[chat] sendMessageRaw: empty text, ignoring'); return; }
+    if (!sessionId) { console.error('[chat] sendMessageRaw: no sessionId! Cannot send:', text); return; }
+    // If a deferred question is waiting (content was shown), continue to the next question
+    if (_deferredQuestion) {
+        optionsArea.querySelectorAll('.content-banner, .content-continue-btn, .growth-content-header').forEach(function(el) { el.remove(); });
+        _deferredQuestion = null;
+    }
+    dbg('[chat] sendMessageRaw:', text.substring(0, 80));
+    prepareSend(text);
     var payload = {session_id: sessionId, message: text};
     if (displayLabel && displayLabel !== text) { payload.display_label = displayLabel; }
     chatApiPost('assessment_chat', payload, handleApiResponse);
 }
 
+/**
+ * Send a user-typed message to the backend.
+ * Adds a user bubble, shows typing indicator, and posts to assessment_chat.
+ * If a deferred question is waiting (and this is not a system command),
+ * serves the deferred question instead.
+ * @param {string} text - User's typed message
+ */
 function sendMessage(text) {
     if (!text.trim()) { console.warn('[chat] sendMessage: empty text, ignoring'); return; }
     if (!sessionId) { console.error('[chat] sendMessage: no sessionId! Cannot send:', text); return; }
@@ -758,18 +981,11 @@ function sendMessage(text) {
         serveDeferredQuestion();
         return;
     }
-    console.log('[chat] sendMessage:', text.substring(0, 80), '| session:', sessionId);
+    dbg('[chat] sendMessage:', text.substring(0, 80), '| session:', sessionId);
     if (text !== '[start]' && text !== '[resume]') {
         addUserMessage(text);
     }
-    _lastMessage = text;
-    _retryCount = 0;
-    chatInput.value = '';
-
-    // Show thinking bubble immediately — no reason to wait
-    typingEl.style.display = 'block';
-    messagesEl.appendChild(typingEl);
-    scrollToBottom();
+    prepareSend(text);
 
     // WP9: Pulse on every client-server interaction (send)
     if (window.lps) {
@@ -780,10 +996,44 @@ function sendMessage(text) {
     chatApiPost('assessment_chat', {session_id: sessionId, message: text}, handleApiResponse);
 }
 
-var _retryCount = 0;
-var _lastMessage = '';
-var _deferredQuestion = null; // {choices, source, bubble} — held when content banner takes priority
+/* =========================================================================
+ * 15. API RESPONSE HANDLER
+ * Central handler for assessment_chat responses. Updates phase, renders bot
+ * messages, profile card, hard-wall KPI accordion, petal drops, content
+ * banners, and MC choices.
+ * ========================================================================= */
 
+/**
+ * Pick the least-presented item from an array, using sessionStorage to track
+ * how many times each item has been shown. Increments the count for the
+ * picked item and persists back to sessionStorage.
+ * @param {Array<Object>} items - Array of items with id and/or title
+ * @returns {{picked: Object|null, counts: Object}} The selected item and updated counts
+ */
+function pickLeastPresented(items) {
+    var counts = {};
+    try { counts = JSON.parse(sessionStorage.getItem('bannerCounts') || '{}'); } catch(e) {}
+    var picked = items.reduce(function(best, item) {
+        var key = item.id || item.title || '';
+        var c = counts[key] || 0;
+        if (!best || c < (counts[best.id || best.title || ''] || 0)) return item;
+        return best;
+    }, null);
+    if (picked) {
+        var pickedKey = picked.id || picked.title || '';
+        counts[pickedKey] = (counts[pickedKey] || 0) + 1;
+        try { sessionStorage.setItem('bannerCounts', JSON.stringify(counts)); } catch(e) {}
+    }
+    return { picked: picked, counts: counts };
+}
+
+/**
+ * Handle the API response from assessment_chat.
+ * Orchestrates all UI updates: phase badge, bot message, profile card,
+ * hard-wall growth path, petal drops, content banners, MC choices,
+ * and session completion.
+ * @param {Object} resp - API response: {error, results: {phase, display_message, choices, ...}}
+ */
 function handleApiResponse(resp) {
     chatInput.focus();
 
@@ -792,7 +1042,7 @@ function handleApiResponse(resp) {
         if (_retryCount < 3 && _lastMessage) {
             _retryCount++;
             var _delay = 1500 * _retryCount;
-            console.log('[chat] Retrying in', _delay + 'ms (attempt', _retryCount + ')...');
+            dbg('[chat] Retrying in', _delay + 'ms (attempt', _retryCount + ')...');
             if (_retryCount === 1) {
                 typingEl.style.display = 'block';
                 messagesEl.appendChild(typingEl);
@@ -813,21 +1063,15 @@ function handleApiResponse(resp) {
     typingEl.style.display = 'none';
 
     var r = resp.results || {};
-    console.group('[chat] ── handleApiResponse ──');
-    console.log('[chat] phase:', r.phase || '(none)', '| display_message:', r.display_message ? r.display_message.substring(0, 80) + '...' : '(none)');
-    console.log('[chat] choices:', r.choices ? r.choices.length : 0,
-        '| inferred_items:', r.inferred_items ? r.inferred_items.length : 0,
-        '| content_recs:', r.content_recommendations ? r.content_recommendations.length : 0);
-    console.log('[chat] session_complete:', !!r.session_complete, '| hard_wall:', r.hard_wall ? 'present' : 'none');
-    if (r.score_update) console.log('[chat] score_update:', JSON.stringify(r.score_update));
-    if (r.placement) console.log('[chat] placement:', JSON.stringify(r.placement));
-    if (r._debug) console.log('[chat] _debug keys:', Object.keys(r._debug).join(', '));
+    dbg('[chat] handleApiResponse — phase:', r.phase || '(none)',
+        '| choices:', r.choices ? r.choices.length : 0,
+        '| content_recs:', r.content_recommendations ? r.content_recommendations.length : 0,
+        '| session_complete:', !!r.session_complete);
 
-    // Update phase
+    // Update phase badge and compass click zone
     if (r.phase) {
         phase = r.phase;
         phaseBadge.textContent = phase;
-        // Hide compass click zone during profile phase — it steals clicks from choices
         var cz = document.getElementById('compassClickZone');
         if (cz) cz.style.pointerEvents = (phase === 'profile') ? 'none' : 'auto';
     }
@@ -847,22 +1091,18 @@ function handleApiResponse(resp) {
         var ppEl = document.getElementById('chatProfileProgress');
         var collected = pp.collected || 0;
         var total = pp.total || 5;
-        var needed = pp.needed || 3;
         var allDone = collected >= total;
 
         if (ppEl) {
-            // Card already exists — update in place (don't remove + re-add)
-            // If all fields are collected, just leave it where it is (no re-render)
             if (!allDone) {
                 updateProfileCard(pp);
             }
         } else {
-            // First appearance — create the card
             updateProfileCard(pp);
         }
     }
 
-    // Handle hard wall display — inline accordion in the chat flow (skip during profile phase)
+    // ── Handle hard wall display — inline KPI accordion in the chat flow ──
     if (hasHardWall) {
         var blocking = null;
         if (typeof r.hard_wall === 'object') {
@@ -931,12 +1171,19 @@ function handleApiResponse(resp) {
                         if (reqIdx < 0) reqIdx = 3;
                         var pct = reqIdx > 0 ? Math.min(100, Math.round((curIdx / reqIdx) * 100)) : 0;
 
+                        // Extract stage number from KPI ID (e.g. "s01-kpi-01" → "01")
+                        var stageNum = (kpi.id || '').match(/^s(\d+)/);
+                        stageNum = stageNum ? stageNum[1] : '';
+
                         accordionHtml +=
-                            '<div class="chat-kpi-row">' +
+                            '<div class="chat-kpi-row chat-kpi-row--interactive" ' +
+                            'onclick="openKpiDetail(\'' + (kpi.id || '').replace(/'/g, "\\'") + '\', \'' + stageNum + '\')" ' +
+                            'style="cursor:pointer;">' +
                             '<div class="chat-kpi-label">' + (kpi.label || kpi.id) + '</div>' +
                             '<div class="chat-kpi-bar-wrap">' +
                             '<div class="chat-kpi-bar" style="width:' + pct + '%;background:' + color + ';"></div>' +
                             '</div>' +
+                            '<i class="bi bi-chevron-right chat-kpi-row__chevron"></i>' +
                             '</div>';
                     });
 
@@ -960,7 +1207,7 @@ function handleApiResponse(resp) {
 
     // ── Cascade petal drops for every resolved item ──
     if (r.inferred_items && r.inferred_items.length && window.lps) {
-        console.log('[chat] Cascading', r.inferred_items.length, 'petal drops:', r.inferred_items.map(function(i) { return i.id; }).join(', '));
+        dbg('[chat] Cascading', r.inferred_items.length, 'petal drops');
         setTimeout(function() {
             cascadeDrops(r.inferred_items);
         }, 50);
@@ -970,45 +1217,33 @@ function handleApiResponse(resp) {
     var hasContentRecs = r.content_recommendations && r.content_recommendations.length > 0;
     var hasChoices = r.choices && r.choices.length > 0;
 
-    if (hasContentRecs && hasChoices) {
-        // Defer question + choices — show content banner first
+    // ── Show question bubble + choices ──
+    if (r.question_bubble) {
+        addBotMessage(r.question_bubble, null, {question: true});
+    }
+    if (hasChoices) {
         var src = r.choices_source || 'matrix';
-        _deferredQuestion = { choices: r.choices, source: src, bubble: r.question_bubble || null };
-        console.log('[chat] Content + choices coexist — deferring', r.choices.length, 'choices, showing content first');
-    } else {
-        // No conflict — show question bubble and choices normally
-        if (r.question_bubble) {
-            addBotMessage(r.question_bubble, null, {question: true});
-        }
-        if (hasChoices) {
-            var src = r.choices_source || 'matrix';
-            console.log('[chat] Rendering', r.choices.length, 'choices (source: ' + src + '):', r.choices.map(function(c) { return c.label || c; }).join(' | '));
-            showOptions(r.choices, src);
-        }
+        dbg('[chat] Rendering', r.choices.length, 'choices (source: ' + src + ')');
+        showOptions(r.choices, src);
+    }
+    // If content is shown without choices, the backend suppressed the question.
+    // "Continue Assessment" triggers a [resume] to get the next question fresh.
+    if (hasContentRecs && !hasChoices && !r.session_complete) {
+        _deferredQuestion = { resume: true };
     }
 
     // ── Show ONE content recommendation (least-presented first) ──
     if (hasContentRecs) {
         var isGrowthRouted = r.content_recommendations.some(function(c) { return c.growth_routed; });
-        console.log('[chat] Content recommendations:', r.content_recommendations.map(function(c) { return c.title; }).join(' | '),
+        dbg('[chat] Content recommendations:', r.content_recommendations.length,
             isGrowthRouted ? '(growth-routed)' : '');
         optionsArea.querySelectorAll('.content-banner').forEach(function(b) { b.remove(); });
 
-        // Pick the least-presented item
-        var counts = {};
-        try { counts = JSON.parse(sessionStorage.getItem('bannerCounts') || '{}'); } catch(e) {}
-        var picked = r.content_recommendations.reduce(function(best, item) {
-            var key = item.id || item.title || '';
-            var c = counts[key] || 0;
-            if (!best || c < (counts[best.id || best.title || ''] || 0)) return item;
-            return best;
-        }, null);
+        var result = pickLeastPresented(r.content_recommendations);
+        var picked = result.picked;
 
         if (picked) {
-            var pickedKey = picked.id || picked.title || '';
-            counts[pickedKey] = (counts[pickedKey] || 0) + 1;
-            try { sessionStorage.setItem('bannerCounts', JSON.stringify(counts)); } catch(e) {}
-            console.log('[chat] Showing least-presented banner:', pickedKey, '(shown', counts[pickedKey], 'times)');
+            dbg('[chat] Showing least-presented banner:', picked.id || picked.title || '');
 
             var bannerDelay = 50;
             if (isGrowthRouted) {
@@ -1036,37 +1271,35 @@ function handleApiResponse(resp) {
 
     // Handle session complete
     if (r.session_complete) {
-        console.log('[chat] SESSION COMPLETE — loading final recommendations');
+        dbg('[chat] SESSION COMPLETE — loading final recommendations');
         loadContentRecommendations();
     }
 
     // Final scroll after all rendering (deferred to let DOM settle)
     setTimeout(scrollToBottom, 100);
-    console.groupEnd();
 }
 
-// ─── Load Content Recommendations from Catalog ──────────────────────
+/* =========================================================================
+ * 16. CONTENT RECOMMENDATIONS
+ * Loads post-assessment content recommendations from the catalog and shows
+ * the least-presented item as a banner.
+ * ========================================================================= */
 
+/**
+ * Fetch content recommendations from the server and display the
+ * least-presented item as a content banner.
+ * Used at session completion and when resuming a completed session.
+ */
 function loadContentRecommendations() {
     chatApiPost('get_recommendations', {}, function(resp) {
         if (resp.error || !resp.results) return;
         var recs = resp.results.recommendations || [];
         if (!recs.length) return;
-        // Clear existing banners, show only the least-presented one
         optionsArea.querySelectorAll('.content-banner').forEach(function(b) { b.remove(); });
-        var counts = {};
-        try { counts = JSON.parse(sessionStorage.getItem('bannerCounts') || '{}'); } catch(e) {}
-        var picked = recs.reduce(function(best, item) {
-            var key = item.id || item.title || '';
-            var c = counts[key] || 0;
-            if (!best || c < (counts[best.id || best.title || ''] || 0)) return item;
-            return best;
-        }, null);
-        if (picked) {
-            var pickedKey = picked.id || picked.title || '';
-            counts[pickedKey] = (counts[pickedKey] || 0) + 1;
-            try { sessionStorage.setItem('bannerCounts', JSON.stringify(counts)); } catch(e) {}
-            showContentBanner(picked);
+
+        var result = pickLeastPresented(recs);
+        if (result.picked) {
+            showContentBanner(result.picked);
         }
     });
 }
@@ -1077,7 +1310,10 @@ if (phase === 'score') {
     loadContentRecommendations();
 }
 
-// ─── Input Handlers ──────────────────────────────────────────────────────
+/* =========================================================================
+ * 17. INPUT HANDLERS
+ * Keyboard (Enter to send) and click (send button) bindings.
+ * ========================================================================= */
 
 chatInput.addEventListener('keydown', function(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -1090,11 +1326,16 @@ chatSendBtn.addEventListener('click', function() {
     sendMessage(chatInput.value);
 });
 
-// ─── Cleanup on SPA navigation ──────────────────────────────────────────
+/* =========================================================================
+ * 18. CLEANUP / SPA NAVIGATION
+ * Clears chat state when the user navigates away via SPA, and disconnects
+ * the MutationObserver when the mount element is removed.
+ * ========================================================================= */
 
+/**
+ * Clear chat DOM content to prevent stale state on SPA navigation.
+ */
 function cleanup() {
-    // Elements are inside #chat-overlay-mount which gets replaced by SPA nav
-    // Just clear content to prevent stale state
     if (messagesEl) messagesEl.innerHTML = '';
     if (optionsArea) optionsArea.innerHTML = '';
 }
@@ -1109,12 +1350,20 @@ var observer = new MutationObserver(function() {
 });
 observer.observe(document.getElementById('content-dynamic') || document.body, { childList: true, subtree: true });
 
-// ─── WP10: Dynamic 4-Zone Layout ────────────────────────────────────────
-// Adjusts --interactive-max and --lotus-reserve based on interactive content
+/* =========================================================================
+ * 19. DYNAMIC 4-ZONE LAYOUT
+ * Adjusts CSS custom properties --interactive-max and --lotus-reserve based
+ * on the current interactive content (MC choices, content banners, explorer).
+ * Observed via MutationObserver on the options area and window resize.
+ * ========================================================================= */
 
+/**
+ * Recalculate zone layout CSS variables based on current interactive content.
+ * Sets --interactive-max and --lotus-reserve on the document root to control
+ * how much vertical space the interactive zone and lotus visualisation receive.
+ */
 function updateZoneLayout() {
     var root = document.documentElement;
-    var vh = window.innerHeight;
     var optionsCount = optionsArea ? optionsArea.children.length : 0;
     var hasBanners = optionsArea ? optionsArea.querySelectorAll('.content-banner').length > 0 : false;
     var explorerActive = document.querySelector('.chat-messages--explorer-active');

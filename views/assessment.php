@@ -138,4 +138,4 @@ $auto_start = empty($instance) && empty($active_session) ? '1' : '0';
     </div>
 </div>
 <?php } ?>
-<script src="../assets/js/chat-overlay.js?v=10"></script>
+<script src="../assets/js/chat-overlay.js?v=16"></script>

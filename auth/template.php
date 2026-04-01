@@ -10,7 +10,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script>document.documentElement.setAttribute('data-bs-theme','dark');</script>
+    <script>
+    document.documentElement.setAttribute('data-bs-theme','dark');
+    // Redirect first-time visitors to onboarding (except if already on onboarding page)
+    if (!localStorage.getItem('elevatehr_onboarded') && !window.location.pathname.match(/onboarding\.php/)) {
+        window.location.replace('onboarding.php');
+    }
+    </script>
     <?php $b = get_branding(); ?>
     <title><?= h($page_title ?? $b['site_name']) ?></title>
     <meta name="theme-color" content="<?= h($b['theme_color']) ?>">
@@ -36,30 +42,84 @@
         }
         .auth-card { width: 100%; max-width: 420px; }
         .auth-card .card {
-            background: rgba(255, 255, 255, 0.04);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2);
+            background: rgba(139, 92, 246, 0.06);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(139, 92, 246, 0.15);
+            box-shadow: 0 4px 32px rgba(99, 102, 241, 0.12);
+            border-radius: 16px;
         }
         .auth-card h2 {
             font-weight: 700;
             letter-spacing: -0.01em;
+            background: linear-gradient(135deg, #c084fc, #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
+        .auth-card .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6, #6366f1);
+            border: none;
+            border-radius: 10px;
+            padding: 10px 24px;
+            font-weight: 600;
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.25);
+            transition: box-shadow 0.25s, transform 0.25s;
+        }
+        .auth-card .btn-primary:hover {
+            box-shadow: 0 6px 24px rgba(99, 102, 241, 0.4);
+            transform: translateY(-1px);
+            background: linear-gradient(135deg, #7c3aed, #4f46e5);
+        }
+        .auth-card .form-control {
+            border-radius: 10px;
+            border-color: rgba(139, 92, 246, 0.2);
+        }
+        .auth-card .form-control:focus,
+        .auth-card .form-select:focus {
+            border-color: rgba(139, 92, 246, 0.5);
+            box-shadow: 0 0 0 0.2rem rgba(139, 92, 246, 0.15);
+        }
+        .auth-card .form-select {
+            border-radius: 10px;
+            border-color: rgba(139, 92, 246, 0.2);
+        }
+        .auth-card .btn-outline-secondary,
+        .auth-card .btn-outline-primary {
+            border-radius: 10px;
+            border-color: rgba(139, 92, 246, 0.3);
+            color: #a78bfa;
+        }
+        .auth-card .btn-outline-secondary:hover,
+        .auth-card .btn-outline-primary:hover {
+            background: rgba(139, 92, 246, 0.12);
+            border-color: rgba(139, 92, 246, 0.5);
+            color: #c4b5fd;
+        }
+        .auth-card a { color: #a78bfa; }
+        .auth-card a:hover { color: #c4b5fd; }
         [data-bs-theme="light"] .auth-card .card {
-            background: rgba(255, 255, 255, 0.7);
-            border-color: rgba(0, 0, 0, 0.08);
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            background: rgba(255, 255, 255, 0.75);
+            border-color: rgba(139, 92, 246, 0.12);
+            box-shadow: 0 4px 24px rgba(99, 102, 241, 0.08);
         }
+        [data-bs-theme="light"] .auth-card h2 {
+            background: linear-gradient(135deg, #7c3aed, #4f46e5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        [data-bs-theme="light"] .auth-card a { color: #7c3aed; }
+        [data-bs-theme="light"] .auth-card a:hover { color: #6d28d9; }
         .auth-color-toggle {
             position: fixed;
             top: 16px;
             right: 16px;
             z-index: 10;
-            background: rgba(255, 255, 255, 0.08);
+            background: rgba(139, 92, 246, 0.1);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(139, 92, 246, 0.15);
             border-radius: 50%;
             width: 40px;
             height: 40px;
@@ -70,16 +130,16 @@
             transition: background 0.2s, border-color 0.2s;
         }
         .auth-color-toggle:hover {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.25);
+            background: rgba(139, 92, 246, 0.2);
+            border-color: rgba(139, 92, 246, 0.3);
         }
         [data-bs-theme="light"] .auth-color-toggle {
-            background: rgba(0, 0, 0, 0.05);
-            border-color: rgba(0, 0, 0, 0.1);
+            background: rgba(99, 102, 241, 0.08);
+            border-color: rgba(99, 102, 241, 0.12);
         }
         [data-bs-theme="light"] .auth-color-toggle:hover {
-            background: rgba(0, 0, 0, 0.1);
-            border-color: rgba(0, 0, 0, 0.2);
+            background: rgba(99, 102, 241, 0.15);
+            border-color: rgba(99, 102, 241, 0.25);
         }
     </style>
 </head>
@@ -97,7 +157,7 @@
     <div class="auth-card">
         <div class="text-center mb-4">
             <?php if (!empty($b['logo_path'])) { ?>
-            <img src="../../admin/branding/<?= h($b['logo_path']) ?>" alt="<?= h($b['site_name']) ?>" style="max-height: 64px;" class="mb-2"<?php if (!empty($b['logo_dark_path'])) { ?> data-logo-dark="../../admin/branding/<?= h($b['logo_dark_path']) ?>" data-logo-light="../../admin/branding/<?= h($b['logo_path']) ?>"<?php } ?>>
+            <img src="../../admin/branding/<?= h($b['logo_path']) ?>" alt="<?= h($b['site_name']) ?>" style="max-height: 100px; width: auto;" class="mb-2"<?php if (!empty($b['logo_dark_path'])) { ?> data-logo-dark="../../admin/branding/<?= h($b['logo_dark_path']) ?>" data-logo-light="../../admin/branding/<?= h($b['logo_path']) ?>"<?php } ?>>
             <?php } ?>
             <h2><?= h($b['site_name']) ?></h2>
         </div>

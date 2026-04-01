@@ -332,7 +332,22 @@ if (($_POST['action'] ?? '') === 'assessment_chat') {
                 ];
 
                 if ($next_q) {
+                    // If next question has its own choices (MC/profile/growth), use them directly
+                    $nq_direct_choices = null;
+                    if (!empty($next_q['choices'])) {
+                        $nq_tier = $next_q['tier'] ?? '';
+                        $is_nq_growth = ($nq_tier === 'growth');
+                        $is_nq_profile = ($nq_tier === 'profile');
+                        $nq_direct_choices = array_map(function($c) use ($is_nq_growth, $is_nq_profile) {
+                            return [
+                                'label' => $c['label'] ?? '',
+                                'value' => ($is_nq_growth || $is_nq_profile) ? ($c['value'] ?? $c['label'] ?? '') : ($c['id'] ?? $c['label'] ?? ''),
+                            ];
+                        }, $next_q['choices']);
+                    }
+
                     // Next question exists — serve it directly
+                    $profile_question_text = $next_q['prompt'] ?? '';
                     $parsed = [
                         'display_message' => $warm_acks[array_rand($warm_acks)],
                         'inferred_responses' => [],
@@ -340,7 +355,7 @@ if (($_POST['action'] ?? '') === 'assessment_chat') {
                         'profile_hints' => [],
                         'session_notes' => [],
                         'phase_signal' => 'continue',
-                        'choices' => null,
+                        'choices' => $nq_direct_choices,
                         'question_id' => $next_q['id'],
                         'question_text' => $next_q['prompt'] ?? null,
                     ];
@@ -414,9 +429,11 @@ if (($_POST['action'] ?? '') === 'assessment_chat') {
 
             // ── Step 2b: Server-side scaffold choices for free-form questions ──
             // When the response has no choices AND the question is free-form with
-            // resolvableItems, generate default scaffold choices server-side.
+            // resolvableItems, generate contextual scaffold choices server-side.
             // This fixes: resume/reload missing MC, AI non-compliance, MC→free-form transitions.
-            if ($parsed && empty($parsed['choices'])) {
+            // Only scaffold when a question is actually being presented to the user.
+            $has_question = !empty($parsed['question_text']) || !empty($profile_question_text);
+            if ($parsed && empty($parsed['choices']) && $has_question) {
                 $scaffold_q = $next_q; // the question being presented
                 if ($scaffold_q && ($scaffold_q['answerFormat'] ?? '') === 'free-form' && !empty($scaffold_q['resolvableItems'])) {
                     $ri_items = $scaffold_q['resolvableItems'];
@@ -435,11 +452,33 @@ if (($_POST['action'] ?? '') === 'assessment_chat') {
                         $resolves_strong_false[$iid]  = ['value' => false, 'confidence' => 0.85];
                     }
 
+                    // Build contextual labels from the first resolvable item's signals
+                    $first_ri = $ri_items[0] ?? [];
+                    $true_sig = $first_ri['trueSignal'] ?? '';
+                    $false_sig = $first_ri['falseSignal'] ?? '';
+
+                    // Extract a short contextual phrase from the signals for better labels
+                    $strong_label = 'I have a solid routine and structure in place';
+                    $partial_label = 'I\'m building habits but not fully consistent yet';
+                    $weak_label = 'I\'m still figuring out my approach';
+                    $struggle_label = 'I haven\'t really started yet';
+
+                    // Use signal text to generate more relevant labels when available
+                    if ($true_sig && $false_sig) {
+                        // Truncate signals to ~60 chars for readable button labels
+                        $strong_label = mb_strlen($true_sig) > 70
+                            ? mb_substr($true_sig, 0, 67) . '...'
+                            : $true_sig;
+                        $struggle_label = mb_strlen($false_sig) > 70
+                            ? mb_substr($false_sig, 0, 67) . '...'
+                            : $false_sig;
+                    }
+
                     $parsed['choices'] = [
-                        ['label' => 'Yes, absolutely — this feels natural to me',    'value' => 'strong-true',   'resolves' => $resolves_strong_true],
-                        ['label' => 'Somewhat — I\'m getting there',                 'value' => 'partial-true',  'resolves' => $resolves_partial_true],
-                        ['label' => 'Not really — I still struggle with this',       'value' => 'partial-false', 'resolves' => $resolves_partial_false],
-                        ['label' => 'No, this is a real challenge for me',           'value' => 'strong-false',  'resolves' => $resolves_strong_false],
+                        ['label' => $strong_label,                                   'value' => 'strong-true',   'resolves' => $resolves_strong_true],
+                        ['label' => $partial_label,                                  'value' => 'partial-true',  'resolves' => $resolves_partial_true],
+                        ['label' => $weak_label,                                     'value' => 'partial-false', 'resolves' => $resolves_partial_false],
+                        ['label' => $struggle_label,                                 'value' => 'strong-false',  'resolves' => $resolves_strong_false],
                         ['label' => 'I\'d like to share more details',               'value' => 'free-form',     'resolves' => []],
                     ];
                     error_log("ElevateHER: Server-side scaffold choices generated for free-form question {$scaffold_q['id']} (AI didn't provide choices)");
@@ -746,42 +785,21 @@ if (($_POST['action'] ?? '') === 'assessment_chat') {
                 }
             }
 
-            // ── Step 13: Get next question's choices for the client ──
-            $next_choices = null;
-            if ($new_phase !== 'score') {
-                $next_asked = get_asked_questions_from_instance($inst_data);
-
-                if ($new_phase === 'growth') {
-                    // In growth phase, pick growth question for the blocking stage
-                    $growth_stage = $inst_data['placement']['placedStage'] ?? $inst_data['placement']['currentStage'] ?? '00';
-                    $next_q = pick_growth_question($growth_stage, $next_asked);
-                } else {
-                    $next_q = pick_next_question($new_phase, $inst_data, $next_asked, $ai_suggested_stage ?? null);
-                }
-
-                if ($next_q && !empty($next_q['choices'])) {
-                    $is_growth_q = ($next_q['tier'] ?? '') === 'growth';
-                    if ($is_growth_q || in_array($next_q['answerFormat'] ?? '', ['multiple-choice', 'hybrid'])) {
-                        $next_choices = array_map(function($c) use ($is_growth_q) {
-                            // Growth choices use 'value' field; assessment choices use 'id'
-                            return [
-                                'label' => $c['label'] ?? '',
-                                'value' => $is_growth_q ? ($c['value'] ?? $c['label'] ?? '') : ($c['id'] ?? $c['label'] ?? ''),
-                            ];
-                        }, $next_q['choices']);
-                    }
-                }
-            }
-
-            // Determine choices and source
+            // ── Step 13: Determine response choices ──
+            // IMPORTANT: Do NOT re-pick $next_q here — the AI already responded to the
+            // question picked before the AI call. Re-picking after AI changes $inst_data
+            // often returns a DIFFERENT question, causing choice/question mismatch.
+            // The scaffold logic (Step 2b) already generates appropriate choices for the
+            // current question. Only use $parsed['choices'] (from AI or scaffold).
             if ($skip_ai) {
                 // Choices came directly from the matrix — no AI involved
                 $response_choices = $parsed['choices'] ?? null;
                 $choices_source = 'matrix';
             } else {
-                // AI was called — use AI choices if present, otherwise framework choices
-                $response_choices = !empty($parsed['choices']) ? $parsed['choices'] : $next_choices;
-                $choices_source = !empty($parsed['choices']) ? 'ai' : (!empty($next_choices) ? 'matrix' : null);
+                // AI was called — use AI choices or scaffold choices only
+                // Do NOT fall back to a different question's choices
+                $response_choices = $parsed['choices'] ?? null;
+                $choices_source = !empty($parsed['choices']) ? 'ai' : null;
             }
 
             // ── Step 14: Capture progress snapshot (throttled: once per session) + mark session complete ──
@@ -837,6 +855,49 @@ if (($_POST['action'] ?? '') === 'assessment_chat') {
             $data['display_message'] = $parsed['display_message'] ?? '';
             // Question in a separate bubble: from AI schema (question_text) or from canned profile flow
             $data['question_bubble'] = $profile_question_text ?? ($parsed['question_text'] ?? null);
+
+            // ── Catchall: choices without a question = mismatch ──
+            // If we have choices but no question was asked, either inject the current
+            // question prompt or strip choices entirely. This catches edge cases like
+            // resume after login, MC→free-form transitions, and AI non-compliance.
+            if (!empty($response_choices) && empty($data['question_bubble']) && empty($data['display_message'])) {
+                // No message at all — find current question and present it
+                if ($next_q && !empty($next_q['prompt'])) {
+                    $data['question_bubble'] = $next_q['prompt'];
+                    error_log("ElevateHER: Catchall injected question bubble for {$next_q['id']} (choices without question)");
+                } else {
+                    $response_choices = null;
+                    error_log("ElevateHER: Catchall stripped orphaned choices (no question available)");
+                }
+            } elseif (!empty($response_choices) && empty($data['question_bubble'])) {
+                // We have a display_message (ack) but no question — inject the question
+                if ($next_q && !empty($next_q['prompt'])) {
+                    $data['question_bubble'] = $next_q['prompt'];
+                    error_log("ElevateHER: Catchall injected question bubble for {$next_q['id']} (ack without question)");
+                } else {
+                    // No question to ask — strip choices to avoid confusing the user
+                    $response_choices = null;
+                    error_log("ElevateHER: Catchall stripped orphaned choices (ack but no question available)");
+                }
+            }
+
+            // ── Content priority: if content is being shown, suppress question/choices ──
+            // The frontend will show the content with a contextual message and a
+            // "Continue Assessment" button. The question comes when the user continues.
+            if (!empty($content_recs) && !empty($response_choices)) {
+                $data['question_bubble'] = null;
+                $response_choices = null;
+                // Replace the ack with a content-contextual message
+                $content_msgs = [
+                    "I found some training that addresses what we just discussed — take a look!",
+                    "Here's some training content that's relevant to where you are right now.",
+                    "Based on what you've shared, this training might really help — check it out!",
+                    "Great progress! Here's some content that connects to what we're exploring.",
+                ];
+                $data['display_message'] = $content_msgs[array_rand($content_msgs)];
+                error_log("ElevateHER: Content priority — suppressed question/choices, showing content instead");
+            }
+
             $data['choices'] = $response_choices;
             $data['choices_source'] = $choices_source; // 'ai' or 'matrix'
             $data['phase'] = $new_phase;
@@ -1484,10 +1545,33 @@ if (($_GET['action'] ?? $_POST['action'] ?? '') === 'get_chat_history') {
                                     'value' => ($is_growth_q || $is_profile_q) ? ($c['value'] ?? $c['label'] ?? '') : ($c['id'] ?? $c['label'] ?? ''),
                                 ];
                             }, $next_q['choices']);
+                        } elseif ($nq_format === 'free-form' && !empty($next_q['resolvableItems'])) {
+                            // Free-form with resolvable items: generate scaffold choices
+                            // so the user has quick-answer options on resume
+                            $ri_items = $next_q['resolvableItems'];
+                            $first_ri = $ri_items[0] ?? [];
+                            $true_sig = $first_ri['trueSignal'] ?? '';
+                            $false_sig = $first_ri['falseSignal'] ?? '';
+                            $strong_label = $true_sig ?: 'Yes, absolutely — this feels natural to me';
+                            $partial_label = 'Somewhat — I\'m getting there';
+                            $weak_label = 'Not really — I still struggle with this';
+                            $struggle_label = $false_sig ?: 'No, this is a real challenge for me';
+                            if (mb_strlen($strong_label) > 70) $strong_label = mb_substr($strong_label, 0, 67) . '...';
+                            if (mb_strlen($struggle_label) > 70) $struggle_label = mb_substr($struggle_label, 0, 67) . '...';
+
+                            $resolves_map = [];
+                            foreach ($ri_items as $ri) {
+                                $iid = $ri['itemId'] ?? '';
+                                if ($iid) $resolves_map[$iid] = true;
+                            }
+                            $data['next_choices'] = [
+                                ['label' => $strong_label,                    'value' => 'strong-true',   'resolves' => array_map(fn() => ['value' => true, 'confidence' => 0.85], $resolves_map)],
+                                ['label' => $partial_label,                   'value' => 'partial-true',  'resolves' => array_map(fn() => ['value' => true, 'confidence' => 0.6], $resolves_map)],
+                                ['label' => $weak_label,                      'value' => 'partial-false', 'resolves' => array_map(fn() => ['value' => false, 'confidence' => 0.6], $resolves_map)],
+                                ['label' => $struggle_label,                  'value' => 'strong-false',  'resolves' => array_map(fn() => ['value' => false, 'confidence' => 0.85], $resolves_map)],
+                                ['label' => 'I\'d like to share more details', 'value' => 'free-form',    'resolves' => []],
+                            ];
                         }
-                        // For free-form questions: no choices needed — the client will
-                        // show the question prompt directly and enable the text input.
-                        // No AI call needed just to resume.
                     }
                 }
             }

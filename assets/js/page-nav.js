@@ -1,6 +1,6 @@
 /**
- * page-nav.js
- * Responsive secondary/page-level navigation toggle.
+ * @module page-nav
+ * @description Responsive secondary/page-level navigation toggle.
  *
  * Desktop (lg+): nav visible by default, toggle collapses it inline.
  * Mobile (<lg):  nav hidden by default, toggle opens it as overlay drawer.
@@ -11,7 +11,10 @@
 (function () {
     'use strict';
 
+    /** @private @constant {string} localStorage key for persisting desktop nav state */
     var STORAGE_KEY = 'wn_page_nav_state';
+
+    /** @private @constant {number} Bootstrap lg breakpoint in pixels */
     var BP_LG = 992;
 
     var toggle  = document.getElementById('pageNavToggle');
@@ -21,20 +24,40 @@
 
     if (!toggle || !wrapper || !nav) return;
 
+    /**
+     * Check whether the viewport is at or above the desktop breakpoint.
+     * @private
+     * @returns {boolean} True if viewport width >= BP_LG
+     */
     function isDesktop() {
         return window.innerWidth >= BP_LG;
     }
 
+    /**
+     * Apply the collapsed/expanded state for desktop layout.
+     * @private
+     * @param {boolean} collapsed - Whether the nav should be collapsed
+     */
     function setDesktopState(collapsed) {
         wrapper.classList.toggle('page-nav-collapsed', collapsed);
         toggle.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
     }
 
+    /**
+     * Apply the open/closed state for mobile drawer layout.
+     * @private
+     * @param {boolean} open - Whether the mobile drawer should be open
+     */
     function setMobileState(open) {
         wrapper.classList.toggle('page-nav-open', open);
         toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     }
 
+    /**
+     * Initialize nav state based on current viewport and saved preferences.
+     * Clears both mobile and desktop classes, then applies the correct one.
+     * @private
+     */
     function init() {
         wrapper.classList.remove('page-nav-collapsed', 'page-nav-open');
 
@@ -46,7 +69,7 @@
         }
     }
 
-    // Toggle click
+    // Toggle click — switches between collapsed/expanded (desktop) or open/closed (mobile)
     toggle.addEventListener('click', function (e) {
         e.preventDefault();
 
@@ -67,15 +90,16 @@
         });
     }
 
-    // Close mobile nav on link click
+    // Close mobile nav when a nav link is clicked (page will navigate)
     nav.addEventListener('click', function (e) {
         if (!isDesktop() && e.target.closest('.nav-link')) {
             setMobileState(false);
         }
     });
 
-    // Reset on breakpoint crossing
+    // Reset layout on breakpoint crossing (debounced)
     var lastDesktop = isDesktop();
+    /** @private @type {number|undefined} Resize debounce timer */
     var resizeTimer;
 
     window.addEventListener('resize', function () {

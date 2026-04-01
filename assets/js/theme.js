@@ -1,6 +1,9 @@
 /**
- * theme.js — ElevateHER always uses the DSWA theme (glass mode)
- * No theme switching. Just ensure sidebar/navbar are in glass mode.
+ * @module theme
+ * @description ElevateHER always uses the DSWA theme (glass mode).
+ * No theme switching is provided. This script forces the DSWA theme
+ * cookie/localStorage value and removes opaque sidebar/navbar styles
+ * so the glass (transparent) appearance is always active.
  */
 (function() {
     'use strict';
@@ -22,7 +25,7 @@
         navbar.classList.remove('bg-dark');
     }
 
-    // Remove any leftover theme selector elements
+    // Remove any leftover theme selector elements from the admin core
     var sel = document.getElementById('themeSelector');
     if (sel) {
         var wrap = sel.closest('.me-2, .dropdown');

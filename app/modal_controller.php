@@ -13,6 +13,7 @@ $modals = [
     'example_form'   => __DIR__ . '/../snippets/modal_example_form.php',
     'seller_detail'  => __DIR__ . '/../snippets/modal_seller_detail.php',
     'coach_note'     => __DIR__ . '/../snippets/modal_coach_note.php',
+    'kpi_detail'     => __DIR__ . '/../snippets/modal_kpi_detail.php',
 ];
 
 if (isset($modals[$modal]) && file_exists($modals[$modal])) {

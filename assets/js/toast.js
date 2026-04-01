@@ -1,5 +1,6 @@
 /**
- * toast.js — Toast notification system for child-app
+ * @module toast
+ * @description Toast notification system for child-app.
  * Vanilla JS, no dependencies beyond Bootstrap 5.
  *
  * Two modes:
@@ -13,7 +14,7 @@
     'use strict';
 
     var CONTAINER_ID = 'toastContainer';
-    var AUTO_HIDE_MS = 5000;
+    var AUTO_HIDE_MS = 2000;
     var counter = 0;
 
     // Icon map for toast types
@@ -33,6 +34,7 @@
 
     /**
      * Ensure the fixed toast container exists in the DOM.
+     * @returns {HTMLElement} The toast container element
      */
     function getContainer() {
         var el = document.getElementById(CONTAINER_ID);
