@@ -1,19 +1,35 @@
-# ElevateHER — CLAUDE.md
+# child-app — CLAUDE.md
 
-## What this is
-Child application for the Wave Networks ecosystem. Deployed at `public_html/elevateher/`
-as a sibling of `public_html/admin/`. Admin core provides auth, sessions, sharding,
-email, notifications, theming, branding. This app adds its own databases, views, actions, theme.
-
-Bootstrap chain: `elevateher/include/common.php` → `admin/include/common.php`
-
-## Path reference
+## CRITICAL: This repo is a template — always clone it first
+**Never create a child app directory from scratch.** To build a new child app:
 ```
-auth/*.php          → include: ../include/common_auth.php
-app/index.php       → include: ../include/common.php
-api/index.php       → include: ../include/common_api.php
-views/*.php         → included BY app/index.php (never directly)
-include/common.php  → include: ../../admin/include/common.php
+git clone https://github.com/WaveNetworks/child-app.git your-app-name/
+```
+Then modify the cloned files — don't recreate them. The template provides
+auth pages, include/common.php, template.php, JS assets, SCSS pipeline,
+Docker config, installer, and the full directory structure.
+
+## What this repo is
+Example child application for the Wave Networks ecosystem. Deployed at
+`public_html/child-app/` as a sibling of `public_html/admin/`. Demonstrates the
+complete pattern for building apps on top of the admin core: own databases,
+own shards, branded auth pages, custom theme pipeline, Docker dev environment.
+
+External developers clone this repo, rename it, and use it as their starting point.
+
+## Relationship to admin core
+Admin core (`../admin/`, repo: WaveNetworks/wave-networks-core) provides: auth,
+sessions, shard routing, email queue, notifications, theming, branding, user management.
+
+Bootstrap chain: `child-app/include/common.php` -> `admin/include/common.php`
+
+## Path reference (critical)
+```
+auth/*.php          -> include: ../include/common_auth.php
+app/index.php       -> include: ../include/common.php
+api/index.php       -> include: ../include/common_api.php
+views/*.php         -> included BY app/index.php (never directly)
+include/common.php  -> include: ../../admin/include/common.php (core)
 ```
 
 ## Three database layers
@@ -29,6 +45,10 @@ Dir: `db_migrations/main/` and `db_migrations/shard/` — decimal versioning (1.
 EVERY migration requires BOTH steps:
 1. Create the SQL file in `db_migrations/main/` or `db_migrations/shard/`
 2. Update `$child_db_version` or `$child_shard_version` in `include/common.php`
+   AND `include/common_api.php` (both files must match!)
+
+THIS STEP IS FREQUENTLY FORGOTTEN — DO NOT SKIP IT.
+See [CLAUDE-development.md](CLAUDE-development.md) for DDL/DML templates and detailed rules.
 
 ## Coding rules
 
@@ -52,80 +72,11 @@ EVERY migration requires BOTH steps:
 - Skip `h()` or `sanitize()` for any output
 - Set `$_SESSION['error']` on first validation failure (collect all first)
 
-## Template pattern
-```php
-<?php if ($someCondition) { ?>
-<div class="something"><?= h($userData['field']) ?></div>
-<?php } ?>
-```
+## Topic files
 
-## Action file pattern
-```php
-if ($_POST['action'] == 'doThing') {
-    $errs = array();
-    if (!$_SESSION['user_id']) { $errs['auth'] = 'Login required.'; }
-    if (!$_POST['title'])      { $errs['title'] = 'Title required.'; }
-    if (count($errs) <= 0) {
-        child_db_query_prepared("INSERT INTO items ...", [...]);
-        $_SESSION['success'] = 'Done.';
-    } else {
-        $_SESSION['error'] = implode('<br>', $errs);
-    }
-}
-```
-
-## Action dispatch
-- Authenticated: `include/actions/memberActions/yourFeatureActions.php` (auto-included via glob)
-- API/public: `include/actions/apiActions/yourFeatureActions.php`
-- Form POST: `<form method="post">` on any view page
-- AJAX: `apiPost('actionName', {data}, callback)` → `api/index.php`
-
-## Docker
-Source is **bind-mounted** — edit any file and refresh, no rebuild needed.
-`docker compose up -d` starts app (port 8085), db, mailhog (port 8025).
-Only rebuild when changing Dockerfile/apache.conf/entrypoint.sh/PHP extensions.
-Test credentials: `admin@elevateher.test` / `Admin123!`
-
-## Detailed reference docs
-Read these on demand when working in the relevant area:
-
-| Doc | When to read |
-|-----|-------------|
-| [01-ARCHITECTURE.md](docs/01-ARCHITECTURE.md) | Bootstrap chains, request flow, directory structure |
-| [02-BOOTSTRAP-AND-CONFIG.md](docs/02-BOOTSTRAP-AND-CONFIG.md) | Config loading, env var fallbacks, common.php internals |
-| [03-FRAMEWORK-SYSTEM.md](docs/03-FRAMEWORK-SYSTEM.md) | Framework data sync, content catalog, versioning |
-| [04-ASSESSMENT-ENGINE.md](docs/04-ASSESSMENT-ENGINE.md) | Assessment instances, scoring, question matrix, AI backstop |
-| [05-CONTENT-SYSTEM.md](docs/05-CONTENT-SYSTEM.md) | Content state machine, progress tracking, recommendations |
-| [06-COACH-AND-TEAM.md](docs/06-COACH-AND-TEAM.md) | Coach relationships, team views, role-based access |
-| [07-ACTIONS-REFERENCE.md](docs/07-ACTIONS-REFERENCE.md) | Complete list of all action handlers by file |
-| [08-VIEWS-AND-UI.md](docs/08-VIEWS-AND-UI.md) | Page views, modal system, template shell regions |
-| [09-JAVASCRIPT.md](docs/09-JAVASCRIPT.md) | All JS modules, apiPost/modalView patterns, game loop architecture |
-| [10-THEME-AND-SCSS.md](docs/10-THEME-AND-SCSS.md) | Theme system, SCSS pipeline, build commands, theme registration |
-| [11-AUTH-AND-PRIVACY.md](docs/11-AUTH-AND-PRIVACY.md) | Auth flow, GDPR privacy page, consent, data export, account deletion |
-| [12-DOCKER-AND-DEPLOY.md](docs/12-DOCKER-AND-DEPLOY.md) | Docker services, volumes, env vars, entrypoint, deploy script |
-| [13-DATABASE-SCHEMA.md](docs/13-DATABASE-SCHEMA.md) | Full table schemas for main and shard DBs |
-
-## Cron system
-
-Entry point: `cron/cron.php` — run via crontab every minute:
-```
-* * * * * /usr/bin/php /path/to/app/cron/cron.php >> /tmp/app_cron.log 2>&1
-```
-
-**Schedule layout:**
-| Directory | When |
-|---|---|
-| `cron/minutes/{N}/*.php` | Every N minutes (e.g. `minutes/5/` runs at :00 :05 :10 …) |
-| `cron/days/*.php` | Every day |
-| `cron/weeks/*.php` | Every Monday |
-| `cron/months/*.php` | 1st of each month |
-
-**Adding a job:**
-- Create a `.php` file in the appropriate directory.
-- Do NOT call `require_once common.php` — `cron.php` bootstraps it first; all globals are available.
-- Use `child_db_query_prepared()` / `child_db_query_shard_prepared()` for DB access.
-
-**Rules:**
-- `cron/.htaccess` blocks web access to the entire `cron/` tree — never remove it.
-- Never do HTTP-only work (headers, sessions) inside cron jobs.
-- Keep jobs idempotent where possible.
+| File | Contents |
+|------|----------|
+| [CLAUDE-architecture.md](CLAUDE-architecture.md) | UI components, folder layout, template shell, JS modules, apiPost/modalView patterns |
+| [CLAUDE-development.md](CLAUDE-development.md) | Migration templates, action files, modal system, live search, toast, page nav, canvas, theme registration, env vars |
+| [CLAUDE-docker.md](CLAUDE-docker.md) | Docker services, build/rebuild, database naming, config auto-generation, environment variables |
+| [CLAUDE-schema.md](CLAUDE-schema.md) | Full database schema (main + shard), history/activity logging, GDPR/privacy, consent, all action names |
