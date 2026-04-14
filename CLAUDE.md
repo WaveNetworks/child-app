@@ -129,3 +129,11 @@ Entry point: `cron/cron.php` — run via crontab every minute:
 - `cron/.htaccess` blocks web access to the entire `cron/` tree — never remove it.
 - Never do HTTP-only work (headers, sessions) inside cron jobs.
 - Keep jobs idempotent where possible.
+
+**Standalone self-monitor:** `cron/minutes/5/self_monitor_admin_errors.php`
+reads the local admin error_log and notifies admin users about new error
+patterns via `send_notification()`. Uses state file at
+`$files_location/self_monitor/admin_errors_state.json` to dedupe within a
+24h re-notify window. Runs independently of nokemo — if nokemo.com is
+offline, errors still get surfaced to the app's own admin users. Category
+`admin_error_alert` is registered in `notificationRegistration.php`.

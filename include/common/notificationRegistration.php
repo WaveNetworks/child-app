@@ -17,4 +17,6 @@ if (function_exists('register_notification_category')) {
         'Notifications when a team member completes their assessment.');
     register_notification_category('framework_updated', 'Framework Updated',
         'Notifications when the training framework data is updated.');
+    register_notification_category('admin_error_alert', 'Admin Error Alert',
+        'Notifications when a new admin error pattern is detected by the local self-monitor cron.');
 }
