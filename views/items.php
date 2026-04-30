@@ -83,6 +83,7 @@ $page_num   = max(1, (int) ($_GET['pg'] ?? 1));
 $per_page   = 15;
 $offset     = ($page_num - 1) * $per_page;
 $filter     = $_GET['filter'] ?? '';
+$search     = trim((string) ($_GET['q'] ?? ''));
 
 $where = "WHERE user_id = ?";
 $params = [$_SESSION['user_id']];
@@ -90,6 +91,13 @@ $params = [$_SESSION['user_id']];
 if (in_array($filter, ['active', 'draft', 'archived'])) {
     $where .= " AND status = ?";
     $params[] = $filter;
+}
+
+if ($search !== '') {
+    $where .= " AND (title LIKE ? OR description LIKE ?)";
+    $like = '%' . $search . '%';
+    $params[] = $like;
+    $params[] = $like;
 }
 
 // Total count
@@ -113,18 +121,37 @@ $rows = child_db_query_prepared(
     </a>
 </div>
 
-<!-- Filters -->
-<div class="btn-group btn-group-sm mb-3">
-    <a href="index.php?page=items" class="btn btn-outline-secondary <?= !$filter ? 'active' : '' ?>">All</a>
-    <a href="index.php?page=items&filter=active" class="btn btn-outline-secondary <?= $filter === 'active' ? 'active' : '' ?>">Active</a>
-    <a href="index.php?page=items&filter=draft" class="btn btn-outline-secondary <?= $filter === 'draft' ? 'active' : '' ?>">Drafts</a>
-    <a href="index.php?page=items&filter=archived" class="btn btn-outline-secondary <?= $filter === 'archived' ? 'active' : '' ?>">Archived</a>
+<!-- Search + Filters -->
+<div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+    <form method="get" class="d-flex" role="search" style="max-width:320px">
+        <input type="hidden" name="page" value="items">
+        <?php if ($filter) { ?>
+        <input type="hidden" name="filter" value="<?= h($filter) ?>">
+        <?php } ?>
+        <div class="input-group input-group-sm">
+            <input type="search" class="form-control" name="q" value="<?= h($search) ?>"
+                   placeholder="Search title or description..." aria-label="Search items">
+            <button type="submit" class="btn btn-outline-secondary" title="Search"><i class="bi bi-search"></i></button>
+            <?php if ($search !== '') { ?>
+            <a href="index.php?page=items<?= $filter ? '&filter=' . h($filter) : '' ?>" class="btn btn-outline-secondary" title="Clear"><i class="bi bi-x-lg"></i></a>
+            <?php } ?>
+        </div>
+    </form>
+    <?php $qsuffix = $search !== '' ? '&q=' . urlencode($search) : ''; ?>
+    <div class="btn-group btn-group-sm">
+        <a href="index.php?page=items<?= $qsuffix ?>" class="btn btn-outline-secondary <?= !$filter ? 'active' : '' ?>">All</a>
+        <a href="index.php?page=items&filter=active<?= $qsuffix ?>" class="btn btn-outline-secondary <?= $filter === 'active' ? 'active' : '' ?>">Active</a>
+        <a href="index.php?page=items&filter=draft<?= $qsuffix ?>" class="btn btn-outline-secondary <?= $filter === 'draft' ? 'active' : '' ?>">Drafts</a>
+        <a href="index.php?page=items&filter=archived<?= $qsuffix ?>" class="btn btn-outline-secondary <?= $filter === 'archived' ? 'active' : '' ?>">Archived</a>
+    </div>
 </div>
 
 <?php if ($total === 0) { ?>
 <div class="text-center text-muted py-5">
     <i class="bi bi-collection fs-1 d-block mb-2"></i>
-    <?php if ($filter) { ?>
+    <?php if ($search !== '') { ?>
+        No items match "<?= h($search) ?>"<?= $filter ? ' in ' . h($filter) : '' ?>.
+    <?php } elseif ($filter) { ?>
         No <?= h($filter) ?> items found.
     <?php } else { ?>
         You don't have any items yet.
@@ -186,7 +213,7 @@ $rows = child_db_query_prepared(
 <nav class="mt-3">
     <ul class="pagination pagination-sm justify-content-center">
         <?php for ($i = 1; $i <= $pages; $i++) {
-            $qs = 'page=items' . ($filter ? "&filter=$filter" : '') . "&pg=$i";
+            $qs = 'page=items' . ($filter ? "&filter=$filter" : '') . ($search !== '' ? '&q=' . urlencode($search) : '') . "&pg=$i";
         ?>
         <li class="page-item <?= $i === $page_num ? 'active' : '' ?>">
             <a class="page-link" href="index.php?<?= $qs ?>"><?= $i ?></a>
