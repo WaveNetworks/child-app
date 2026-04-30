@@ -56,8 +56,6 @@ if (($action ?? null) == 'getUserFeedback') {
         $data['page']        = $result['page'];
         $data['per_page']    = $result['per_page'];
         $data['user_upvotes'] = get_user_upvotes($_SESSION['user_id']);
-
-        $_SESSION['success'] = 'OK';
     } else {
         $_SESSION['error'] = implode('<br>', $errs);
     }
@@ -125,8 +123,6 @@ if (($action ?? null) == 'getRoadmapData') {
         $data['roadmap']     = $grouped;
         $data['user_cr_ids'] = array_unique($userCRIds);
         $data['total']       = $all['total'];
-
-        $_SESSION['success'] = 'OK';
     } else {
         $_SESSION['error'] = implode('<br>', $errs);
     }
