@@ -27,7 +27,7 @@ foreach ($all_proposals as $p) {
     <div class="col-6 col-md-3">
         <a href="index.php?page=admin-proposals&status=submitted" class="card text-center text-decoration-none <?= $filter_status === 'submitted' ? 'border-primary' : '' ?>">
             <div class="card-body py-2">
-                <div class="fs-3 fw-bold text-warning"><?= $status_counts['submitted'] ?></div>
+                <div class="fs-3 fw-bold text-warning" id="countSubmitted"><?= $status_counts['submitted'] ?></div>
                 <small class="text-muted">Pending</small>
             </div>
         </a>
@@ -35,7 +35,7 @@ foreach ($all_proposals as $p) {
     <div class="col-6 col-md-3">
         <a href="index.php?page=admin-proposals&status=approved" class="card text-center text-decoration-none <?= $filter_status === 'approved' ? 'border-primary' : '' ?>">
             <div class="card-body py-2">
-                <div class="fs-3 fw-bold text-success"><?= $status_counts['approved'] ?></div>
+                <div class="fs-3 fw-bold text-success" id="countApproved"><?= $status_counts['approved'] ?></div>
                 <small class="text-muted">Approved</small>
             </div>
         </a>
@@ -73,8 +73,7 @@ foreach ($proposals as $p) {
     if (($p['status'] ?? '') === 'submitted') $pending_visible++;
 }
 ?>
-<?php if ($pending_visible > 0) { ?>
-<div class="d-flex justify-content-end mb-3">
+<div class="d-flex justify-content-end mb-3" id="approveAllWrap" <?= $pending_visible > 0 ? '' : 'style="display:none"' ?>>
     <form method="post" onsubmit="return confirm('Approve all <?= (int)$pending_visible ?> pending proposal<?= $pending_visible === 1 ? '' : 's' ?><?= $filter_type ? ' of type ' . h($filter_type) : '' ?>?');">
         <input type="hidden" name="action" value="approve_all_proposals">
         <?php if ($filter_type) { ?>
@@ -82,11 +81,10 @@ foreach ($proposals as $p) {
         <?php } ?>
         <button type="submit" class="btn btn-sm btn-success">
             <i class="bi bi-check-all me-1"></i>Approve All<?= $filter_type ? ' (' . h($filter_type) . ')' : '' ?>
-            <span class="badge bg-light text-success ms-1"><?= (int)$pending_visible ?></span>
+            <span class="badge bg-light text-success ms-1" id="approveAllBadge"><?= (int)$pending_visible ?></span>
         </button>
     </form>
 </div>
-<?php } ?>
 
 <?php if (empty($proposals)) { ?>
 <div class="card">
@@ -112,7 +110,7 @@ foreach ($proposals as $p) {
             </thead>
             <tbody>
                 <?php foreach ($proposals as $p) { ?>
-                <tr>
+                <tr id="proposal-row-<?= (int)$p['id'] ?>">
                     <td>
                         <span class="badge bg-body-tertiary text-body border"><?= h($p['target_type']) ?></span>
                         <?php if ($p['target_id']) { ?>
@@ -141,27 +139,23 @@ foreach ($proposals as $p) {
                     </td>
                     <td class="small"><?= h($p['user_email'] ?? 'User #' . $p['user_id']) ?></td>
                     <td class="small text-nowrap"><?= h(date('M j, g:ia', strtotime($p['created']))) ?></td>
-                    <td>
+                    <td class="proposal-status-cell">
                         <?php
                         $status_colors = ['submitted' => 'warning', 'approved' => 'success', 'applied' => 'info', 'rejected' => 'secondary', 'draft' => 'dark'];
                         ?>
                         <span class="badge bg-<?= $status_colors[$p['status']] ?? 'secondary' ?>"><?= h($p['status']) ?></span>
                     </td>
-                    <td>
+                    <td class="proposal-actions-cell">
                         <?php if ($p['status'] === 'submitted') { ?>
                         <div class="d-flex gap-1">
-                            <form method="post" class="d-inline">
-                                <input type="hidden" name="action" value="review_proposal">
-                                <input type="hidden" name="proposal_id" value="<?= $p['id'] ?>">
-                                <input type="hidden" name="new_status" value="approved">
-                                <button type="submit" class="btn btn-sm btn-outline-success" title="Approve"><i class="bi bi-check-lg"></i></button>
-                            </form>
-                            <form method="post" class="d-inline">
-                                <input type="hidden" name="action" value="review_proposal">
-                                <input type="hidden" name="proposal_id" value="<?= $p['id'] ?>">
-                                <input type="hidden" name="new_status" value="rejected">
-                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Reject"><i class="bi bi-x-lg"></i></button>
-                            </form>
+                            <button type="button" class="btn btn-sm btn-outline-success js-review-proposal"
+                                    data-proposal-id="<?= (int)$p['id'] ?>" data-new-status="approved" title="Approve">
+                                <i class="bi bi-check-lg"></i>
+                            </button>
+                            <button type="button" class="btn btn-sm btn-outline-danger js-review-proposal"
+                                    data-proposal-id="<?= (int)$p['id'] ?>" data-new-status="rejected" title="Reject">
+                                <i class="bi bi-x-lg"></i>
+                            </button>
                         </div>
                         <?php } elseif ($p['status'] === 'approved') { ?>
                         <span class="badge bg-success bg-opacity-10 text-success">Ready</span>
@@ -174,3 +168,78 @@ foreach ($proposals as $p) {
     </div>
 </div>
 <?php } ?>
+
+<script>
+(function () {
+    'use strict';
+
+    function adjustCount(id, delta) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        var n = parseInt(el.textContent, 10) || 0;
+        n = Math.max(0, n + delta);
+        el.textContent = n;
+    }
+
+    function updateApproveAllBadge(delta) {
+        var badge = document.getElementById('approveAllBadge');
+        var wrap  = document.getElementById('approveAllWrap');
+        if (!badge || !wrap) return;
+        var n = Math.max(0, (parseInt(badge.textContent, 10) || 0) + delta);
+        badge.textContent = n;
+        wrap.style.display = n > 0 ? '' : 'none';
+    }
+
+    function paintRowAsReviewed(row, newStatus) {
+        var statusCell = row.querySelector('.proposal-status-cell');
+        var actionCell = row.querySelector('.proposal-actions-cell');
+        var colors = { approved: 'success', rejected: 'secondary' };
+        if (statusCell) {
+            statusCell.innerHTML = '<span class="badge bg-' + (colors[newStatus] || 'secondary') + '">' + newStatus + '</span>';
+        }
+        if (actionCell) {
+            actionCell.innerHTML = newStatus === 'approved'
+                ? '<span class="badge bg-success bg-opacity-10 text-success">Ready</span>'
+                : '';
+        }
+    }
+
+    document.addEventListener('click', function (e) {
+        var btn = e.target.closest('.js-review-proposal');
+        if (!btn) return;
+        e.preventDefault();
+        if (btn.disabled) return;
+
+        var pid       = btn.getAttribute('data-proposal-id');
+        var newStatus = btn.getAttribute('data-new-status');
+        var row       = document.getElementById('proposal-row-' + pid);
+        if (!pid || !newStatus || !row) return;
+
+        // Disable both buttons in the row to prevent double-clicks
+        var allBtns = row.querySelectorAll('.js-review-proposal');
+        allBtns.forEach(function (b) { b.disabled = true; });
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+
+        apiPost('review_proposal', {
+            proposal_id: pid,
+            new_status:  newStatus
+        }, function (json) {
+            if (json && json.error) {
+                allBtns.forEach(function (b) { b.disabled = false; });
+                btn.innerHTML = newStatus === 'approved'
+                    ? '<i class="bi bi-check-lg"></i>'
+                    : '<i class="bi bi-x-lg"></i>';
+                if (typeof showToast === 'function') showToast('danger', json.error);
+                return;
+            }
+            paintRowAsReviewed(row, newStatus);
+            adjustCount('countSubmitted', -1);
+            if (newStatus === 'approved') adjustCount('countApproved', +1);
+            updateApproveAllBadge(-1);
+            if (typeof showToast === 'function') {
+                showToast('success', 'Proposal ' + newStatus + '.');
+            }
+        });
+    });
+})();
+</script>
