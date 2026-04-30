@@ -52,3 +52,30 @@ if (($_POST['action'] ?? '') === 'review_proposal') {
         $_SESSION['error'] = implode('<br>', $errs);
     }
 }
+
+// Bulk-approve all submitted proposals (optionally filtered by target type)
+if (($_POST['action'] ?? '') === 'approve_all_proposals') {
+    $errs = [];
+    $uid = $_SESSION['user_id'] ?? 0;
+
+    if (!$uid) { $errs['auth'] = 'Login required.'; }
+    if (!has_role('admin')) { $errs['role'] = 'Admin access required.'; }
+
+    if (count($errs) <= 0) {
+        $filters = ['status' => 'submitted'];
+        if (!empty($_POST['target_type'])) {
+            $filters['target_type'] = $_POST['target_type'];
+        }
+        $pending = get_proposals($filters) ?: [];
+        $count = 0;
+        foreach ($pending as $p) {
+            update_proposal_status((int)$p['id'], 'approved', $uid);
+            $count++;
+        }
+        $_SESSION['success'] = $count === 1
+            ? '1 proposal approved.'
+            : $count . ' proposals approved.';
+    } else {
+        $_SESSION['error'] = implode('<br>', $errs);
+    }
+}

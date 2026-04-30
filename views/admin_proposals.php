@@ -67,6 +67,27 @@ foreach ($all_proposals as $p) {
     <?php } ?>
 </div>
 
+<?php
+$pending_visible = 0;
+foreach ($proposals as $p) {
+    if (($p['status'] ?? '') === 'submitted') $pending_visible++;
+}
+?>
+<?php if ($pending_visible > 0) { ?>
+<div class="d-flex justify-content-end mb-3">
+    <form method="post" onsubmit="return confirm('Approve all <?= (int)$pending_visible ?> pending proposal<?= $pending_visible === 1 ? '' : 's' ?><?= $filter_type ? ' of type ' . h($filter_type) : '' ?>?');">
+        <input type="hidden" name="action" value="approve_all_proposals">
+        <?php if ($filter_type) { ?>
+        <input type="hidden" name="target_type" value="<?= h($filter_type) ?>">
+        <?php } ?>
+        <button type="submit" class="btn btn-sm btn-success">
+            <i class="bi bi-check-all me-1"></i>Approve All<?= $filter_type ? ' (' . h($filter_type) . ')' : '' ?>
+            <span class="badge bg-light text-success ms-1"><?= (int)$pending_visible ?></span>
+        </button>
+    </form>
+</div>
+<?php } ?>
+
 <?php if (empty($proposals)) { ?>
 <div class="card">
     <div class="card-body text-center text-muted py-5">
