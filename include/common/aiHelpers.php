@@ -517,7 +517,7 @@ function call_ai_api($system_prompt, $conversation_log, $ai_config, $tool_schema
     if (($input_tokens + $output_tokens) > 0 && function_exists('record_cost')) {
         $rates = get_vendor_cost_rates($used_vendor, $model);
         $cost  = ($input_tokens * $rates['input'] / 1000000) + ($output_tokens * $rates['output'] / 1000000);
-        record_cost('cogs', 'elevateher', 'AI assessment chat (' . $model . ')', $cost, [
+        record_cost('cogs', getenv('CHILD_APP_SLUG') ?: 'child-app', 'AI assessment chat (' . $model . ')', $cost, [
             'user_id'  => $uid ?: null,
             'vendor'   => $used_vendor,
             'metadata' => json_encode([

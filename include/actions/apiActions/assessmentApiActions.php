@@ -119,7 +119,7 @@ if (($_POST['action'] ?? '') === 'assessment_chat') {
                             $inst_data['askedQuestions'][] = $cur_q['id'];
                         }
 
-                        error_log("ElevateHER: Growth choice resolved — Q: {$cur_q['id']}, dimension: $growth_dimension, content: " . implode(', ', $growth_content_ids));
+                        error_log("Growth choice resolved — Q: {$cur_q['id']}, dimension: $growth_dimension, content: " . implode(', ', $growth_content_ids));
                     }
                 } elseif (in_array($format, ['multiple-choice', 'hybrid'])) {
                     // ── Assessment MC: diagnostic scoring ──
@@ -481,7 +481,7 @@ if (($_POST['action'] ?? '') === 'assessment_chat') {
                         ['label' => $struggle_label,                                 'value' => 'strong-false',  'resolves' => $resolves_strong_false],
                         ['label' => 'I\'d like to share more details',               'value' => 'free-form',     'resolves' => []],
                     ];
-                    error_log("ElevateHER: Server-side scaffold choices generated for free-form question {$scaffold_q['id']} (AI didn't provide choices)");
+                    error_log("Server-side scaffold choices generated for free-form question {$scaffold_q['id']} (AI didn't provide choices)");
                 }
             }
 
@@ -580,7 +580,7 @@ if (($_POST['action'] ?? '') === 'assessment_chat') {
             // doesn't report question_id, e.g., free-form answers that went off-topic)
             if ($cur_q && !in_array($cur_q['id'], $inst_data['askedQuestions'])) {
                 $inst_data['askedQuestions'][] = $cur_q['id'];
-                error_log("ElevateHER: Marked cur_q {$cur_q['id']} as asked (server-side enforcement)");
+                error_log("Marked cur_q {$cur_q['id']} as asked (server-side enforcement)");
             }
 
             // ── Step 7b: Process suggested_stage from AI ──
@@ -592,7 +592,7 @@ if (($_POST['action'] ?? '') === 'assessment_chat') {
                 // Store in placement for use by pick_next_question
                 if (!isset($inst_data['placement'])) $inst_data['placement'] = [];
                 $inst_data['placement']['aiSuggestedStage'] = $ai_suggested_stage;
-                error_log("ElevateHER: AI suggested_stage = $ai_suggested_stage (current placed: " . ($inst_data['placement']['placedStage'] ?? 'none') . ")");
+                error_log("AI suggested_stage = $ai_suggested_stage (current placed: " . ($inst_data['placement']['placedStage'] ?? 'none') . ")");
             }
 
             // ── Step 8: Handle phase advancement ──
@@ -610,7 +610,7 @@ if (($_POST['action'] ?? '') === 'assessment_chat') {
             // Growth phase auto-completion: after a growth choice is resolved, transition to score
             if ($session['phase'] === 'growth' && $growth_resolved) {
                 $new_phase = 'score';
-                error_log("ElevateHER: Growth choice resolved — transitioning from growth to score");
+                error_log("Growth choice resolved — transitioning from growth to score");
             }
 
             // Server-side enforcement: if no more questions remain for this phase, advance regardless of AI signal
@@ -628,20 +628,20 @@ if (($_POST['action'] ?? '') === 'assessment_chat') {
                     if (in_array($session['phase'], ['floor', 'ceiling'])) {
                         $phase_order = ['floor' => 'ceiling', 'ceiling' => 'zone'];
                         $new_phase = $phase_order[$session['phase']] ?? $session['phase'];
-                        error_log("ElevateHER: Server-side phase enforcement — advancing from {$session['phase']} to $new_phase (no questions remain)");
+                        error_log("Server-side phase enforcement — advancing from {$session['phase']} to $new_phase (no questions remain)");
                     } elseif ($session['phase'] === 'zone') {
                         // Before going to score, check if we should transition to growth
                         $growth_check = check_growth_activation($inst_data, $enforce_asked);
                         if ($growth_check) {
                             $new_phase = 'growth';
-                            error_log("ElevateHER: Server-side phase enforcement — advancing from zone to growth (wall blocking at stage {$growth_check['stage']}, assessment questions exhausted)");
+                            error_log("Server-side phase enforcement — advancing from zone to growth (wall blocking at stage {$growth_check['stage']}, assessment questions exhausted)");
                         } else {
                             $new_phase = 'score';
-                            error_log("ElevateHER: Server-side phase enforcement — advancing from zone to score (no questions remain)");
+                            error_log("Server-side phase enforcement — advancing from zone to score (no questions remain)");
                         }
                     } elseif ($session['phase'] === 'growth') {
                         $new_phase = 'score';
-                        error_log("ElevateHER: Server-side phase enforcement — advancing from growth to score (no growth questions remain)");
+                        error_log("Server-side phase enforcement — advancing from growth to score (no growth questions remain)");
                     } elseif ($session['phase'] === 'profile') {
                         $profile_check = $inst_data['subjectProfile'] ?? [];
                         $who_check = $profile_check['who'] ?? [];
@@ -654,7 +654,7 @@ if (($_POST['action'] ?? '') === 'assessment_chat') {
                         if ($field_count >= 3) {
                             $new_phase = 'floor';
                             $inst_data['subjectProfile']['who']['completedAt'] = date('c');
-                            error_log("ElevateHER: Server-side phase enforcement — advancing from profile to floor ($field_count profile fields collected)");
+                            error_log("Server-side phase enforcement — advancing from profile to floor ($field_count profile fields collected)");
                         }
                     }
                 }
@@ -689,7 +689,7 @@ if (($_POST['action'] ?? '') === 'assessment_chat') {
                             'unresolvedItems' => $gap_items,
                             'note' => 'No matrix questions available for phase "' . $session['phase'] . '" to cover these stage ' . sprintf('%02d', $gap_stage_num) . ' items.',
                         ];
-                        error_log("ElevateHER: Question gap detected — stage " . sprintf('%02d', $gap_stage_num) . ", phase {$session['phase']}, " . count($gap_items) . " unresolved items with no matrix questions.");
+                        error_log("Question gap detected — stage " . sprintf('%02d', $gap_stage_num) . ", phase {$session['phase']}, " . count($gap_items) . " unresolved items with no matrix questions.");
                     }
                 }
             }
@@ -700,7 +700,7 @@ if (($_POST['action'] ?? '') === 'assessment_chat') {
             $inst_data['responses'] = $inf_result['responses'];
             $inst_data['responseMeta'] = $inf_result['responseMeta'];
             if ($inf_result['inferred_count'] > 0) {
-                error_log("ElevateHER: Inference pass resolved {$inf_result['inferred_count']} earlier-stage items");
+                error_log("Inference pass resolved {$inf_result['inferred_count']} earlier-stage items");
             }
             $inst_data['scores'] = compute_all_stage_scores($inst_data['responses']);
             $inst_data['placement'] = compute_placement($inst_data);
@@ -752,7 +752,7 @@ if (($_POST['action'] ?? '') === 'assessment_chat') {
                     $gc['growth_routed'] = true;
                 }
                 unset($gc);
-                error_log("ElevateHER: Growth content routing — " . count($content_recs) . " items surfaced for dimension: $growth_dimension");
+                error_log("Growth content routing — " . count($content_recs) . " items surfaced for dimension: $growth_dimension");
             } elseif (!empty($inferred_items)) {
                 // Path B: MC or AI-inferred items — match content to resolved items
                 $resolved_ids = array_map(fn($i) => $i['id'], $inferred_items);
@@ -780,7 +780,7 @@ if (($_POST['action'] ?? '') === 'assessment_chat') {
                         $content_recs[] = $item;
                     }
                     if (!empty($content_recs)) {
-                        error_log("ElevateHER: Path C contextual content — " . count($content_recs) . " items from question {$cur_q['id']}");
+                        error_log("Path C contextual content — " . count($content_recs) . " items from question {$cur_q['id']}");
                     }
                 }
             }
@@ -864,20 +864,20 @@ if (($_POST['action'] ?? '') === 'assessment_chat') {
                 // No message at all — find current question and present it
                 if ($next_q && !empty($next_q['prompt'])) {
                     $data['question_bubble'] = $next_q['prompt'];
-                    error_log("ElevateHER: Catchall injected question bubble for {$next_q['id']} (choices without question)");
+                    error_log("Catchall injected question bubble for {$next_q['id']} (choices without question)");
                 } else {
                     $response_choices = null;
-                    error_log("ElevateHER: Catchall stripped orphaned choices (no question available)");
+                    error_log("Catchall stripped orphaned choices (no question available)");
                 }
             } elseif (!empty($response_choices) && empty($data['question_bubble'])) {
                 // We have a display_message (ack) but no question — inject the question
                 if ($next_q && !empty($next_q['prompt'])) {
                     $data['question_bubble'] = $next_q['prompt'];
-                    error_log("ElevateHER: Catchall injected question bubble for {$next_q['id']} (ack without question)");
+                    error_log("Catchall injected question bubble for {$next_q['id']} (ack without question)");
                 } else {
                     // No question to ask — strip choices to avoid confusing the user
                     $response_choices = null;
-                    error_log("ElevateHER: Catchall stripped orphaned choices (ack but no question available)");
+                    error_log("Catchall stripped orphaned choices (ack but no question available)");
                 }
             }
 
@@ -895,7 +895,7 @@ if (($_POST['action'] ?? '') === 'assessment_chat') {
                     "Great progress! Here's some content that connects to what we're exploring.",
                 ];
                 $data['display_message'] = $content_msgs[array_rand($content_msgs)];
-                error_log("ElevateHER: Content priority — suppressed question/choices, showing content instead");
+                error_log("Content priority — suppressed question/choices, showing content instead");
             }
 
             $data['choices'] = $response_choices;

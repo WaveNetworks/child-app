@@ -3,7 +3,7 @@ try {
     include(__DIR__ . '/../include/common_auth.php');
     $b = get_branding();
 } catch (Throwable $e) {
-    $b = ['site_name' => 'ElevateHER', 'logo_path' => '', 'logo_dark_path' => '', 'favicon_path' => ''];
+    $b = ['site_name' => defined('CHILD_APP_NAME') ? CHILD_APP_NAME : 'this app', 'logo_path' => '', 'logo_dark_path' => '', 'favicon_path' => ''];
     function h($s) { return htmlspecialchars($s ?? '', ENT_QUOTES, 'UTF-8'); }
 }
 $logo = !empty($b['logo_dark_path']) ? $b['logo_dark_path'] : ($b['logo_path'] ?? '');
@@ -49,7 +49,7 @@ $logo = !empty($b['logo_dark_path']) ? $b['logo_dark_path'] : ($b['logo_path'] ?
                         <div class="lotus-center"></div>
                     </div>
                 </div>
-                <h1 class="panel-title">Welcome to ElevateHER</h1>
+                <h1 class="panel-title">Welcome to <?= h(defined("CHILD_APP_NAME") ? CHILD_APP_NAME : "this app") ?></h1>
                 <p class="panel-subtitle">
                     A free AI-powered assessment from the Direct Selling Women's Alliance.
                     Discover exactly where you stand in your direct sales journey &mdash;

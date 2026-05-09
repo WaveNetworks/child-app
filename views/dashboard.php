@@ -205,7 +205,7 @@ if ($instance && $scores) {
             }
             if ($count > 0) $scores = ['mindset' => $total_m, 'toolset' => $total_t, 'skillset' => $total_s];
         }
-        error_log("ElevateHER: Auto-recomputed scores for user $uid (framework $last_fw_version → $current_fw_version)");
+        error_log("Auto-recomputed scores for user $uid (framework $last_fw_version → $current_fw_version)");
     }
 }
 

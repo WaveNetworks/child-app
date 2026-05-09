@@ -10,10 +10,10 @@ if (function_exists('register_theme')) {
         foreach (glob($themes_dir . '/*/custom.css') as $css_file) {
             $slug = basename(dirname($css_file));
             $name = ucfirst(str_replace(['-', '_'], ' ', $slug));
-            $rel_path = 'elevateher/assets/themes/' . $slug . '/custom.css';
+            $rel_path = (getenv('CHILD_APP_SLUG') ?: 'child-app') . '/assets/themes/' . $slug . '/custom.css';
             register_theme($slug, $name, $rel_path, [
                 'sidebar_mode'   => 'glass',
-                'created_by_app' => 'elevateher',
+                'created_by_app' => (getenv('CHILD_APP_SLUG') ?: 'child-app'),
             ]);
         }
     }

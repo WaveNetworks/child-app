@@ -185,7 +185,7 @@ function pick_next_question($phase, $instance_data, $asked_questions = [], $sugg
         // This is how the AI's assessment guides the server to the right area
         if ($suggested_stage !== null) {
             $ci = (int)$suggested_stage;
-            error_log("ElevateHER: Using AI suggested_stage $suggested_stage to guide zone question selection (placed: $current)");
+            error_log(" Using AI suggested_stage $suggested_stage to guide zone question selection (placed: $current)");
         } else {
             $ci = (int)$current;
         }
@@ -197,9 +197,9 @@ function pick_next_question($phase, $instance_data, $asked_questions = [], $sugg
     } elseif ($phase === 'floor' && $suggested_stage !== null) {
         // During floor phase, if AI suggests a high stage, we still use floor-tier questions
         // but the suggested_stage is logged for later use when we enter zone
-        error_log("ElevateHER: AI suggested_stage $suggested_stage during floor phase — will influence zone entry");
+        error_log(" AI suggested_stage $suggested_stage during floor phase — will influence zone entry");
     } elseif ($phase === 'ceiling' && $suggested_stage !== null) {
-        error_log("ElevateHER: AI suggested_stage $suggested_stage during ceiling phase — narrowing bracket");
+        error_log(" AI suggested_stage $suggested_stage during ceiling phase — narrowing bracket");
     }
 
     $questions = get_questions_for_phase($phase, $stage_band);

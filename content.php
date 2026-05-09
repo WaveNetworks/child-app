@@ -4,7 +4,7 @@
  * Serves framework content files (thumbnails, documents, media) from the
  * dswa-framework content directory. Lightweight — no session/auth/helpers.
  *
- * URL: /elevateher/content/{path} (rewritten by .htaccess)
+ * URL: /CHILD_APP_SLUG/content/{path} (rewritten by .htaccess)
  */
 
 // Get relative path from rewrite or query string
@@ -16,7 +16,7 @@ if (!$file || preg_match('/\.\.|\x00/', $file) || strpos($file, '\\') !== false)
 }
 
 // Resolve framework content base path
-$fw_path = getenv('ELEVATEHER_FRAMEWORK_PATH') ?: __DIR__ . '/../dswa-framework/framework';
+$fw_path = getenv('CHILD_APP_FRAMEWORK_PATH') ?: __DIR__ . '/../dswa-framework/framework';
 $base_path = realpath($fw_path . '/content');
 
 if (!$base_path) {

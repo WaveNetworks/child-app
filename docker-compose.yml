@@ -1,4 +1,14 @@
-# docker-compose.yml — ElevateHER Learning Suite
+# docker-compose.yml — generic Wave Networks child app dev stack.
+#
+# Set CHILD_APP_SLUG (lowercase, URL-safe) and CHILD_APP_NAME in your
+# .env file. Every database name + path below is derived from
+# CHILD_APP_SLUG via env interpolation, so a new child app gets its
+# own namespaced DBs without editing this file.
+#
+# .env example:
+#   CHILD_APP_SLUG=hireasupport
+#   CHILD_APP_NAME=Hire a Support
+#   ANTHROPIC_API_KEY=sk-ant-...
 #
 # Single MySQL server hosts all 6 namespaced databases.
 # Source is BIND-MOUNTED from the host — edit files and refresh, no rebuild needed.
@@ -13,44 +23,49 @@ services:
       - ../../.env
     environment:
       - ENVIRONMENT=development
-      # Admin databases
+      - CHILD_APP_SLUG=${CHILD_APP_SLUG:-child-app}
+      - CHILD_APP_NAME=${CHILD_APP_NAME:-Wave Networks Child App}
+      # Admin databases — namespaced by child app slug
       - DB_HOST_MAIN=db
-      - DB_NAME_MAIN=elevateher_admin_main
+      - DB_NAME_MAIN=${CHILD_APP_SLUG:-child_app}_admin_main
       - DB_USER=root
       - DB_PASSWORD=dev_root_password_123
       - DB_HOST_SHARD=db
-      - DB_NAME_SHARD=elevateher_admin_shard_1
+      - DB_NAME_SHARD=${CHILD_APP_SLUG:-child_app}_admin_shard_1
       - DB_HOST_SHARD2=db
-      - DB_NAME_SHARD2=elevateher_admin_shard_2
+      - DB_NAME_SHARD2=${CHILD_APP_SLUG:-child_app}_admin_shard_2
       - FILES_LOCATION=/var/www/files/
       - SMTP_HOST=mailhog
       - SMTP_PORT=1025
       - MAIL_FROM=noreply@localhost
-      - MAIL_FROM_NAME=ElevateHER
+      - MAIL_FROM_NAME=${CHILD_APP_NAME:-Wave Networks Child App}
       - APP_SECRET=dev_app_secret_64_chars_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
       - HIDDEN_HASH=dev_hidden_hash_xxxxxxxxxxxxxxxxxx
       - SEED_TEST_DATA=true
-      # ElevateHER child app databases
+      # Child-app databases — namespaced by child app slug
       - CHILD_DB_HOST=db
-      - CHILD_DB_NAME=elevateher_main
+      - CHILD_DB_NAME=${CHILD_APP_SLUG:-child_app}_main
       - CHILD_DB_USER=root
       - CHILD_DB_PASS=dev_root_password_123
       - CHILD_DB_HOST_SHARD=db
-      - CHILD_DB_NAME_SHARD=elevateher_shard_1
+      - CHILD_DB_NAME_SHARD=${CHILD_APP_SLUG:-child_app}_shard_1
       - CHILD_DB_HOST_SHARD2=db
-      - CHILD_DB_NAME_SHARD2=elevateher_shard_2
-      # ElevateHER app config
-      - ELEVATEHER_AI_API_KEY=${ANTHROPIC_API_KEY}
-      - ELEVATEHER_AI_MODEL=claude-sonnet-4-20250514
-      - ELEVATEHER_FRAMEWORK_SOURCE=local
-      - ELEVATEHER_FRAMEWORK_PATH=/var/www/public_html/dswa-framework/framework
-      - ELEVATEHER_APP_URL=http://localhost:8085/elevateher/app
+      - CHILD_DB_NAME_SHARD2=${CHILD_APP_SLUG:-child_app}_shard_2
+      # Optional AI / framework config — only relevant if the app
+      # uses AI assistance and an external framework JSON tree
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - CHILD_APP_AI_MODEL=${CHILD_APP_AI_MODEL:-claude-sonnet-4-20250514}
+      - CHILD_APP_FRAMEWORK_SOURCE=${CHILD_APP_FRAMEWORK_SOURCE:-local}
+      - CHILD_APP_FRAMEWORK_PATH=${CHILD_APP_FRAMEWORK_PATH:-/var/www/public_html/dswa-framework/framework}
+      - CHILD_APP_URL=${CHILD_APP_URL:-http://localhost:8085/${CHILD_APP_SLUG:-child-app}/app}
     volumes:
       # Source code — bind-mounted for live editing (no rebuild needed)
       - ../admin:/var/www/public_html/admin
-      - .:/var/www/public_html/elevateher
-      - ../dswa-framework:/var/www/public_html/dswa-framework
-      - ../DSWADemo:/var/www/public_html/DSWADemo
+      - .:/var/www/public_html/${CHILD_APP_SLUG:-child-app}
+      # Optional: mount a sibling framework / demo content tree if the
+      # app uses one. Comment these out if not needed.
+      # - ../dswa-framework:/var/www/public_html/dswa-framework
+      # - ../DSWADemo:/var/www/public_html/DSWADemo
       # Persistent data
       - files_vol:/var/www/files
     depends_on:

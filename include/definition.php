@@ -1,13 +1,20 @@
 <?php
 /**
- * definition.php — ElevateHER Learning Suite variable pre-declarations.
+ * definition.php — child app variable pre-declarations.
  * Admin's definition.php already handles core session/request vars.
+ *
+ * CHILD_APP_SLUG and CHILD_APP_NAME are driven by env vars so this
+ * scaffold can be reused for any child app without editing source.
+ * A new child app should set:
+ *   CHILD_APP_SLUG=hireasupport         (lowercase, URL-safe)
+ *   CHILD_APP_NAME="Hire a Support"      (display name)
+ * in its config.php / .env / docker-compose env block.
  */
 
-// ─── VERSION ────────────────────────────────────────────────────────────────
+// ─── VERSION + APP IDENTITY ─────────────────────────────────────────────────
 define('WN_CHILD_APP_VERSION', '1.0.0');
-define('ELEVATEHER_APP_NAME', 'ElevateHER Learning Suite');
-define('ELEVATEHER_APP_SLUG', 'elevateher');
+define('CHILD_APP_SLUG', getenv('CHILD_APP_SLUG') ?: 'child-app');
+define('CHILD_APP_NAME', getenv('CHILD_APP_NAME') ?: 'Wave Networks Child App');
 
 // ─── CHILD APP REQUEST VARIABLES ────────────────────────────────────────────
 $seller_id   = $_REQUEST['seller_id'] ?? null;

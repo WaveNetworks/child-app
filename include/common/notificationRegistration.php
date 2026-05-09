@@ -1,7 +1,7 @@
 <?php
 /**
  * notificationRegistration.php
- * Register ElevateHER-specific notification categories with Wave Networks.
+ * Register child-app notification categories with Wave Networks.
  * Runs on every request (idempotent via ON DUPLICATE KEY UPDATE).
  */
 if (function_exists('register_notification_category')) {

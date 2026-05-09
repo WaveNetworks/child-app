@@ -32,7 +32,7 @@ function get_content_files($catalog_item) {
     if (!is_dir($content_dir)) return [];
 
     $title_slug = str_replace([' ', "\u{2014}", "\u{2013}", ':', ',', "'", '"'], ['_', '', '', '', '', '', ''], $title);
-    $url_base = '/elevateher/content/' . $stage_folder . '/' . $dim . '/';
+    $url_base = '/' . (getenv('CHILD_APP_SLUG') ?: 'child-app') . '/content/' . $stage_folder . '/' . $dim . '/';
 
     $files = [];
     $all_files = glob($content_dir . '/*');

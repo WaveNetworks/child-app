@@ -1,6 +1,6 @@
 <?php
 /**
- * common_api.php — ElevateHER Learning Suite JSON API bootstrap.
+ * common_api.php — child app JSON API bootstrap.
  * Sets JSON header, includes admin's API bootstrap, then opens child DBs.
  */
 header('Content-Type: application/json');
@@ -29,7 +29,7 @@ if (file_exists($childConfigFile)) {
     include($childConfigFile);
 } else {
     $child_db_host = getenv('CHILD_DB_HOST') ?: 'db_child';
-    $child_db_name = getenv('CHILD_DB_NAME') ?: 'elevateher_main';
+    $child_db_name = getenv('CHILD_DB_NAME') ?: ((getenv('CHILD_APP_SLUG') ?: 'child_app') . '_main');
     $child_db_user = getenv('CHILD_DB_USER') ?: getenv('DB_USER') ?: 'root';
     $child_db_pass = getenv('CHILD_DB_PASS') ?: getenv('DB_PASSWORD') ?: '';
 
@@ -37,7 +37,7 @@ if (file_exists($childConfigFile)) {
     if (getenv('CHILD_DB_HOST_SHARD')) {
         $childShardConfigs['shard1'] = [
             'host' => getenv('CHILD_DB_HOST_SHARD'),
-            'name' => getenv('CHILD_DB_NAME_SHARD') ?: 'elevateher_shard_1',
+            'name' => getenv('CHILD_DB_NAME_SHARD') ?: ((getenv('CHILD_APP_SLUG') ?: 'child_app') . '_shard_1'),
             'user' => getenv('CHILD_DB_USER') ?: getenv('DB_USER') ?: 'root',
             'pass' => getenv('CHILD_DB_PASS') ?: getenv('DB_PASSWORD') ?: '',
         ];
@@ -45,7 +45,7 @@ if (file_exists($childConfigFile)) {
     if (getenv('CHILD_DB_HOST_SHARD2')) {
         $childShardConfigs['shard2'] = [
             'host' => getenv('CHILD_DB_HOST_SHARD2'),
-            'name' => getenv('CHILD_DB_NAME_SHARD2') ?: 'elevateher_shard_2',
+            'name' => getenv('CHILD_DB_NAME_SHARD2') ?: ((getenv('CHILD_APP_SLUG') ?: 'child_app') . '_shard_2'),
             'user' => getenv('CHILD_DB_USER') ?: getenv('DB_USER') ?: 'root',
             'pass' => getenv('CHILD_DB_PASS') ?: getenv('DB_PASSWORD') ?: '',
         ];
@@ -59,7 +59,7 @@ if (file_exists($childConfigFile)) {
         'vendors' => [
             'anthropic' => [
                 'api_key' => getenv('ANTHROPIC_API_KEY') ?: '',
-                'model'   => getenv('ELEVATEHER_AI_MODEL') ?: 'claude-sonnet-4-20250514',
+                'model'   => getenv('CHILD_APP_AI_MODEL') ?: 'claude-sonnet-4-20250514',
             ],
             'openai' => [
                 'api_key' => getenv('OPEN_AI_API_KEY') ?: '',
@@ -73,14 +73,14 @@ if (file_exists($childConfigFile)) {
     ];
 
     $framework_config = [
-        'source'     => getenv('ELEVATEHER_FRAMEWORK_SOURCE') ?: 'local',
-        'local_path' => getenv('ELEVATEHER_FRAMEWORK_PATH') ?: __DIR__ . '/../../dswa-framework/framework',
-        'remote_url' => getenv('ELEVATEHER_FRAMEWORK_URL') ?: '',
+        'source'     => getenv('CHILD_APP_FRAMEWORK_SOURCE') ?: 'local',
+        'local_path' => getenv('CHILD_APP_FRAMEWORK_PATH') ?: __DIR__ . '/../../dswa-framework/framework',
+        'remote_url' => getenv('CHILD_APP_FRAMEWORK_URL') ?: '',
         'auto_sync'  => false,
     ];
 
     $app_config = [
-        'app_url'                => getenv('ELEVATEHER_APP_URL') ?: '',
+        'app_url'                => getenv('CHILD_APP_URL') ?: '',
         'invite_max_per_coach'   => 20,
         'session_timeout_hours'  => 4,
         'cohort_cache_hours'     => 1,
@@ -153,10 +153,10 @@ if (empty($_SESSION['_fw_sync_checked'])) {
         try {
             $sync_result = sync_framework_data();
             if (!empty($sync_result['changed'])) {
-                error_log("ElevateHER: Framework auto-synced to " . ($sync_result['version'] ?? 'unknown'));
+                error_log("Framework auto-synced to " . ($sync_result['version'] ?? 'unknown'));
             }
         } catch (Exception $e) {
-            error_log("ElevateHER: Framework auto-sync error: " . $e->getMessage());
+            error_log("Framework auto-sync error: " . $e->getMessage());
         }
     }
 }

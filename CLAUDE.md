@@ -1,13 +1,40 @@
-# ElevateHER — CLAUDE.md
+# Wave Networks Child App — CLAUDE.md
 
 ## What this is
-Child application for the Wave Networks ecosystem. Deployed at `public_html/elevateher/`
-as a sibling of `public_html/admin/`. Admin core provides auth, sessions, sharding,
-email, notifications, theming, branding. This app adds its own databases, views, actions, theme.
 
-Bootstrap chain: `elevateher/include/common.php` → `admin/include/common.php`
+A reference scaffold for child applications in the Wave Networks
+ecosystem. Deployed at `public_html/{CHILD_APP_SLUG}/` as a sibling
+of `public_html/admin/`. Admin core (`wave-networks-core`) provides
+auth, sessions, sharding, email, notifications, theming, branding.
+This scaffold adds child-app-specific bootstrap, config, and
+boilerplate.
+
+Bootstrap chain:
+`{child-app}/include/common.php` → `admin/include/common.php`
+
+## Scaffolding a new child app from this repo
+
+1. Create the new repo (e.g. `WaveNetworks/myapp`) and copy this
+   scaffold's contents into it.
+2. Set the env identity:
+   - `CHILD_APP_SLUG=myapp` (lowercase, URL-safe — drives DB
+     namespacing, URL paths, theme paths, cost tracking)
+   - `CHILD_APP_NAME="My App"` (display name shown in onboarding etc.)
+3. Set in `.github/workflows/deploy.yml`:
+   - `env.CHILD_APP_SLUG: myapp`
+4. Set repo secrets via `gh secret set`:
+   - `SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY`, `CROSS_REPO_PAT`
+5. Set in `docker-compose.yml` `.env`:
+   - same `CHILD_APP_SLUG=myapp` and `CHILD_APP_NAME=...`
+6. Decide which scaffold files you actually need. Some files in
+   `include/common/` (`questionMatrixHelpers.php`,
+   `instanceFileHelpers.php`, `scoringEngine.php`,
+   `contentHelpers.php`, etc.) are inherited from the original
+   ElevateHER assessment engine and most child apps will delete them.
+   Strip what you don't need before first run.
 
 ## Path reference
+
 ```
 auth/*.php          → include: ../include/common_auth.php
 app/index.php       → include: ../include/common.php
@@ -17,13 +44,20 @@ include/common.php  → include: ../../admin/include/common.php
 ```
 
 ## Three database layers
+
 1. **Admin main DB** (`$db`) — READ ONLY from child
 2. **Child main DB** (`$child_db`) — `child_db_query()`, `child_db_query_prepared()`
 3. **Child shard DBs** — `child_prime_shard()`, `child_db_query_shard()`, `child_db_query_shard_prepared()`
 
 Use `db_query_shard()` ONLY for reading admin shard data (user_profile).
 
+DB names default to `{CHILD_APP_SLUG}_main`, `{CHILD_APP_SLUG}_shard_1`,
+`{CHILD_APP_SLUG}_shard_2` (and `{CHILD_APP_SLUG}_admin_main` etc for
+admin tables) so each child app on shared infra has its own
+namespace automatically.
+
 ## Migration rules
+
 Dir: `db_migrations/main/` and `db_migrations/shard/` — decimal versioning (1.0, 1.1, 2.0).
 
 EVERY migration requires BOTH steps:
@@ -51,8 +85,12 @@ EVERY migration requires BOTH steps:
 - Edit existing migration files — always create a new version
 - Skip `h()` or `sanitize()` for any output
 - Set `$_SESSION['error']` on first validation failure (collect all first)
+- Hardcode the child-app slug, DB name, or URL prefix anywhere — read
+  `CHILD_APP_SLUG` / `CHILD_APP_NAME` constants instead so the
+  scaffold stays reusable.
 
 ## Template pattern
+
 ```php
 <?php if ($someCondition) { ?>
 <div class="something"><?= h($userData['field']) ?></div>
@@ -60,6 +98,7 @@ EVERY migration requires BOTH steps:
 ```
 
 ## Action file pattern
+
 ```php
 if ($_POST['action'] == 'doThing') {
     $errs = array();
@@ -75,35 +114,17 @@ if ($_POST['action'] == 'doThing') {
 ```
 
 ## Action dispatch
+
 - Authenticated: `include/actions/memberActions/yourFeatureActions.php` (auto-included via glob)
 - API/public: `include/actions/apiActions/yourFeatureActions.php`
 - Form POST: `<form method="post">` on any view page
 - AJAX: `apiPost('actionName', {data}, callback)` → `api/index.php`
 
 ## Docker
+
 Source is **bind-mounted** — edit any file and refresh, no rebuild needed.
 `docker compose up -d` starts app (port 8085), db, mailhog (port 8025).
 Only rebuild when changing Dockerfile/apache.conf/entrypoint.sh/PHP extensions.
-Test credentials: `admin@elevateher.test` / `Admin123!`
-
-## Detailed reference docs
-Read these on demand when working in the relevant area:
-
-| Doc | When to read |
-|-----|-------------|
-| [01-ARCHITECTURE.md](docs/01-ARCHITECTURE.md) | Bootstrap chains, request flow, directory structure |
-| [02-BOOTSTRAP-AND-CONFIG.md](docs/02-BOOTSTRAP-AND-CONFIG.md) | Config loading, env var fallbacks, common.php internals |
-| [03-FRAMEWORK-SYSTEM.md](docs/03-FRAMEWORK-SYSTEM.md) | Framework data sync, content catalog, versioning |
-| [04-ASSESSMENT-ENGINE.md](docs/04-ASSESSMENT-ENGINE.md) | Assessment instances, scoring, question matrix, AI backstop |
-| [05-CONTENT-SYSTEM.md](docs/05-CONTENT-SYSTEM.md) | Content state machine, progress tracking, recommendations |
-| [06-COACH-AND-TEAM.md](docs/06-COACH-AND-TEAM.md) | Coach relationships, team views, role-based access |
-| [07-ACTIONS-REFERENCE.md](docs/07-ACTIONS-REFERENCE.md) | Complete list of all action handlers by file |
-| [08-VIEWS-AND-UI.md](docs/08-VIEWS-AND-UI.md) | Page views, modal system, template shell regions |
-| [09-JAVASCRIPT.md](docs/09-JAVASCRIPT.md) | All JS modules, apiPost/modalView patterns, game loop architecture |
-| [10-THEME-AND-SCSS.md](docs/10-THEME-AND-SCSS.md) | Theme system, SCSS pipeline, build commands, theme registration |
-| [11-AUTH-AND-PRIVACY.md](docs/11-AUTH-AND-PRIVACY.md) | Auth flow, GDPR privacy page, consent, data export, account deletion |
-| [12-DOCKER-AND-DEPLOY.md](docs/12-DOCKER-AND-DEPLOY.md) | Docker services, volumes, env vars, entrypoint, deploy script |
-| [13-DATABASE-SCHEMA.md](docs/13-DATABASE-SCHEMA.md) | Full table schemas for main and shard DBs |
 
 ## Cron system
 
@@ -129,11 +150,3 @@ Entry point: `cron/cron.php` — run via crontab every minute:
 - `cron/.htaccess` blocks web access to the entire `cron/` tree — never remove it.
 - Never do HTTP-only work (headers, sessions) inside cron jobs.
 - Keep jobs idempotent where possible.
-
-**Standalone self-monitor:** `cron/minutes/5/self_monitor_admin_errors.php`
-reads the local admin error_log and notifies admin users about new error
-patterns via `send_notification()`. Uses state file at
-`$files_location/self_monitor/admin_errors_state.json` to dedupe within a
-24h re-notify window. Runs independently of nokemo — if nokemo.com is
-offline, errors still get surfaced to the app's own admin users. Category
-`admin_error_alert` is registered in `notificationRegistration.php`.
