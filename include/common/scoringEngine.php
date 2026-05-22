@@ -1,7 +1,7 @@
 <?php
 /**
  * scoringEngine.php
- * Scoring engine for the ElevateHER assessment framework.
+ * Scoring engine (inherited from ElevateHER assessment framework).
  * Reads spec v2.3 format: responses as {value, answeredAt}, levels as beginner/developing/mastery.
  * Computes per-stage scores, placement, and hard wall checks.
  */

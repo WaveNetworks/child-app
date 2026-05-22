@@ -1,7 +1,7 @@
 <?php
 /**
  * views/template.php
- * ElevateHER Learning Suite — Full HTML shell with sidebar + topnav.
+ * Child app — full HTML shell with sidebar + topnav.
  * $current_page_file is set by app/index.php.
  */
 ?><!DOCTYPE html>
@@ -236,7 +236,7 @@
                 <a href="../../admin/app/" class="badge bg-danger bg-opacity-75 text-decoration-none"><i class="bi bi-shield-lock me-1"></i>Admin</a>
                 <?php } ?>
             </nav>
-            <span class="small text-muted ms-auto">&copy; <?= date('Y') ?> DSWA — ElevateHER Learning Suite</span>
+            <span class="small text-muted ms-auto">&copy; <?= date('Y') ?> <?= h(CHILD_APP_NAME) ?></span>
         </footer>
     </div>
 </div>
@@ -279,7 +279,7 @@
                 <h6 class="small fw-bold text-uppercase text-muted mb-3">Application</h6>
                 <dl class="small mb-0">
                     <dt class="text-muted">App</dt>
-                    <dd>ElevateHER Learning Suite</dd>
+                    <dd><?= h(CHILD_APP_NAME) ?></dd>
                     <dt class="text-muted">Version</dt>
                     <dd><?= defined('WN_CHILD_APP_VERSION') ? WN_CHILD_APP_VERSION : '1.0.0' ?></dd>
                     <dt class="text-muted">Framework</dt>

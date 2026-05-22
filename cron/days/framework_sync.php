@@ -17,7 +17,7 @@ if ($result['changed']) {
     if (function_exists('queue_email')) {
         $admin_email = get_branding()['admin_email'] ?? '';
         if ($admin_email) {
-            queue_email($admin_email, 'Admin', 'ElevateHER Framework Updated',
+            queue_email($admin_email, 'Admin', CHILD_APP_NAME . ' Framework Updated',
                 "Framework data updated to version {$result['version']}. {$result['files_loaded']} files loaded.");
         }
     }

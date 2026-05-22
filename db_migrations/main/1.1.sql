@@ -1,4 +1,4 @@
--- ElevateHER Learning Suite — Main DB v1.1
+-- Child app — Main DB v1.1
 -- Cache and cohort snapshot tables
 
 CREATE TABLE IF NOT EXISTS `app_cache` (

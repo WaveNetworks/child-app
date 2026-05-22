@@ -1,7 +1,7 @@
 <?php
 /**
  * modal_controller.php
- * AJAX modal content loader for ElevateHER Learning Suite.
+ * AJAX modal content loader for the child app.
  */
 include(__DIR__ . '/../include/common.php');
 

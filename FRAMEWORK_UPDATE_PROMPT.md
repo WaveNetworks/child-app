@@ -1,5 +1,7 @@
 # Framework Update Prompt: Growth Path Choice Questions
 
+> **This is an ElevateHER-specific example.** It documents the prompt used to evolve the ElevateHER assessment framework. If your child app doesn't use the inherited assessment engine, you can delete this file.
+
 Copy everything below the line into a new Claude session along with your current framework JSON files.
 
 ---

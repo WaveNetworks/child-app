@@ -1,6 +1,6 @@
 /**
  * @module explorer-view
- * @description ElevateHER Explorer View -- stage tiles grid with dimension
+ * @description Explorer view (inherited from ElevateHER assessment engine) -- stage tiles grid with dimension
  * progress bars, hard wall dividers, stage detail drill-down, content detail,
  * KPI breakdowns, field wisdom, and self-assessment reflection capture.
  *

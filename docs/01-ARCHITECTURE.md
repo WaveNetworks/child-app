@@ -47,7 +47,7 @@ SPA navigation (spa-nav.js) intercepts `a[href*="index.php?page="]` clicks and l
 ## Directory Structure
 
 ```
-elevateher/
+{child-app}/
 ├── api/                    # Single JSON endpoint (index.php)
 ├── app/                    # App shell (index.php) + modal controller
 ├── assets/

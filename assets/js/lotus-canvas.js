@@ -1,6 +1,6 @@
 /**
  * @module lotus-canvas
- * @description ElevateHER Lotus Visualization System — renders an animated lotus flower
+ * @description Lotus visualization system (inherited from ElevateHER) — renders an animated lotus flower
  * on an HTML5 canvas. The lotus is composed of concentric rings of petals, each ring
  * representing a framework stage. Petals are mapped to assessment dimensions (mindset,
  * toolset, skillset) and KPIs; their brightness ramps up as progress is reported.

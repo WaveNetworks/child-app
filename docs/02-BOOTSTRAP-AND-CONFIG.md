@@ -14,8 +14,8 @@ Constants and request variable extraction.
 
 ```php
 WN_CHILD_APP_VERSION = '1.0.0'        // Semantic version shown in admin dashboard
-ELEVATEHER_APP_NAME  = 'ElevateHER Learning Suite'
-ELEVATEHER_APP_SLUG  = 'elevateher'
+CHILD_APP_NAME  = 'Wave Networks Child App'   // env-driven, e.g. 'ElevateHER Learning Suite'
+CHILD_APP_SLUG  = 'child-app'                 // env-driven, e.g. 'elevateher', 'hireasupport', 'pwt'
 ```
 
 Request variables (from `$_REQUEST`):

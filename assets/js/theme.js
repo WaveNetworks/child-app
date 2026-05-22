@@ -1,6 +1,6 @@
 /**
  * @module theme
- * @description ElevateHER always uses the DSWA theme (glass mode).
+ * @description The child app reference demo uses the DSWA theme (glass mode).
  * No theme switching is provided. This script forces the DSWA theme
  * cookie/localStorage value and removes opaque sidebar/navbar styles
  * so the glass (transparent) appearance is always active.

@@ -77,7 +77,7 @@ Applied to: cards, modals, dropdowns, sidebar, offcanvas, navbar.
 `themeRegistration.php` auto-discovers themes:
 - Scans `assets/themes/*/custom.css` via glob
 - Registers each with admin core via `register_theme(slug, name, metadata)`
-- Metadata includes `sidebar_mode: 'glass'`, `created_by_app: 'elevateher'`
+- Metadata includes `sidebar_mode: 'glass'`, `created_by_app: CHILD_APP_SLUG`
 
 ## Theme Resolution (appFunctions.php)
 
@@ -98,7 +98,7 @@ Cache-busted via `?v=` with `filemtime()`.
 
 ## elevateher.css (1,810 lines)
 
-Application-specific styles that are **not** part of the Bootstrap theme pipeline. Loaded separately from the theme CSS.
+Application-specific styles that are **not** part of the Bootstrap theme pipeline. Loaded separately from the theme CSS. Filename is historical (inherited from the ElevateHER reference engine); replace with your own app CSS if rebuilding.
 
 ### Sections
 
@@ -129,7 +129,7 @@ These dimension colors appear in both CSS and JS (duplicated in chat-overlay.js 
 ```
 assets/
 ├── css/
-│   └── elevateher.css           # App-specific styles (1,810 lines, not SCSS-compiled)
+│   └── elevateher.css           # App-specific styles (1,810 lines, not SCSS-compiled, inherited)
 ├── themes/
 │   ├── glassmorphism/
 │   │   ├── _variables.scss      # Bootstrap variable overrides

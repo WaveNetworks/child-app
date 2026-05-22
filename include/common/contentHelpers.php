@@ -269,10 +269,10 @@ function get_content_for_resolved_items($resolved_item_ids, $user_state, $assess
     }
 
     $catalog = get_content_catalog();
-    if (empty($catalog)) { error_log("ElevateHER content: catalog empty"); return []; }
+    if (empty($catalog)) { error_log("[content] catalog empty"); return []; }
     $items = isset($catalog['contentCatalog']) ? $catalog['contentCatalog'] : (isset($catalog['items']) ? $catalog['items'] : $catalog);
 
-    error_log("ElevateHER content: searching " . count($items) . " catalog items for " . count($resolved_item_ids) . " resolved IDs (assessed_stage=" . ($assessed_stage ?? 'null') . ", currentStage=" . ($user_state['currentStage'] ?? 'null') . ")");
+    error_log("[content] searching " . count($items) . " catalog items for " . count($resolved_item_ids) . " resolved IDs (assessed_stage=" . ($assessed_stage ?? 'null') . ", currentStage=" . ($user_state['currentStage'] ?? 'null') . ")");
 
     $matches = [];
     $debug_rejected = [];
@@ -294,9 +294,9 @@ function get_content_for_resolved_items($resolved_item_ids, $user_state, $assess
     }
 
     if (!empty($debug_rejected)) {
-        error_log("ElevateHER content: " . count($debug_rejected) . " items had overlap but rejected — " . implode(', ', array_slice($debug_rejected, 0, 10)));
+        error_log("[content] " . count($debug_rejected) . " items had overlap but rejected — " . implode(', ', array_slice($debug_rejected, 0, 10)));
     }
-    error_log("ElevateHER content: returning " . count($matches) . " matches");
+    error_log("[content] returning " . count($matches) . " matches");
 
     // Sort by overlap count (most relevant first)
     usort($matches, fn($a, $b) => $b['overlap'] <=> $a['overlap']);

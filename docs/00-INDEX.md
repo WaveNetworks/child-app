@@ -1,6 +1,8 @@
-# ElevateHER Application Documentation
+# Child App Documentation
 
 > Generated 2026-03-26 from full codebase audit. Updated with re-engineering notes.
+> This codebase carries the ElevateHER assessment engine as its reference feature set;
+> docs describe both the generic child-app scaffolding and the inherited engine.
 
 ## Document Index
 
@@ -15,7 +17,7 @@
 | [07-ACTIONS-REFERENCE.md](07-ACTIONS-REFERENCE.md) | All 47 action handlers across 16 files | Medium — no action registry |
 | [08-VIEWS-AND-UI.md](08-VIEWS-AND-UI.md) | Views, snippets, modals, SPA navigation | Low — inline scripts |
 | [09-JAVASCRIPT.md](09-JAVASCRIPT.md) | All 14 client-side JS modules + PWT game loop migration plan | **HIGH — full rebuild needed** |
-| [10-THEME-AND-SCSS.md](10-THEME-AND-SCSS.md) | Themes, SCSS pipeline, elevateher.css, dark/light mode | Low — unused theme dir |
+| [10-THEME-AND-SCSS.md](10-THEME-AND-SCSS.md) | Themes, SCSS pipeline, app.css, dark/light mode | Low — unused theme dir |
 | [11-AUTH-AND-PRIVACY.md](11-AUTH-AND-PRIVACY.md) | Auth flow, GDPR, consent, export, deletion | Low — sync export |
 | [12-DOCKER-AND-DEPLOY.md](12-DOCKER-AND-DEPLOY.md) | Dockerfile, compose, entrypoint, cron jobs | Low — dev ergonomics |
 | [13-DATABASE-SCHEMA.md](13-DATABASE-SCHEMA.md) | Tables by database, migration system | Low — implicit schema |

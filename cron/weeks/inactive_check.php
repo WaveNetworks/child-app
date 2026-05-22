@@ -38,7 +38,7 @@ foreach ($childShardConfigs as $shard_id => $cfg) {
                     $coach['coach_shard_id'],
                     'seller_inactive',
                     'Inactive Team Member',
-                    "$seller_name hasn't been active on ElevateHER for over 2 weeks."
+                    "$seller_name hasn't been active on " . CHILD_APP_NAME . " for over 2 weeks."
                 );
             }
         }

@@ -75,7 +75,7 @@ if (($_POST['action'] ?? '') === 'accept_invite') {
                     send_notification($link['creator_user_id'], $link['creator_shard_id'], 'seller_linked',
                         'New Team Member', "$seller_name has accepted your invite.");
                     send_notification($uid, $sid, 'coach_linked',
-                        'New Coach Linked', ($result['coach_name'] ?? 'A coach') . ' is now your coach on ElevateHER.');
+                        'New Coach Linked', ($result['coach_name'] ?? 'A coach') . ' is now your coach on ' . CHILD_APP_NAME . '.');
                 }
             }
         } else {

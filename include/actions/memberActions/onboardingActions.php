@@ -69,7 +69,7 @@ if (($_POST['action'] ?? '') === 'save_onboarding') {
             }
         }
 
-        $_SESSION['success'] = 'Profile saved! Welcome to ElevateHER.';
+        $_SESSION['success'] = 'Profile saved! Welcome to ' . CHILD_APP_NAME . '.';
         log_user_history($uid, $sid, 'onboarding_completed', $profile);
     } else {
         $_SESSION['error'] = implode('<br>', $errs);

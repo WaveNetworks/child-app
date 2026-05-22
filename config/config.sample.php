@@ -1,15 +1,17 @@
 <?php
 /**
  * config/config.sample.php
- * ElevateHER Learning Suite Configuration Template.
+ * Child app — configuration template.
  *
  * Copy to config.php and fill in credentials.
  * Admin core credentials are NOT needed here — admin's bootstrap loads its own config.
+ * Replace the example DB names below (`{slug}_main`, `{slug}_shard_*`) with the
+ * actual DB names you create for your child app.
  */
 
 // ─── Child App Main Database ────────────────────────────────────────────────
 $child_db_host = 'your_child_main_db_host';
-$child_db_name = 'elevateher_main';
+$child_db_name = '{slug}_main';          // e.g. 'elevateher_main', 'hireasupport_main'
 $child_db_user = 'your_child_main_db_user';
 $child_db_pass = 'your_child_main_db_password';
 
@@ -17,13 +19,13 @@ $child_db_pass = 'your_child_main_db_password';
 $childShardConfigs = [
     'shard1' => [
         'host' => 'your_child_shard1_db_host',
-        'name' => 'elevateher_shard_1',
+        'name' => '{slug}_shard_1',       // e.g. 'elevateher_shard_1'
         'user' => 'your_child_shard1_db_user',
         'pass' => 'your_child_shard1_db_password',
     ],
     'shard2' => [
         'host' => 'your_child_shard2_db_host',
-        'name' => 'elevateher_shard_2',
+        'name' => '{slug}_shard_2',       // e.g. 'elevateher_shard_2'
         'user' => 'your_child_shard2_db_user',
         'pass' => 'your_child_shard2_db_password',
     ],

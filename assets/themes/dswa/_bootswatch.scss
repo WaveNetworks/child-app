@@ -1,6 +1,6 @@
 // DSWA Theme — Post-Bootstrap Overrides
 // Dark immersive aesthetic with glass panels, DSWA brand colors,
-// and dimension-coded badges/progress bars for the ElevateHER app.
+// and dimension-coded badges/progress bars (inherited from the ElevateHER app).
 
 // ─── GLASS MIXIN ──────────────────────────────────────────────────────────────
 @mixin glass($bg: rgba(0, 0, 0, 0.4), $blur: 16px) {
@@ -443,7 +443,7 @@ div.dt-container {
   letter-spacing: 0.03em;
 }
 
-// ElevateHER dimension badges
+// Assessment dimension badges (inherited from ElevateHER)
 .badge-mindset {
   background: rgba(179, 136, 217, 0.2);
   color: #d4b8f0;

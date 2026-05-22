@@ -1,6 +1,6 @@
 <?php
 /**
- * Dashboard — ElevateHER Learning Suite
+ * Dashboard — child app
  * Shows assessment status, stage placement, quick actions, and contextual quote.
  */
 $page_title = 'Dashboard';
@@ -239,7 +239,7 @@ if ($instance && $scores && function_exists('get_user_progress_timeline')) {
 <?php if (!$instance || ($instance['status'] ?? 'not_started') === 'not_started') { ?>
 <div class="alert alert-info">
     <i class="bi bi-flower1 me-2"></i>
-    <strong>Welcome to ElevateHER!</strong> Start your assessment — your AI coach will get to know you and guide you through the Training Continuum.
+    <strong>Welcome to <?= h(CHILD_APP_NAME) ?>!</strong> Start your assessment — your AI coach will get to know you and guide you through the Training Continuum.
     <a href="index.php?page=assessment" class="alert-link ms-2">Start Assessment <i class="bi bi-arrow-right"></i></a>
 </div>
 <?php } ?>
@@ -250,7 +250,7 @@ if ($instance && $scores && function_exists('get_user_progress_timeline')) {
         <div class="card">
             <div class="card-body">
                 <h4 class="card-title mb-1">Welcome back, <?= h($first_name) ?>!</h4>
-                <p class="text-muted mb-0">Your ElevateHER Learning Suite dashboard</p>
+                <p class="text-muted mb-0">Your <?= h(CHILD_APP_NAME) ?> dashboard</p>
             </div>
         </div>
     </div>

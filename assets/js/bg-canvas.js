@@ -1,6 +1,6 @@
 /**
  * @module bg-canvas
- * @description Full-page canvas background layer for ElevateHER.
+ * @description Full-page canvas background layer for the child app.
  * Renders a multi-stop radial/linear gradient nebula in dark mode and
  * soft color washes in light mode.  Automatically redraws on window
  * resize and `data-bs-theme` attribute changes.

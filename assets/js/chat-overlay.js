@@ -1,6 +1,6 @@
 /**
  * chat-overlay.js
- * ElevateHER Assessment Chat Overlay
+ * Assessment chat overlay (inherited from ElevateHER assessment engine).
  *
  * Connects to the assessment_chat API action.
  * Renders MC choices, cascading petal drops, and content banners with thumbnails.
@@ -50,7 +50,7 @@ var hasSession = !!sessionId;
 var logoUrl = mount.getAttribute('data-logo-url') || '';
 
 /** @type {string} Site name for branding */
-var siteName = mount.getAttribute('data-site-name') || 'ElevateHER';
+var siteName = mount.getAttribute('data-site-name') || 'App';
 
 /** @type {boolean} True when the logged-in user is an admin (enables debug UI) */
 var isAdmin = document.body.getAttribute('data-is-admin') === '1';

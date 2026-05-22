@@ -1,8 +1,10 @@
 # Question Gap Detection System
 
+> **This document describes the ElevateHER assessment engine** that ships as the reference feature set in this child-app template. If your child app doesn't use this engine, you can delete this file.
+
 ## Overview
 
-The ElevateHER assessment engine uses a **question matrix** to drive structured evaluation through phases (floor → ceiling → zone → score). When the matrix runs out of questions for a phase but stage items remain unresolved, the system detects this as a **question gap** and activates fallback behaviors to keep the assessment moving.
+The assessment engine uses a **question matrix** to drive structured evaluation through phases (floor → ceiling → zone → score). When the matrix runs out of questions for a phase but stage items remain unresolved, the system detects this as a **question gap** and activates fallback behaviors to keep the assessment moving.
 
 ## How It Works
 

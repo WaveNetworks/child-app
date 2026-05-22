@@ -1,5 +1,6 @@
--- ElevateHER Learning Suite — Main DB v1.0
+-- Child app — Main DB v1.0
 -- Foundation tables: framework data, invite links, app roles
+-- (Inherited from the ElevateHER assessment engine.)
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
 

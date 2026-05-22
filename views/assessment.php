@@ -33,14 +33,14 @@ $auto_start = empty($instance) && empty($active_session) ? '1' : '0';
      data-phase="<?= h($phase_label) ?>"
      data-auto-start="<?= $auto_start ?>"
      data-logo-url="<?= h($logo_url) ?>"
-     data-site-name="<?= h($_b['site_name'] ?? 'ElevateHER') ?>">
+     data-site-name="<?= h($_b['site_name'] ?? CHILD_APP_NAME) ?>">
 
     <!-- Splash overlay: logo + fake thinking — hidden once first bot message arrives -->
     <div id="chatSplash" class="chat-splash">
         <?php if ($logo_url) { ?>
-        <img src="<?= h($logo_url) ?>" alt="<?= h($_b['site_name'] ?? 'DSWA') ?>" class="chat-splash__logo">
+        <img src="<?= h($logo_url) ?>" alt="<?= h($_b['site_name'] ?? CHILD_APP_NAME) ?>" class="chat-splash__logo">
         <?php } else { ?>
-        <div class="chat-splash__logo-text"><?= h($_b['site_name'] ?? 'ElevateHER') ?></div>
+        <div class="chat-splash__logo-text"><?= h($_b['site_name'] ?? CHILD_APP_NAME) ?></div>
         <?php } ?>
         <div class="chat-splash__tagline">Your AI-Powered Growth Companion</div>
         <div class="chat-splash__typing">

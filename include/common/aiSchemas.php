@@ -17,7 +17,7 @@
 function get_assessment_response_schema() {
     return [
         'name' => 'assessment_response',
-        'description' => 'Structured response for the ElevateHER assessment chat. Contains the display message, inferred data, and choices.',
+        'description' => 'Structured response for the assessment chat. Contains the display message, inferred data, and choices.',
         'input_schema' => [
             'type' => 'object',
             'required' => ['display_message', 'question_text', 'inferred_responses', 'kpi_signals', 'profile_hints', 'session_notes', 'phase_signal', 'suggested_stage', 'choices', 'question_id'],

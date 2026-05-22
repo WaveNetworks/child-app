@@ -1,11 +1,11 @@
 <?php
 /**
  * instanceFileHelpers.php
- * Filesystem-based instance file I/O for ElevateHER.
+ * Filesystem-based instance file I/O (inherited from ElevateHER assessment engine).
  * Reads/writes spec-compliant v2.3 instance JSON files in the user's homedir.
  * UserState is computed from all instance files.
  *
- * Directory: {user_profile.homedir}/elevateher/
+ * Directory: {user_profile.homedir}/elevateher/  (legacy name kept on disk)
  * Files:
  *   instance_ai_{YYYY-MM-DD}.json
  *   instance_self_{YYYY-MM-DD}.json
@@ -16,8 +16,10 @@
 // ─── Homedir / Directory ────────────────────────────────────────────────────
 
 /**
- * Get the ElevateHER directory for a user. Creates it if missing.
+ * Get the per-user instance directory. Creates it if missing.
  * Uses admin's existing hashed homedir system.
+ * Function name + on-disk directory kept as "elevateher" for back-compat with
+ * existing user data; safe to rename in a future migration.
  */
 function get_elevateher_dir($user_id = null) {
     $homedir = $_SESSION['homedir'] ?? '';
@@ -159,7 +161,7 @@ function create_instance_v23($user_id, $shard_id, $instance_type = 'ai-assessmen
 // ─── File Read/Write ────────────────────────────────────────────────────────
 
 /**
- * Write an instance file to the user's ElevateHER directory.
+ * Write an instance file to the user's instance directory.
  * Also updates the DB row as an index/cache.
  */
 function save_instance_file($user_id, $shard_id, $instance_data, $instance_type = 'ai-assessment', $coach_id = null) {

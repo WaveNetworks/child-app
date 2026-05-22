@@ -1,6 +1,6 @@
--- ElevateHER Learning Suite — Main DB v1.2
+-- Child app — Main DB v1.2
 -- Framework proposals and feedback system
--- ⚠️ REMINDER: Update elevateher/include/common.php $child_db_version = 1.2;
+-- ⚠️ REMINDER: Update include/common.php $child_db_version = 1.2;
 
 CREATE TABLE IF NOT EXISTS `framework_proposals` (
     `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,

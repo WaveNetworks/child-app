@@ -1,7 +1,7 @@
 <?php
 /**
  * app/index.php
- * ElevateHER Learning Suite — Main app controller.
+ * Child app — main controller.
  * Session-guarded by common.php. Routes to view files based on ?page= parameter.
  */
 include(__DIR__ . '/../include/common.php');

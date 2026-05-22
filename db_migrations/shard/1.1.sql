@@ -1,4 +1,4 @@
--- ElevateHER Learning Suite — Shard DB v1.1
+-- Child app — Shard DB v1.1
 -- Longitudinal progress tracking
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";

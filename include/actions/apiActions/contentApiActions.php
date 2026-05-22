@@ -70,7 +70,7 @@ if (($_POST['action'] ?? '') === 'content_chat') {
         );
 
         // ── Build system prompt ──
-        $system_prompt  = "You are a friendly, knowledgeable content guide for the ElevateHER Compass learning system by DSWA (Direct Selling World Alliance).\n\n";
+        $system_prompt  = "You are a friendly, knowledgeable content guide for the " . CHILD_APP_NAME . " learning system.\n\n";
 
         // User context — tier and role weighting
         $system_prompt .= "═══ USER CONTEXT ═══\n";
@@ -140,7 +140,7 @@ if (($_POST['action'] ?? '') === 'content_chat') {
                 $reply = 'I had trouble processing that. Could you try rephrasing?';
             }
         } catch (Exception $e) {
-            error_log("ElevateHER content chat error: " . $e->getMessage());
+            error_log("[content_chat] error: " . $e->getMessage());
             $reply = 'Sorry, I\'m having trouble connecting right now. Please try again in a moment.';
         }
 
@@ -221,7 +221,7 @@ if (($_POST['action'] ?? '') === 'content_chat_choice') {
             $content_md = get_content_markdown($content_item);
 
             // Build a focused system prompt for the choice
-            $system_prompt  = "You are a friendly, knowledgeable content guide for the ElevateHER Compass learning system by DSWA (Direct Selling World Alliance).\n\n";
+            $system_prompt  = "You are a friendly, knowledgeable content guide for the " . CHILD_APP_NAME . " learning system.\n\n";
             $system_prompt .= "═══ CONTENT ITEM ═══\n";
             $system_prompt .= "Title: " . ($content_item['title'] ?? '') . "\n";
             $system_prompt .= "Type: " . ($content_item['type'] ?? '') . "\n";
@@ -259,7 +259,7 @@ if (($_POST['action'] ?? '') === 'content_chat_choice') {
                     $reply = 'I had trouble processing that. Could you try asking in your own words?';
                 }
             } catch (Exception $e) {
-                error_log("ElevateHER content chat choice error: " . $e->getMessage());
+                error_log("[content_chat_choice] error: " . $e->getMessage());
                 $reply = 'Sorry, I\'m having trouble connecting right now. Please try again in a moment.';
             }
 
@@ -271,7 +271,7 @@ if (($_POST['action'] ?? '') === 'content_chat_choice') {
                     [$content_id, $choice_key, $content_version, $reply]
                 );
             } catch (Exception $e) {
-                error_log("ElevateHER content guide cache write error: " . $e->getMessage());
+                error_log("[content_guide_cache] write error: " . $e->getMessage());
             }
         }
 

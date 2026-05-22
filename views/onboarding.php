@@ -2,7 +2,7 @@
 /**
  * Onboarding — Collect subject profile data
  */
-$page_title = 'Welcome to ElevateHER';
+$page_title = 'Welcome to ' . CHILD_APP_NAME;
 $uid = $_SESSION['user_id'];
 $sid = $_SESSION['shard_id'];
 $existing = get_onboarding_profile($uid, $sid);
@@ -13,7 +13,7 @@ $existing = get_onboarding_profile($uid, $sid);
         <div class="card">
             <div class="card-header">
                 <h5 class="mb-0"><i class="bi bi-person-badge me-2"></i>Tell Us About You</h5>
-                <p class="text-muted small mb-0">This helps personalize your ElevateHER assessment experience.</p>
+                <p class="text-muted small mb-0">This helps personalize your <?= h(CHILD_APP_NAME) ?> assessment experience.</p>
             </div>
             <div class="card-body">
                 <form method="post" id="onboardingForm">

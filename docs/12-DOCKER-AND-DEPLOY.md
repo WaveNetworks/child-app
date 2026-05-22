@@ -1,5 +1,7 @@
 # Docker & Deployment
 
+> **Note:** Several files in `docker/` (`generate-elevateher-config.php`, `entrypoint.sh`, `init-databases.sql`) still hardcode `elevateher_*` database names and paths from when this template was bootstrapped from the ElevateHER codebase. The defaults below reflect the *current* state of those scripts. When you scaffold a new child app, either override every env var or genericize these docker files to use `CHILD_APP_SLUG`.
+
 ---
 
 ## Dockerfile
@@ -59,7 +61,7 @@ CMD ["apache2-foreground"]
 | Volume | Mount | Purpose |
 |--------|-------|---------|
 | Bind: `../admin` | /var/www/public_html/admin | Admin core (live) |
-| Bind: `.` | /var/www/public_html/elevateher | ElevateHER child app (live) |
+| Bind: `.` | /var/www/public_html/{CHILD_APP_SLUG} | Child app source (live) |
 | Bind: `../dswa-framework` | /var/www/public_html/dswa-framework | Framework (live) |
 | Bind: `../DSWADemo` | /var/www/public_html/DSWADemo | Demo app (live) |
 | Named: `files_vol` | /var/www/files | User uploads |
@@ -177,7 +179,7 @@ docker compose up -d --build   # Dockerfile, apache.conf, entrypoint.sh, PHP ext
 docker compose logs -f app
 
 # Access
-# App: http://localhost:8085/elevateher/
+# App: http://localhost:8085/{CHILD_APP_SLUG}/   (e.g. /child-app/, /elevateher/, /pwt/)
 # MailHog: http://localhost:8025
 # MySQL: localhost:3306
 ```

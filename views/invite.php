@@ -121,7 +121,7 @@ $td = get_tier_display($user_tier);
             <div class="modal-body">
                 <div id="qrCodeContainer" class="mb-3"></div>
                 <p class="small text-muted mb-2">Sellers scan this to accept your invite</p>
-                <a id="qrDownloadLink" href="#" download="elevateher-invite.png" class="btn btn-sm btn-outline-primary">
+                <a id="qrDownloadLink" href="#" download="<?= h(CHILD_APP_SLUG) ?>-invite.png" class="btn btn-sm btn-outline-primary">
                     <i class="bi bi-download me-1"></i>Download PNG
                 </a>
             </div>
@@ -153,7 +153,7 @@ function showQR(url, tokenPrefix) {
             var ctx = canvas.getContext('2d');
             ctx.drawImage(imgEl, 0, 0);
             document.getElementById('qrDownloadLink').href = canvas.toDataURL('image/png');
-            document.getElementById('qrDownloadLink').download = 'elevateher-invite-' + tokenPrefix + '.png';
+            document.getElementById('qrDownloadLink').download = '<?= h(CHILD_APP_SLUG) ?>-invite-' + tokenPrefix + '.png';
         };
     }
 

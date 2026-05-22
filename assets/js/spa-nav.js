@@ -1,6 +1,6 @@
 /**
  * @module spa-nav
- * @description SPA-style navigation for the ElevateHER child-app.
+ * @description SPA-style navigation for the child app.
  * Intercepts sidebar and internal nav link clicks, fetches view content
  * via AJAX, and replaces `#content-dynamic` without reloading the page.
  * This keeps the canvas background, sidebar, topnav, and all JS state alive.

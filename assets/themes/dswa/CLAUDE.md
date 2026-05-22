@@ -1,12 +1,13 @@
 # DSWA Theme
 
-Custom Bootstrap 5 theme for the ElevateHER app. Uses a dark immersive
+Custom Bootstrap 5 theme. Originally built for the ElevateHER app; ships
+with this child-app template as the reference theme. Uses a dark immersive
 palette inspired by the DSWADemo aesthetic: deep blues, DSWA brand greens,
 gold accents, and glass panels on a textured dark background.
 
 ## Build
 
-From the elevateher root:
+From the child app's root:
 ```
 npm run build:dswa
 ```
@@ -35,7 +36,7 @@ with all Bootswatch themes and the admin's theme switcher:
   go inside `[data-bs-theme="light"] { ... }` blocks in `_bootswatch.scss`.
 - **glass() mixin.** `@include glass($bg, $blur)` applies background +
   backdrop-filter. Default: `rgba(0, 0, 0, 0.4)` bg, `16px` blur.
-- **Dimension colors.** ElevateHER dimensions use coded colors:
+- **Dimension colors.** The inherited ElevateHER assessment dimensions use coded colors:
   - Mindset: purple (#b388d9)
   - Skillset: green (#6bc96b)
   - Toolset: blue (#6ca6d9)

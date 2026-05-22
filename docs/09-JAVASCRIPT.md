@@ -6,11 +6,11 @@
 >
 > 1. **Three independent RAF loops (lotus-canvas, water-ripples, pong-game)** — PWT uses a single `requestAnimationFrame` chain (`game-loop.js`) that processes subsystems, levels, and particles in one tick. Every canvas/animation module registers as a subsystem with a `draw(dt, now)` method. No component runs its own RAF.
 >
-> 2. **No level lifecycle** — PWT has `registerLevel('pageName', {enter, exit})` so each view gets clean setup/teardown. On SPA navigation, `exitLevel()` auto-clears level-scoped timers and particles, then `enterLevel()` starts the new page. ElevateHER has no equivalent — the chat, explorer, and lotus views don't have enter/exit hooks, creating zombie timers and orphaned event listeners.
+> 2. **No level lifecycle** — PWT has `registerLevel('pageName', {enter, exit})` so each view gets clean setup/teardown. On SPA navigation, `exitLevel()` auto-clears level-scoped timers and particles, then `enterLevel()` starts the new page. The inherited ElevateHER JS has no equivalent — the chat, explorer, and lotus views don't have enter/exit hooks, creating zombie timers and orphaned event listeners.
 >
-> 3. **No managed timer system** — PWT wraps `setTimeout`/`setInterval` with `GameLoop.setTimeout(fn, delay, levelScoped)`. Level-scoped timers are bulk-cleared on navigation. ElevateHER uses raw `setTimeout` everywhere with no cleanup.
+> 3. **No managed timer system** — PWT wraps `setTimeout`/`setInterval` with `GameLoop.setTimeout(fn, delay, levelScoped)`. Level-scoped timers are bulk-cleared on navigation. The inherited ElevateHER JS uses raw `setTimeout` everywhere with no cleanup.
 >
-> 4. **No particle system** — PWT has `GameLoop.addParticle({life, update, onDeath, levelScoped})` for ephemeral animated elements. ElevateHER manages falling petals and ripples with ad-hoc arrays.
+> 4. **No particle system** — PWT has `GameLoop.addParticle({life, update, onDeath, levelScoped})` for ephemeral animated elements. The inherited ElevateHER JS manages falling petals and ripples with ad-hoc arrays.
 >
 > 5. **Module coupling via window globals** — `window.lps` is the single point of coupling. chat-overlay.js and explorer-view.js reach into `lps.canvas._petalStates`, etc. PWT uses CustomEvents for inter-module communication. **Caveat:** water-ripples.js reads `lps.canvas._windVector` at ~30fps synchronously for parallax sway — CustomEvents are the wrong abstraction for continuous animation data. When migrating to the game loop, water-ripples should read the wind vector from the subsystem context (shared state within the tick), not via events. Explorer-view's discrete calls (`lps.setViewState()`, `lps.pulse()`) are safe to convert to events.
 >
@@ -322,7 +322,7 @@ showToast('success', 'Item saved!', {autohide: true, delay: 5000})
 
 ## PWT Game Loop Reference Architecture
 
-The PWT app (`github.com/WaveNetworks/pwt`) implements a game engine pattern for web apps. This is the target for ElevateHER's JS rebuild.
+The PWT app (`github.com/WaveNetworks/pwt`) implements a game engine pattern for web apps. This is the target for any future rebuild of the inherited ElevateHER JS.
 
 ### Core: game-loop.js
 

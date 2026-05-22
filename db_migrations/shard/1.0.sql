@@ -1,5 +1,6 @@
--- ElevateHER Learning Suite — Shard DB v1.0
+-- Child app — Shard DB v1.0
 -- Per-user tables: assessments, sessions, relationships, content, notes
+-- (Inherited from the ElevateHER assessment engine.)
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
 
