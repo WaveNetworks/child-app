@@ -12,6 +12,27 @@ boilerplate.
 Bootstrap chain:
 `{child-app}/include/common.php` → `admin/include/common.php`
 
+## Keep it generic — reference-contamination guard
+
+This repo is the GENERIC reference scaffold. It must never carry
+tenant/app-specific domain logic or identity (slugs, brand names,
+app-specific tables/files). The cleanliness contract is declared in
+`.reference-clean.yml` at the repo root and enforced by
+`scripts/scan_reference_contamination.py`.
+
+The `.github/workflows/contamination-guard.yml` CI workflow runs the
+scanner on every push and pull request. It is currently in **`--baseline`
+(report-only)** mode because the repo is still being de-tenant-ed — the
+report prints in the CI log without failing the build. Once the scanner
+reports 0 Tier 1/Tier 2 violations, drop `--baseline` (and optionally add
+`--strict`) in the workflow to make it a hard gate.
+
+Run it locally before adding code:
+`python3 scripts/scan_reference_contamination.py --target .`
+
+The canonical scanner/contract live in the nokemo repo
+(`scripts/`); the copies here are vendored — keep them in sync.
+
 ## Scaffolding a new child app from this repo
 
 1. Create the new repo (e.g. `WaveNetworks/myapp`) and copy this

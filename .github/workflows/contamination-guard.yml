@@ -1,0 +1,36 @@
+# Reference-contamination guard
+# ==============================
+# child-app is the GENERIC reference scaffold for the Wave Networks platform.
+# It must never carry tenant/app-specific domain logic or identity. This guard
+# runs scan_reference_contamination.py against the cleanliness contract
+# (.reference-clean.yml at the repo root) on every push and pull request.
+#
+# MODE: --baseline (report-only). The repo is still being de-tenant-ed, so the
+# scanner currently reports violations. Baseline mode always exits 0 and prints
+# the full report in the CI log so cleanup progress is visible without failing
+# the build.
+#
+# FOLLOW-UP — flip to STRICT once the scan reports 0 Tier 1/Tier 2:
+#   drop the `--baseline` flag below (optionally add `--strict` to also gate on
+#   the advisory Tier 3 heuristics). Re-check locally with:
+#     python3 scripts/scan_reference_contamination.py --target .
+#
+# Part of the nokemo "Reference Harvest & Sync" process.
+name: contamination-guard
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install pyyaml
+      - name: Scan for reference contamination
+        run: python3 scripts/scan_reference_contamination.py --target . --baseline
