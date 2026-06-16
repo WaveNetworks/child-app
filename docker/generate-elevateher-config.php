@@ -20,7 +20,7 @@ $shard2Host = getenv('CHILD_DB_HOST_SHARD2') ?: $dbHost;
 $shard2Name = getenv('CHILD_DB_NAME_SHARD2') ?: 'elevateher_shard_2';
 
 $aiKey   = getenv('ELEVATEHER_AI_API_KEY') ?: getenv('ANTHROPIC_API_KEY') ?: '';
-$aiModel = getenv('ELEVATEHER_AI_MODEL')   ?: 'claude-sonnet-4-20250514';
+$aiModel = getenv('ELEVATEHER_AI_MODEL')   ?: 'claude-sonnet-4-6';
 $fwSource = getenv('ELEVATEHER_FRAMEWORK_SOURCE') ?: 'local';
 $fwPath   = getenv('ELEVATEHER_FRAMEWORK_PATH')   ?: '/var/www/public_html/dswa-framework/framework';
 $appUrl   = getenv('ELEVATEHER_APP_URL')           ?: '';

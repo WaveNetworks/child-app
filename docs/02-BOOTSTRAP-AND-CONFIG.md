@@ -80,7 +80,7 @@ Template for `config/config.php`. Sections:
 $ai_config = [
     'default_vendor' => 'anthropic',
     'vendors' => [
-        'anthropic' => ['api_key' => '...', 'model' => 'claude-sonnet-4-20250514'],
+        'anthropic' => ['api_key' => '...', 'model' => 'claude-sonnet-4-6'],
         'openai'    => ['api_key' => '...', 'model' => 'gpt-4o'],
         'deepseek'  => ['api_key' => '...', 'model' => 'deepseek-chat'],
     ],

@@ -59,7 +59,7 @@ if (file_exists($childConfigFile)) {
         'vendors' => [
             'anthropic' => [
                 'api_key' => getenv('ANTHROPIC_API_KEY') ?: '',
-                'model'   => getenv('CHILD_APP_AI_MODEL') ?: 'claude-sonnet-4-20250514',
+                'model'   => getenv('CHILD_APP_AI_MODEL') ?: 'claude-sonnet-4-6',
             ],
             'openai' => [
                 'api_key' => getenv('OPEN_AI_API_KEY') ?: '',
@@ -99,7 +99,7 @@ if (file_exists($childConfigFile)) {
 // Docker entrypoint may generate old single-vendor format. Upgrade it here.
 if (isset($ai_config) && !isset($ai_config['vendors'])) {
     $legacy_key   = $ai_config['api_key'] ?? '';
-    $legacy_model = $ai_config['model'] ?? 'claude-sonnet-4-20250514';
+    $legacy_model = $ai_config['model'] ?? 'claude-sonnet-4-6';
     $ai_config = [
         'default_vendor' => 'anthropic',
         'max_tokens'     => $ai_config['max_tokens'] ?? 2048,

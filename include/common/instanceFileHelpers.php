@@ -77,7 +77,7 @@ function create_instance_v23($user_id, $shard_id, $instance_type = 'ai-assessmen
     $user = get_user($user_id);
     $profile = get_user_profile($user_id, $shard_id);
     $version = get_active_framework_version();
-    $model = $ai_config['model'] ?? 'claude-sonnet-4-20250514';
+    $model = $ai_config['model'] ?? 'claude-sonnet-4-6';
 
     // Assessor block per spec
     $assessor = [];

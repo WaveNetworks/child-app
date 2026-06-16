@@ -54,7 +54,7 @@ services:
       # Optional AI / framework config — only relevant if the app
       # uses AI assistance and an external framework JSON tree
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - CHILD_APP_AI_MODEL=${CHILD_APP_AI_MODEL:-claude-sonnet-4-20250514}
+      - CHILD_APP_AI_MODEL=${CHILD_APP_AI_MODEL:-claude-sonnet-4-6}
       - CHILD_APP_FRAMEWORK_SOURCE=${CHILD_APP_FRAMEWORK_SOURCE:-local}
       - CHILD_APP_FRAMEWORK_PATH=${CHILD_APP_FRAMEWORK_PATH:-/var/www/public_html/dswa-framework/framework}
       - CHILD_APP_URL=${CHILD_APP_URL:-http://localhost:8085/${CHILD_APP_SLUG:-child-app}/app}

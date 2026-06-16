@@ -41,7 +41,7 @@ $ai_config = [
     'vendors' => [
         'anthropic' => [
             'api_key' => getenv('ANTHROPIC_API_KEY') ?: '',
-            'model'   => 'claude-sonnet-4-20250514',
+            'model'   => 'claude-sonnet-4-6',
         ],
         'openai' => [
             'api_key' => getenv('OPEN_AI_API_KEY') ?: '',
