@@ -11,7 +11,6 @@ $modals = [
     'item_detail'    => __DIR__ . '/../snippets/modal_item_detail.php',
     'confirm_delete' => __DIR__ . '/../snippets/modal_confirm_delete.php',
     'example_form'   => __DIR__ . '/../snippets/modal_example_form.php',
-    'seller_detail'  => __DIR__ . '/../snippets/modal_seller_detail.php',
     'coach_note'     => __DIR__ . '/../snippets/modal_coach_note.php',
     'kpi_detail'     => __DIR__ . '/../snippets/modal_kpi_detail.php',
 ];
