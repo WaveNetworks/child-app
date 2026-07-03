@@ -12,8 +12,8 @@ CREATE TABLE IF NOT EXISTS `db_version` (
 
 INSERT INTO `db_version` (`version`) VALUES (1.0);
 
--- User activity history
-CREATE TABLE IF NOT EXISTS `user_history` (
+-- User activity event log (generic per-user shard example)
+CREATE TABLE IF NOT EXISTS `user_event_log` (
     `history_id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     `user_id` INT UNSIGNED NOT NULL,
     `event_type` VARCHAR(50) NOT NULL,

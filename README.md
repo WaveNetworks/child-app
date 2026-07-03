@@ -253,7 +253,7 @@ Create `snippets/modal_myfeature.php`, register in `modal_controller.php`, then 
 - **Admin core** handles auth, sessions, email queue, notifications, branding, and user management
 - **Child app** has its own databases and shards for app-specific data
 - **Three DB layers**: admin main (read-only from child), child main (`$child_db`), child shards
-- **Sharding**: user_history table demonstrates per-user data distribution across shards
+- **Sharding**: user_event_log table demonstrates per-user data distribution across shards
 - All auth actions (login, register, 2FA, etc.) are provided by admin's action files automatically
 - **Bootstrap chain**: `child-app/include/common.php` → `admin/include/common.php` — admin handles config, `$db`, helpers, migrations, and session guard; child app then opens `$child_db` and runs its own migrations
 - **Asset sharing**: admin provides shared CSS (`style.css`, `bs-theme-overrides.css`) and JS (`bs-init.js`, `sidebar.js`, `color-mode.js`, `notifications.js`); child app adds its own theme CSS and feature JS on top

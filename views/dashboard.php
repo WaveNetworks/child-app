@@ -208,32 +208,6 @@ if ($instance && $scores) {
         error_log("Auto-recomputed scores for user $uid (framework $last_fw_version → $current_fw_version)");
     }
 }
-
-// Seed initial progress snapshot if we have scores but no snapshots exist yet
-if ($instance && $scores && function_exists('get_user_progress_timeline')) {
-    // One-time cleanup: purge stale snapshots where all scores are zero (bug fix)
-    $existing_snaps = get_user_progress_timeline($uid, $sid);
-    if (!empty($existing_snaps)) {
-        $all_zero = true;
-        foreach ($existing_snaps as $snap) {
-            if (($snap['overall_score'] ?? 0) > 0 || ($snap['mindset_score'] ?? 0) > 0
-                || ($snap['toolset_score'] ?? 0) > 0 || ($snap['skillset_score'] ?? 0) > 0) {
-                $all_zero = false;
-                break;
-            }
-        }
-        if ($all_zero) {
-            child_db_query_shard_prepared($sid,
-                "DELETE FROM progress_snapshots WHERE user_id = ? AND overall_score = 0 AND mindset_score = 0 AND toolset_score = 0 AND skillset_score = 0",
-                [$uid]
-            );
-            $existing_snaps = []; // force re-seed below
-        }
-    }
-    if (empty($existing_snaps) && function_exists('capture_progress_snapshot')) {
-        capture_progress_snapshot($uid, $sid, 'assessment');
-    }
-}
 ?>
 
 <?php if (!$instance || ($instance['status'] ?? 'not_started') === 'not_started') { ?>

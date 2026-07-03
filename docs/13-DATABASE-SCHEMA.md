@@ -25,19 +25,10 @@
 ├─────────────────────────────────────────────────┤
 │  child_main        │ items, app_cache,           │
 │                    │ invite_links,               │
-│                    │ framework_versions,          │
-│                    │ framework_data,              │
-│                    │ cohort_snapshots,            │
 │                    │ app_settings                 │
 │                    │                              │
-│  child_shard_1     │ assessment_instances,        │
-│  child_shard_2     │ assessment_sessions,         │
-│                    │ coach_relationships,          │
-│                    │ content_progress,             │
-│                    │ user_history,                 │
-│                    │ childapp_user_prefs,          │
-│                    │ progress_snapshots,           │
-│                    │ user_roles                    │
+│  child_shard_1     │ user_event_log,              │
+│  child_shard_2     │ childapp_user_prefs          │
 └─────────────────────────────────────────────────┘
 ```
 
@@ -154,12 +145,12 @@
 | created_at | DATETIME | Start timestamp |
 | updated_at | DATETIME | Last update |
 
-### user_history
+### user_event_log
 | Column | Type | Description |
 |--------|------|-------------|
 | id | INT AUTO_INCREMENT | Primary key |
 | user_id | INT | User |
-| event_type | VARCHAR(64) | Event name (item_created, content_started, etc.) |
+| event_type | VARCHAR(64) | Event name (item_created, page_view, etc.) |
 | event_data | LONGTEXT | JSON event payload |
 | ip_address | VARCHAR(45) | Client IP |
 | user_agent | VARCHAR(512) | Browser user agent |
@@ -174,15 +165,6 @@
 | email_on_item_change | TINYINT | Email notification toggle |
 | bio | TEXT | User biography |
 | ai_vendor | VARCHAR(16) | Preferred AI vendor |
-
-### progress_snapshots
-| Column | Type | Description |
-|--------|------|-------------|
-| id | INT AUTO_INCREMENT | Primary key |
-| user_id | INT | User |
-| snapshot_type | VARCHAR(16) | periodic, milestone |
-| snapshot_data | LONGTEXT | JSON snapshot (stage, scores, items, walls) |
-| created_at | DATETIME | Snapshot timestamp |
 
 ### user_roles
 | Column | Type | Description |

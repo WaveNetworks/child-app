@@ -40,8 +40,8 @@ SPA navigation (spa-nav.js) intercepts `a[href*="index.php?page="]` clicks and l
 | Admin main | `$db` | Users, auth, notifications, feedback | Read-only |
 | Admin shard 1 | via admin helpers | Per-user profiles | Read-only |
 | Admin shard 2 | via admin helpers | Per-user profiles | Read-only |
-| Child main | `$child_db` | Items, app_cache, invite_links, framework_versions, framework_data, cohort_snapshots | Read/write |
-| Child shard 1 | `child_prime_shard('shard1')` | assessment_instances, assessment_sessions, coach_relationships, content_progress, user_history, childapp_user_prefs, progress_snapshots | Read/write |
+| Child main | `$child_db` | Items, app_cache, invite_links | Read/write |
+| Child shard 1 | `child_prime_shard('shard1')` | user_event_log, childapp_user_prefs | Read/write |
 | Child shard 2 | `child_prime_shard('shard2')` | Same schema as shard 1 | Read/write |
 
 ## Directory Structure

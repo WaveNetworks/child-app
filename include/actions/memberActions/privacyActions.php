@@ -76,9 +76,9 @@ if (($_POST['action'] ?? '') == 'requestDataExport') {
             while ($row = db_fetch($r)) { $child_prefs[] = $row; }
             $data['child_app_preferences'] = $child_prefs;
 
-            // Child history
+            // Child event history
             $r = child_db_query_shard_prepared($sid,
-                "SELECT event_type, event_data, ip_address, created FROM user_history WHERE user_id = ? ORDER BY created DESC", [$uid]);
+                "SELECT event_type, event_data, ip_address, created FROM user_event_log WHERE user_id = ? ORDER BY created DESC", [$uid]);
             $history = [];
             while ($row = db_fetch($r)) { $history[] = $row; }
             $data['child_app_history'] = $history;

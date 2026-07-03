@@ -5,14 +5,14 @@
 # runs scan_reference_contamination.py against the cleanliness contract
 # (.reference-clean.yml at the repo root) on every push and pull request.
 #
-# MODE: --baseline (report-only). The repo is still being de-tenant-ed, so the
-# scanner currently reports violations. Baseline mode always exits 0 and prints
-# the full report in the CI log so cleanup progress is visible without failing
-# the build.
+# MODE: hard gate on Tier 1/Tier 2 (no --baseline). Tier 1/2a/2b contamination
+# has been driven to 0, so the guard now FAILS the build on any newly introduced
+# app-identity token, forbidden file, or forbidden CREATE TABLE.
 #
-# FOLLOW-UP — flip to STRICT once the scan reports 0 Tier 1/Tier 2:
-#   drop the `--baseline` flag below (optionally add `--strict` to also gate on
-#   the advisory Tier 3 heuristics). Re-check locally with:
+# Tier 3 (advisory domain-term heuristics) is intentionally NOT gated: the repo
+# still carries ~200 legacy domain-term hits across docs/views being stripped in
+# later slices. Add `--strict` here only once Tier 3 is also clean, or it will
+# fail the build. Re-check locally with:
 #     python3 scripts/scan_reference_contamination.py --target .
 #
 # Part of the nokemo "Reference Harvest & Sync" process.
@@ -33,4 +33,4 @@ jobs:
       - name: Install dependencies
         run: pip install pyyaml
       - name: Scan for reference contamination
-        run: python3 scripts/scan_reference_contamination.py --target . --baseline
+        run: python3 scripts/scan_reference_contamination.py --target .
