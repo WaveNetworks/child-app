@@ -72,19 +72,10 @@ if (file_exists($childConfigFile)) {
         ],
     ];
 
-    $framework_config = [
-        'source'     => getenv('CHILD_APP_FRAMEWORK_SOURCE') ?: 'local',
-        'local_path' => getenv('CHILD_APP_FRAMEWORK_PATH') ?: __DIR__ . '/../../app-framework/framework',
-        'remote_url' => getenv('CHILD_APP_FRAMEWORK_URL') ?: '',
-        'auto_sync'  => false,
-    ];
-
     $app_config = [
         'app_url'                => getenv('CHILD_APP_URL') ?: '',
         'invite_max_per_coach'   => 20,
         'session_timeout_hours'  => 4,
-        'cohort_cache_hours'     => 1,
-        'snapshot_enabled'       => true,
     ];
 
     $qr_config = [
@@ -145,18 +136,3 @@ include_once(__DIR__ . '/definition.php');
 foreach (glob(__DIR__ . '/common/*.php') as $f) { include_once($f); }
 foreach (glob(__DIR__ . '/actions/memberActions/*.php') as $f) { include_once($f); }
 foreach (glob(__DIR__ . '/actions/apiActions/*.php') as $f) { include_once($f); }
-
-// 8. Auto-sync framework on first request per session (cheap checksum check)
-if (empty($_SESSION['_fw_sync_checked'])) {
-    $_SESSION['_fw_sync_checked'] = true;
-    if (function_exists('sync_framework_data')) {
-        try {
-            $sync_result = sync_framework_data();
-            if (!empty($sync_result['changed'])) {
-                error_log("Framework auto-synced to " . ($sync_result['version'] ?? 'unknown'));
-            }
-        } catch (Exception $e) {
-            error_log("Framework auto-sync error: " . $e->getMessage());
-        }
-    }
-}

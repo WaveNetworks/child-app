@@ -54,21 +54,11 @@ $ai_config = [
     ],
 ];
 
-// ─── Framework Data Source ──────────────────────────────────────────────────
-$framework_config = [
-    'source'     => 'local',
-    'local_path' => __DIR__ . '/../../app-framework/framework',
-    'remote_url' => '',
-    'auto_sync'  => false,
-];
-
 // ─── App Settings ───────────────────────────────────────────────────────────
 $app_config = [
     'app_url'                => '',
     'invite_max_per_coach'   => 20,
     'session_timeout_hours'  => 4,
-    'cohort_cache_hours'     => 1,
-    'snapshot_enabled'       => true,
 ];
 
 // ─── QR Code Settings ───────────────────────────────────────────────────────
