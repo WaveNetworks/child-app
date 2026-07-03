@@ -3,13 +3,13 @@ name: Build & Deploy Child App
 # Generic Wave Networks child-app deploy workflow. When you scaffold
 # a new child app from this template:
 #   1. Set CHILD_APP_SLUG below to the lowercase URL-safe slug
-#      (e.g. 'hireasupport', 'elevateher', 'pwt').
+#      (e.g. 'myapp', 'demo', 'acme').
 #   2. Set the secrets in the new repo via `gh secret set`:
 #        SSH_HOST          ssh.us.stackcp.com (StackCP) or your host
 #        SSH_USER          the StackCP package username (e.g. yourapp.com)
 #        SSH_PRIVATE_KEY   private key matching the host's authorized_keys
 #        CROSS_REPO_PAT    PAT for cloning wave-networks-core (admin core)
-#                          (and dswa-framework if your app uses it)
+#                          (and an optional framework repo if your app uses one)
 #   3. Verify the host accepts your SSH_PRIVATE_KEY before the first deploy.
 
 on:
@@ -38,11 +38,11 @@ jobs:
           token: ${{ secrets.CROSS_REPO_PAT }}
 
       # Optional: uncomment if your child app pulls a framework tree.
-      # - name: Checkout dswa-framework
+      # - name: Checkout app-framework
       #   uses: actions/checkout@v4
       #   with:
-      #     repository: WaveNetworks/dswa-framework
-      #     path: dswa-framework
+      #     repository: WaveNetworks/app-framework
+      #     path: app-framework
       #     token: ${{ secrets.CROSS_REPO_PAT }}
 
       - name: Setup PHP
@@ -75,9 +75,9 @@ jobs:
           mkdir -p staging/admin staging/${{ env.CHILD_APP_SLUG }}
 
           # Optional framework tree — only if you uncommented the checkout above
-          # mkdir -p staging/dswa-framework
+          # mkdir -p staging/app-framework
           # rsync -a --exclude='.git' --exclude='.github' --exclude='CLAUDE.md' \
-          #   dswa-framework/ staging/dswa-framework/
+          #   app-framework/ staging/app-framework/
 
           # Admin — exclude dev/build artifacts and local config
           rsync -a --exclude='.git' --exclude='node_modules' --exclude='tests' \
@@ -141,9 +141,9 @@ jobs:
           rsync $RSYNC_OPTS --exclude='config/config.php' -e "$SSH_CMD" \
             staging/${{ env.CHILD_APP_SLUG }}/ $TARGET:public_html/${{ env.CHILD_APP_SLUG }}/
 
-          # Optional framework deploy — uncomment if you checked out dswa-framework above
-          # echo "Deploying dswa-framework..."
+          # Optional framework deploy — uncomment if you checked out app-framework above
+          # echo "Deploying app-framework..."
           # rsync $RSYNC_OPTS -e "$SSH_CMD" \
-          #   staging/dswa-framework/ $TARGET:public_html/dswa-framework/
+          #   staging/app-framework/ $TARGET:public_html/app-framework/
 
           echo "Deploy complete."

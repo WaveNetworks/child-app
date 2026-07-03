@@ -13,12 +13,7 @@
  * @return string
  */
 function get_app_theme_css_url($admin_prefix = '../../admin/', $webroot_prefix = '../../') {
-    // Always use DSWA theme — no theme switching in this app
-    $css_path = __DIR__ . '/../../assets/themes/dswa/custom.css';
-    if (file_exists($css_path)) {
-        return '../assets/themes/dswa/custom.css?v=' . filemtime($css_path);
-    }
-    // Fallback to glassmorphism
+    // Use the bundled glassmorphism theme — no theme switching in this app
     $css_path = __DIR__ . '/../../assets/themes/glassmorphism/custom.css';
     if (file_exists($css_path)) {
         return '../assets/themes/glassmorphism/custom.css?v=' . filemtime($css_path);

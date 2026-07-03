@@ -1,16 +1,16 @@
 /**
  * @module theme
- * @description The child app reference demo uses the DSWA theme (glass mode).
- * No theme switching is provided. This script forces the DSWA theme
- * cookie/localStorage value and removes opaque sidebar/navbar styles
+ * @description The child app reference demo uses the glassmorphism theme.
+ * No theme switching is provided. This script forces the glassmorphism
+ * theme cookie/localStorage value and removes opaque sidebar/navbar styles
  * so the glass (transparent) appearance is always active.
  */
 (function() {
     'use strict';
 
-    // Force DSWA theme cookie so PHP always resolves correctly
-    document.cookie = 'wn_theme=dswa;path=/;max-age=31536000;SameSite=Lax';
-    localStorage.setItem('wn_theme', 'dswa');
+    // Force the glassmorphism theme cookie so PHP always resolves correctly
+    document.cookie = 'wn_theme=glassmorphism;path=/;max-age=31536000;SameSite=Lax';
+    localStorage.setItem('wn_theme', 'glassmorphism');
 
     // Always glass mode: transparent sidebar + navbar
     var sidebar = document.getElementById('sidebar');
