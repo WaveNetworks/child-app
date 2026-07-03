@@ -441,7 +441,7 @@ function showOptions(choices, source) {
 }
 
 /**
- * Show a content recommendation banner with thumbnail — matching DSWADemo style.
+ * Show a content recommendation banner with thumbnail.
  * Banner is clickable and navigates to the content detail page or external URL.
  * @param {Object} item - Content item with id, title, description, thumbnail,
  *                         dimensions[], type, estimatedDuration, reason, url

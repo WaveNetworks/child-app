@@ -47,12 +47,12 @@ CMD ["apache2-foreground"]
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `ADMIN_DB_NAME` | elevateher_admin_main | Admin main database |
-| `ADMIN_SHARD1_DB_NAME` | elevateher_admin_shard_1 | Admin shard 1 |
-| `ADMIN_SHARD2_DB_NAME` | elevateher_admin_shard_2 | Admin shard 2 |
-| `CHILD_DB_NAME` | elevateher_main | Child main database |
-| `CHILD_SHARD1_DB_NAME` | elevateher_shard_1 | Child shard 1 |
-| `CHILD_SHARD2_DB_NAME` | elevateher_shard_2 | Child shard 2 |
+| `ADMIN_DB_NAME` | {CHILD_APP_SLUG}_admin_main | Admin main database |
+| `ADMIN_SHARD1_DB_NAME` | {CHILD_APP_SLUG}_admin_shard_1 | Admin shard 1 |
+| `ADMIN_SHARD2_DB_NAME` | {CHILD_APP_SLUG}_admin_shard_2 | Admin shard 2 |
+| `CHILD_DB_NAME` | {CHILD_APP_SLUG}_main | Child main database |
+| `CHILD_SHARD1_DB_NAME` | {CHILD_APP_SLUG}_shard_1 | Child shard 1 |
+| `CHILD_SHARD2_DB_NAME` | {CHILD_APP_SLUG}_shard_2 | Child shard 2 |
 | `ANTHROPIC_API_KEY` | — | AI API key |
 | `FRAMEWORK_PATH` | /var/www/public_html/{CHILD_APP_SLUG}-framework/framework | Local framework path |
 
@@ -112,12 +112,12 @@ exec apache2-foreground
 
 Creates 6 databases on first MySQL start:
 ```sql
-CREATE DATABASE IF NOT EXISTS elevateher_admin_main;
-CREATE DATABASE IF NOT EXISTS elevateher_admin_shard_1;
-CREATE DATABASE IF NOT EXISTS elevateher_admin_shard_2;
-CREATE DATABASE IF NOT EXISTS elevateher_main;
-CREATE DATABASE IF NOT EXISTS elevateher_shard_1;
-CREATE DATABASE IF NOT EXISTS elevateher_shard_2;
+CREATE DATABASE IF NOT EXISTS {CHILD_APP_SLUG}_admin_main;
+CREATE DATABASE IF NOT EXISTS {CHILD_APP_SLUG}_admin_shard_1;
+CREATE DATABASE IF NOT EXISTS {CHILD_APP_SLUG}_admin_shard_2;
+CREATE DATABASE IF NOT EXISTS {CHILD_APP_SLUG}_main;
+CREATE DATABASE IF NOT EXISTS {CHILD_APP_SLUG}_shard_1;
+CREATE DATABASE IF NOT EXISTS {CHILD_APP_SLUG}_shard_2;
 ```
 
 ## docker/apache.conf
