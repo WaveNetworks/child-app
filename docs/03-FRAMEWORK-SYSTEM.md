@@ -11,7 +11,7 @@
 ## Framework Data Flow
 
 ```
-dswa-framework/framework/          (local JSON files)
+framework/                         (local JSON files)
         │
         ▼
 frameworkSync.php                  (sync_from_local)

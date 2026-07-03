@@ -1,6 +1,6 @@
 # Docker & Deployment
 
-> **Note:** Several files in `docker/` (`generate-elevateher-config.php`, `entrypoint.sh`, `init-databases.sql`) still hardcode `elevateher_*` database names and paths from when this template was bootstrapped from the ElevateHER codebase. The defaults below reflect the *current* state of those scripts. When you scaffold a new child app, either override every env var or genericize these docker files to use `CHILD_APP_SLUG`.
+> **Note:** The `docker/` scripts (`generate-config.php`, `entrypoint.sh`, `init-databases.sql`) are driven by `CHILD_APP_SLUG` and the `*_DB_NAME` env vars. Some example defaults in `docker-compose.yml` still carry app-specific database names from an earlier bootstrap — override every env var when you scaffold a new child app so nothing tenant-specific leaks in.
 
 ---
 
@@ -54,7 +54,7 @@ CMD ["apache2-foreground"]
 | `CHILD_SHARD1_DB_NAME` | elevateher_shard_1 | Child shard 1 |
 | `CHILD_SHARD2_DB_NAME` | elevateher_shard_2 | Child shard 2 |
 | `ANTHROPIC_API_KEY` | — | AI API key |
-| `FRAMEWORK_PATH` | /var/www/public_html/dswa-framework/framework | Local framework path |
+| `FRAMEWORK_PATH` | /var/www/public_html/{CHILD_APP_SLUG}-framework/framework | Local framework path |
 
 ### Volumes
 
@@ -62,8 +62,8 @@ CMD ["apache2-foreground"]
 |--------|-------|---------|
 | Bind: `../admin` | /var/www/public_html/admin | Admin core (live) |
 | Bind: `.` | /var/www/public_html/{CHILD_APP_SLUG} | Child app source (live) |
-| Bind: `../dswa-framework` | /var/www/public_html/dswa-framework | Framework (live) |
-| Bind: `../DSWADemo` | /var/www/public_html/DSWADemo | Demo app (live) |
+| Bind: `../{CHILD_APP_SLUG}-framework` | /var/www/public_html/{CHILD_APP_SLUG}-framework | Framework (live) |
+| Bind: `../demo` | /var/www/public_html/demo | Demo app (live) |
 | Named: `files_vol` | /var/www/files | User uploads |
 | Named: `db_data` | /var/lib/mysql | Database persistence |
 
@@ -93,7 +93,7 @@ chown -R www-data:www-data /var/www/files
 chown -R www-data:www-data \
     /var/www/public_html/admin/config \
     /var/www/public_html/admin/install \
-    /var/www/public_html/elevateher/config
+    /var/www/public_html/{CHILD_APP_SLUG}/config
 
 # Install admin composer deps on first run
 if [ ! -d /var/www/public_html/admin/vendor ]; then
@@ -103,9 +103,6 @@ fi
 # Generate configs from env vars (first run only)
 if [ ! -f /var/www/public_html/admin/config/config.php ]; then
     php /usr/local/bin/generate-config.php
-fi
-if [ ! -f /var/www/public_html/elevateher/config/config.php ]; then
-    php /usr/local/bin/generate-elevateher-config.php
 fi
 
 exec apache2-foreground
@@ -179,7 +176,7 @@ docker compose up -d --build   # Dockerfile, apache.conf, entrypoint.sh, PHP ext
 docker compose logs -f app
 
 # Access
-# App: http://localhost:8085/{CHILD_APP_SLUG}/   (e.g. /child-app/, /elevateher/, /pwt/)
+# App: http://localhost:8085/{CHILD_APP_SLUG}/   (e.g. /child-app/, /myapp/)
 # MailHog: http://localhost:8025
 # MySQL: localhost:3306
 ```

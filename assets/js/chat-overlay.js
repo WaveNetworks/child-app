@@ -1,8 +1,8 @@
 /**
  * chat-overlay.js
- * Assessment chat overlay (inherited from ElevateHER assessment engine).
+ * Chat overlay for the conversational view.
  *
- * Connects to the assessment_chat API action.
+ * Connects to the chat API action.
  * Renders MC choices, cascading petal drops, and content banners with thumbnails.
  *
  * Sections:
@@ -376,7 +376,7 @@ function addBotMessage(html, debugData, opts) {
     messagesEl.appendChild(div);
     scrollToBottom();
 
-    // Pulse the lotus on every bot message
+    // Pulse the visualization on every bot message
     if (window.lps) {
         try { window.lps.pulse(); } catch(e) {}
         if (window.pulseRipple) try { window.pulseRipple(); } catch(e) {}
@@ -479,7 +479,7 @@ function showContentBanner(item) {
         '</div>' +
         '<div class="content-banner__cta">' +
             '<div class="content-banner__cta-label">View Training</div>' +
-            '<div class="content-banner__cta-sub">DSWA Community</div>' +
+            '<div class="content-banner__cta-sub">Community</div>' +
             '<div class="content-banner__cta-arrow">\u203A</div>' +
         '</div>';
 
@@ -592,13 +592,13 @@ function escHtml(str) {
 
 /* =========================================================================
  * 10. CASCADING PETAL DROPS
- * Triggers animated petal drops on the lotus visualisation for each
+ * Triggers animated petal drops on the visualization visualisation for each
  * resolved assessment item (dimension + stage + progress).
  * ========================================================================= */
 
 /**
  * Trigger cascading petal drop animations with staggered timing.
- * Each item drops onto the lotus at 300 ms intervals.
+ * Each item drops onto the visualization at 300 ms intervals.
  * @param {Array<Object>} items - Items with {dimension, stage, progress, id}
  */
 function cascadeDrops(items) {
@@ -1352,15 +1352,15 @@ observer.observe(document.getElementById('content-dynamic') || document.body, { 
 
 /* =========================================================================
  * 19. DYNAMIC 4-ZONE LAYOUT
- * Adjusts CSS custom properties --interactive-max and --lotus-reserve based
+ * Adjusts CSS custom properties --interactive-max and --visual-reserve based
  * on the current interactive content (MC choices, content banners, explorer).
  * Observed via MutationObserver on the options area and window resize.
  * ========================================================================= */
 
 /**
  * Recalculate zone layout CSS variables based on current interactive content.
- * Sets --interactive-max and --lotus-reserve on the document root to control
- * how much vertical space the interactive zone and lotus visualisation receive.
+ * Sets --interactive-max and --visual-reserve on the document root to control
+ * how much vertical space the interactive zone and visualization visualisation receive.
  */
 function updateZoneLayout() {
     var root = document.documentElement;
@@ -1369,28 +1369,28 @@ function updateZoneLayout() {
     var explorerActive = document.querySelector('.chat-messages--explorer-active');
 
     if (explorerActive) {
-        // Explorer takes full space, lotus reserve is minimal
+        // Explorer takes full space, visualization reserve is minimal
         root.style.setProperty('--interactive-max', '0px');
-        root.style.setProperty('--lotus-reserve', '160px');
+        root.style.setProperty('--visual-reserve', '160px');
         return;
     }
 
     if (optionsCount === 0) {
-        // No interactive content — maximize chat, keep good lotus space
+        // No interactive content — maximize chat, keep good visualization space
         root.style.setProperty('--interactive-max', '0px');
-        root.style.setProperty('--lotus-reserve', '220px');
+        root.style.setProperty('--visual-reserve', '220px');
     } else if (optionsCount <= 2 && !hasBanners) {
         // Few MC choices — small interactive area
         root.style.setProperty('--interactive-max', '25vh');
-        root.style.setProperty('--lotus-reserve', '200px');
+        root.style.setProperty('--visual-reserve', '200px');
     } else if (hasBanners) {
         // Content banners need more space
         root.style.setProperty('--interactive-max', '35vh');
-        root.style.setProperty('--lotus-reserve', '180px');
+        root.style.setProperty('--visual-reserve', '180px');
     } else {
         // Many MC choices or mixed content
         root.style.setProperty('--interactive-max', '40vh');
-        root.style.setProperty('--lotus-reserve', '180px');
+        root.style.setProperty('--visual-reserve', '180px');
     }
 
     // Keep chat scrolled to bottom after zone resize

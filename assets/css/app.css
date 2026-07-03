@@ -197,7 +197,7 @@ body.sidebar-collapsed { --sidebar-w: 56px; }
 
 
 /* ==========================================================================
-   0b. DSWA LOGO HEADER — centered branding from DSWADemo
+   0b. LOGO HEADER — centered branding
    ========================================================================== */
 .chat-logo {
     position: fixed;
@@ -270,13 +270,13 @@ body.sidebar-collapsed { --sidebar-w: 56px; }
    Zone 1: Chat messages (scrollable, flex-grows to fill)
    Zone 2: Chat input bar (fixed height, always visible)
    Zone 3: Interactive area — MC choices, content banners, explorer panels
-   Zone 4: Lotus negative space — always keeps lotus visible and clickable
+   Zone 4: Visual negative space — always keeps the visualization visible and clickable
    Zones resize via CSS custom properties set by JS:
-     --lotus-reserve: minimum px reserved for lotus visibility (default 220px)
+     --visual-reserve: minimum px reserved for visualization visibility (default 220px)
      --interactive-max: max-height for interactive area (default 40vh)
 */
 :root {
-  --lotus-reserve: 220px;
+  --visual-reserve: 220px;
   --interactive-max: 40vh;
 }
 

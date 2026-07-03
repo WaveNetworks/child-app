@@ -1,8 +1,8 @@
 # Child App Documentation
 
 > Generated 2026-03-26 from full codebase audit. Updated with re-engineering notes.
-> This codebase carries the ElevateHER assessment engine as its reference feature set;
-> docs describe both the generic child-app scaffolding and the inherited engine.
+> This codebase carries a reference feature set on top of the generic child-app
+> scaffolding; docs describe both the scaffolding and the inherited reference engine.
 
 ## Document Index
 
@@ -16,7 +16,7 @@
 | [06-COACH-AND-TEAM.md](06-COACH-AND-TEAM.md) | Invites, relationships, coach notes, team/cohort APIs | Low — cache TTL only |
 | [07-ACTIONS-REFERENCE.md](07-ACTIONS-REFERENCE.md) | All 47 action handlers across 16 files | Medium — no action registry |
 | [08-VIEWS-AND-UI.md](08-VIEWS-AND-UI.md) | Views, snippets, modals, SPA navigation | Low — inline scripts |
-| [09-JAVASCRIPT.md](09-JAVASCRIPT.md) | All 14 client-side JS modules + PWT game loop migration plan | **HIGH — full rebuild needed** |
+| [09-JAVASCRIPT.md](09-JAVASCRIPT.md) | All 14 client-side JS modules + game loop migration plan | **HIGH — full rebuild needed** |
 | [10-THEME-AND-SCSS.md](10-THEME-AND-SCSS.md) | Themes, SCSS pipeline, app.css, dark/light mode | Low — unused theme dir |
 | [11-AUTH-AND-PRIVACY.md](11-AUTH-AND-PRIVACY.md) | Auth flow, GDPR, consent, export, deletion | Low — sync export |
 | [12-DOCKER-AND-DEPLOY.md](12-DOCKER-AND-DEPLOY.md) | Dockerfile, compose, entrypoint, cron jobs | Low — dev ergonomics |
@@ -31,7 +31,7 @@
 - **Database layers:** 6 (3 admin read-only, 3 child read/write)
 - **Lines of code (helpers + actions):** ~5,700+
 - **Largest PHP file:** assessmentApiActions.php (1,268 lines)
-- **Largest JS file:** lotus-canvas.js (1,833 lines)
+- **Largest JS file:** the primary canvas visualization module (~1,833 lines)
 
 ## Architecture Principles (By Design)
 
