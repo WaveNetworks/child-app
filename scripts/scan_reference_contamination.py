@@ -7,7 +7,7 @@ platform. It must never carry tenant/app-specific domain logic or identity.
 This scanner reads a contract (reference_clean.sample.yml / .reference-clean.yml)
 and reports violations in three tiers:
 
-  Tier 1  forbidden_tokens   app-identity tokens (elevateher, dswa, ...)   HARD FAIL
+  Tier 1  forbidden_tokens   app-identity tokens (tenant app slugs)        HARD FAIL
   Tier 2a forbidden_paths    known app-specific files present              HARD FAIL
   Tier 2b forbidden_tables   app-specific CREATE TABLE in db_migrations    HARD FAIL
   Tier 3  warn_tokens        domain-term heuristics                        WARN (fail only with --strict)
