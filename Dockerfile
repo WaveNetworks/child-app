@@ -16,7 +16,6 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 COPY docker/apache.conf /etc/apache2/sites-available/000-default.conf
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 COPY docker/generate-config.php /usr/local/bin/generate-config.php
-COPY docker/generate-elevateher-config.php /usr/local/bin/generate-elevateher-config.php
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 WORKDIR /var/www/public_html

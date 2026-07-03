@@ -1,16 +1,15 @@
 /**
- * elevateher.css
- * ElevateHER game UI styles — chat overlay, content banners, explorer view, stage detail
- * Extracted from DSWADemo with responsive adaptations
+ * app.css
+ * App UI styles — chat overlay, content banners, detail views, stage detail
  */
 
 /* ==========================================================================
-   0. WATER BACKGROUND — animated gradient + ripples behind the lotus
+   0. ANIMATED BACKGROUND — animated gradient + ripples behind the UI
    ========================================================================== */
 
 /* Water ripples are now driven by water-ripples.js (JS-animated body background).
-   The JS system builds radial ripple rings, caustic stripe shimmer, and parallax sway
-   matching the DSWADemo water effect. See water-ripples.js for the full system. */
+   The JS system builds radial ripple rings, caustic stripe shimmer, and parallax sway.
+   See water-ripples.js for the full system. */
 
 /* ==========================================================================
    0a. Z-INDEX LAYER STACK — single source of truth

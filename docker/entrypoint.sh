@@ -23,11 +23,5 @@ if [ ! -f /var/www/public_html/admin/config/config.php ] && [ -n "$DB_HOST_MAIN"
     echo "Generated admin config.php from environment variables."
 fi
 
-# Generate ElevateHER child app config from env vars if not present
-if [ ! -f /var/www/public_html/elevateher/config/config.php ] && [ -n "$CHILD_DB_HOST" ]; then
-    php /usr/local/bin/generate-elevateher-config.php
-    echo "Generated elevateher config.php from environment variables."
-fi
-
 # Start Apache
 exec "$@"

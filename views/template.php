@@ -22,13 +22,12 @@
     <link rel="stylesheet" href="../../admin/assets/css/bs-theme-overrides.css">
     <link rel="stylesheet" href="<?= h(get_app_theme_css_url()) ?>" id="themeStylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="../assets/css/elevateher.css?v=7">
+    <link rel="stylesheet" href="../assets/css/app.css?v=7">
 </head>
 <body data-is-admin="<?= (function_exists('has_role') && has_role('admin')) ? '1' : '0' ?>">
 
-<!-- Lotus canvas (persists across all pages, behind all UI) -->
-<canvas id="lotus-canvas" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none;"></canvas>
-<div id="lps-viewport" style="position:fixed;inset:0;width:100vw;height:100vh;overflow:hidden;pointer-events:none;z-index:1;"></div>
+<!-- Background canvas (persists across all pages, behind all UI) -->
+<canvas id="bg-canvas" style="position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:0;pointer-events:none;"></canvas>
 
 <div class="d-flex" id="wrapper" style="position:relative;">
 
@@ -303,13 +302,11 @@
 <script src="../assets/js/toast.js"></script>
 <script src="../assets/js/page-nav.js"></script>
 <script src="../../admin/assets/js/notifications.js"></script>
-<script src="../assets/js/lotus-canvas.js"></script>
+<script src="../assets/js/bg-canvas.js"></script>
 <script src="../assets/js/water-ripples.js"></script>
-<!-- chat-overlay.js loaded inside assessment.php for SPA compat -->
-<script src="../assets/js/explorer-view.js?v=5"></script>
 <script src="../assets/js/spa-nav.js"></script>
 <script>
-// Collapse sidebar by default for immersive lotus experience
+// Collapse sidebar by default for an immersive experience
 (function() {
     if (!localStorage.getItem('wn_sidebar_state')) {
         localStorage.setItem('wn_sidebar_state', 'collapsed');
