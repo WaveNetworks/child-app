@@ -6,8 +6,8 @@
  * CHILD_APP_SLUG and CHILD_APP_NAME are driven by env vars so this
  * scaffold can be reused for any child app without editing source.
  * A new child app should set:
- *   CHILD_APP_SLUG=hireasupport         (lowercase, URL-safe)
- *   CHILD_APP_NAME="Hire a Support"      (display name)
+ *   CHILD_APP_SLUG=myapp                (lowercase, URL-safe)
+ *   CHILD_APP_NAME="My App"              (display name)
  * in its config.php / .env / docker-compose env block.
  */
 

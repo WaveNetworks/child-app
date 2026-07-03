@@ -284,7 +284,7 @@
                     <dt class="text-muted">Framework</dt>
                     <dd>Bootstrap 5.3 + PHP 8.2</dd>
                     <dt class="text-muted">Theme</dt>
-                    <dd>DSWA</dd>
+                    <dd>Glassmorphism</dd>
                 </dl>
             </div>
         </div>

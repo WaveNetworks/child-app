@@ -11,7 +11,7 @@
 
 // ─── Child App Main Database ────────────────────────────────────────────────
 $child_db_host = 'your_child_main_db_host';
-$child_db_name = '{slug}_main';          // e.g. 'elevateher_main', 'hireasupport_main'
+$child_db_name = '{slug}_main';          // e.g. 'myapp_main'
 $child_db_user = 'your_child_main_db_user';
 $child_db_pass = 'your_child_main_db_password';
 
@@ -19,13 +19,13 @@ $child_db_pass = 'your_child_main_db_password';
 $childShardConfigs = [
     'shard1' => [
         'host' => 'your_child_shard1_db_host',
-        'name' => '{slug}_shard_1',       // e.g. 'elevateher_shard_1'
+        'name' => '{slug}_shard_1',       // e.g. 'myapp_shard_1'
         'user' => 'your_child_shard1_db_user',
         'pass' => 'your_child_shard1_db_password',
     ],
     'shard2' => [
         'host' => 'your_child_shard2_db_host',
-        'name' => '{slug}_shard_2',       // e.g. 'elevateher_shard_2'
+        'name' => '{slug}_shard_2',       // e.g. 'myapp_shard_2'
         'user' => 'your_child_shard2_db_user',
         'pass' => 'your_child_shard2_db_password',
     ],
@@ -57,7 +57,7 @@ $ai_config = [
 // ─── Framework Data Source ──────────────────────────────────────────────────
 $framework_config = [
     'source'     => 'local',
-    'local_path' => __DIR__ . '/../../dswa-framework/framework',
+    'local_path' => __DIR__ . '/../../app-framework/framework',
     'remote_url' => '',
     'auto_sync'  => false,
 ];

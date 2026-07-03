@@ -74,7 +74,7 @@ if (file_exists($childConfigFile)) {
 
     $framework_config = [
         'source'     => getenv('CHILD_APP_FRAMEWORK_SOURCE') ?: 'local',
-        'local_path' => getenv('CHILD_APP_FRAMEWORK_PATH') ?: __DIR__ . '/../../dswa-framework/framework',
+        'local_path' => getenv('CHILD_APP_FRAMEWORK_PATH') ?: __DIR__ . '/../../app-framework/framework',
         'remote_url' => getenv('CHILD_APP_FRAMEWORK_URL') ?: '',
         'auto_sync'  => false,
     ];

@@ -33,7 +33,7 @@ function build_assessment_system_prompt($instance_data, $session) {
     $is_complete = check_assessment_completion($instance_data, $phase);
 
     // ── Role ──
-    $prompt = "You are the " . CHILD_APP_NAME . " AI Coach for the DSWA Training Continuum.\n\n";
+    $prompt = "You are the " . CHILD_APP_NAME . " AI assistant.\n\n";
     $prompt .= "ROLE: Present matrix questions and collect answers. The question matrix drives EVERYTHING.\n";
     $prompt .= "STRICT RULES:\n";
     $prompt .= "1. ALWAYS present the CURRENT QUESTION from the matrix below. Do NOT invent your own questions.\n";
