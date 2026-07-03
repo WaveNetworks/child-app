@@ -1,11 +1,11 @@
 /**
  * @module water-ripples
- * @description Animated water ripple system ported from DSWADemo.
+ * @description Animated water ripple system ported from a reference demo.
  * Drives `body` background-image, background-position, and background-size
  * to create living water with radial ripple rings, caustic stripe shimmer,
- * and parallax sway tied to the lotus wind vector.
+ * and parallax sway tied to the bloom wind vector.
  *
- * Exposes {@link window.pulseRipple} for lotus pulse integration.
+ * Exposes {@link window.pulseRipple} for bloom pulse integration.
  */
 (function() {
 'use strict';
@@ -51,11 +51,11 @@ var _windVector = { x: 0.3, y: 0.15 };  // default gentle wind
  * @param {number} topHue    - Base hue (degrees).
  * @param {number} litTop    - Base lightness.
  * @param {number} time      - Current time in seconds (fractional).
- * @param {number} [lotusEdge=210] - Pixel radius at which the first ripple starts.
+ * @param {number} [bloomEdge=210] - Pixel radius at which the first ripple starts.
  * @returns {string} A complete `radial-gradient(...)` CSS value.
  */
-function buildRippleGradient(topHue, litTop, time, lotusEdge) {
-    var edge  = lotusEdge || 210;
+function buildRippleGradient(topHue, litTop, time, bloomEdge) {
+    var edge  = bloomEdge || 210;
     var power = 1.85;
     var scale = 8;
     var maxR  = 1500;
@@ -185,7 +185,7 @@ function pulseRipple() {
  * the expensive gradient rebuild only happens when the visual
  * result would actually change (or during an active pulse).
  *
- * Wind vector is pulled from the LotusProgressSystem canvas if
+ * Wind vector is pulled from the BloomProgressSystem canvas if
  * available, otherwise falls back to the default gentle breeze.
  */
 function startSwayLoop() {
@@ -211,10 +211,10 @@ function startSwayLoop() {
         var w = _windVector;
         var mag = Math.sqrt(w.x * w.x + w.y * w.y) || 0.01;
 
-        // Get lotus edge for ripple start distance
-        var lotusEdge = 210;
+        // Get bloom edge for ripple start distance
+        var bloomEdge = 210;
         if (lps && lps.canvas && lps.canvas.R && typeof maxPetalExtent === 'function') {
-            lotusEdge = maxPetalExtent(lps.canvas.R) * 0.63;
+            bloomEdge = maxPetalExtent(lps.canvas.R) * 0.63;
         }
 
         // Rebuild ripple gradient at ~30fps (quantised phase check)
@@ -225,7 +225,7 @@ function startSwayLoop() {
             _lastQPhase = qPhase;
             var stripes = buildDynamicStripes(_rippleConfig.topHue, _rippleConfig.litTop, t);
             _cachedBgImage = buildRippleGradient(
-                _rippleConfig.topHue, _rippleConfig.litTop, t, lotusEdge
+                _rippleConfig.topHue, _rippleConfig.litTop, t, bloomEdge
             ) + ',' + stripes + ',' + _staticBgLayers;
             document.body.style.backgroundImage = _cachedBgImage;
         }
@@ -274,7 +274,7 @@ document.addEventListener('visibilitychange', function() {
 });
 
 /**
- * Trigger a visual ripple pulse from external code (e.g. lotus heartbeat).
+ * Trigger a visual ripple pulse from external code (e.g. bloom heartbeat).
  * @function window.pulseRipple
  */
 window.pulseRipple = pulseRipple;

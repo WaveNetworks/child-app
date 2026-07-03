@@ -40,13 +40,13 @@ $logo = !empty($b['logo_dark_path']) ? $b['logo_dark_path'] : ($b['logo_path'] ?
                 <img src="../../admin/branding/<?= h($logo) ?>" alt="<?= h($b['site_name']) ?>" class="panel-brand-logo">
                 <?php } ?>
                 <div class="panel-icon">
-                    <div class="lotus-icon">
-                        <div class="lotus-petal"></div>
-                        <div class="lotus-petal"></div>
-                        <div class="lotus-petal"></div>
-                        <div class="lotus-petal"></div>
-                        <div class="lotus-petal"></div>
-                        <div class="lotus-center"></div>
+                    <div class="bloom-icon">
+                        <div class="bloom-petal"></div>
+                        <div class="bloom-petal"></div>
+                        <div class="bloom-petal"></div>
+                        <div class="bloom-petal"></div>
+                        <div class="bloom-petal"></div>
+                        <div class="bloom-center"></div>
                     </div>
                 </div>
                 <h1 class="panel-title">Welcome to <?= h(defined("CHILD_APP_NAME") ? CHILD_APP_NAME : "this app") ?></h1>
@@ -93,7 +93,7 @@ $logo = !empty($b['logo_dark_path']) ? $b['logo_dark_path'] : ($b['logo_path'] ?
                 </div>
                 <h1 class="panel-title">What You'll Get</h1>
                 <p class="panel-subtitle">
-                    Your assessment maps strengths and growth areas across the DSWA Training Continuum.
+                    Your assessment maps strengths and growth areas across the training continuum.
                     Coaches at the Pro tier can assess unlimited team members for free and
                     track everyone's progress in real time.
                 </p>
@@ -108,7 +108,7 @@ $logo = !empty($b['logo_dark_path']) ? $b['logo_dark_path'] : ($b['logo_path'] ?
                     </div>
                     <div class="panel-feature">
                         <span class="panel-feature-icon">&#9829;</span>
-                        <span>Access to a 30 day free trial in the DSWA Community</span>
+                        <span>Access to a 30 day free trial in the community</span>
                     </div>
                 </div>
             </div>
@@ -133,14 +133,14 @@ $logo = !empty($b['logo_dark_path']) ? $b['logo_dark_path'] : ($b['logo_path'] ?
                     Create a free account and take your first assessment.
                     Share your results with your coach or keep them private &mdash; it's up to you.
                 </p>
-                <!-- Lotus at bottom of content -->
-                <div class="ready-lotus">
-                    <div class="lotus-petal"></div>
-                    <div class="lotus-petal"></div>
-                    <div class="lotus-petal"></div>
-                    <div class="lotus-petal"></div>
-                    <div class="lotus-petal"></div>
-                    <div class="lotus-center"></div>
+                <!-- Bloom at bottom of content -->
+                <div class="ready-bloom">
+                    <div class="bloom-petal"></div>
+                    <div class="bloom-petal"></div>
+                    <div class="bloom-petal"></div>
+                    <div class="bloom-petal"></div>
+                    <div class="bloom-petal"></div>
+                    <div class="bloom-center"></div>
                 </div>
             </div>
         </div>

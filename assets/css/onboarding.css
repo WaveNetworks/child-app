@@ -1,6 +1,6 @@
 /**
  * onboarding.css — Pre-auth first-time user onboarding panels
- * 4 swipeable full-screen panels with DSWA brand gradient
+ * 4 swipeable full-screen panels with app brand gradient
  */
 
 /* ── Base layout: flex column so footer never overlaps ── */
@@ -241,13 +241,13 @@
     font-size: 0.85rem;
 }
 
-/* ── Panel 1: Lotus bloom ── */
-.lotus-icon {
+/* ── Panel 1: Bloom ── */
+.bloom-icon {
     position: relative;
     width: 100%;
     height: 100%;
 }
-.lotus-petal {
+.bloom-petal {
     position: absolute;
     width: 24px;
     height: 48px;
@@ -258,12 +258,12 @@
     opacity: 0;
     animation: petalBloom 1.2s ease-out forwards;
 }
-.lotus-petal:nth-child(1) { background: rgba(139, 92, 246, 0.8); --r: -40deg; animation-delay: 0.1s; }
-.lotus-petal:nth-child(2) { background: rgba(168, 85, 247, 0.8); --r: -20deg; animation-delay: 0.2s; }
-.lotus-petal:nth-child(3) { background: rgba(192, 132, 252, 0.9); --r: 0deg; animation-delay: 0.3s; }
-.lotus-petal:nth-child(4) { background: rgba(168, 85, 247, 0.8); --r: 20deg; animation-delay: 0.4s; }
-.lotus-petal:nth-child(5) { background: rgba(139, 92, 246, 0.8); --r: 40deg; animation-delay: 0.5s; }
-.lotus-center {
+.bloom-petal:nth-child(1) { background: rgba(139, 92, 246, 0.8); --r: -40deg; animation-delay: 0.1s; }
+.bloom-petal:nth-child(2) { background: rgba(168, 85, 247, 0.8); --r: -20deg; animation-delay: 0.2s; }
+.bloom-petal:nth-child(3) { background: rgba(192, 132, 252, 0.9); --r: 0deg; animation-delay: 0.3s; }
+.bloom-petal:nth-child(4) { background: rgba(168, 85, 247, 0.8); --r: 20deg; animation-delay: 0.4s; }
+.bloom-petal:nth-child(5) { background: rgba(139, 92, 246, 0.8); --r: 40deg; animation-delay: 0.5s; }
+.bloom-center {
     position: absolute;
     width: 20px; height: 20px;
     background: radial-gradient(circle, #fbbf24, #f59e0b);
@@ -346,7 +346,7 @@
     100% { opacity: 1; transform: scaleY(1); transform-origin: bottom; }
 }
 
-/* ── Panel 4: Ready — falling petals bg + lotus at bottom ── */
+/* ── Panel 4: Ready — falling petals bg + bloom at bottom ── */
 .panel-ready {
     position: relative;
 }
@@ -379,15 +379,15 @@
     100% { top: 95%; opacity: 0; transform: rotate(200deg) translateX(15px); }
 }
 
-/* Lotus at bottom of ready panel content */
-.ready-lotus {
+/* Bloom at bottom of ready panel content */
+.ready-bloom {
     position: relative;
     width: 80px;
     height: 70px;
     margin-top: 24px;
     flex-shrink: 0;
 }
-.ready-lotus .lotus-petal {
+.ready-bloom .bloom-petal {
     position: absolute;
     width: 20px;
     height: 40px;
@@ -398,12 +398,12 @@
     opacity: 0;
     animation: petalBloom 1.2s ease-out forwards;
 }
-.ready-lotus .lotus-petal:nth-child(1) { background: rgba(139, 92, 246, 0.8); --r: -40deg; animation-delay: 0.3s; }
-.ready-lotus .lotus-petal:nth-child(2) { background: rgba(168, 85, 247, 0.8); --r: -20deg; animation-delay: 0.4s; }
-.ready-lotus .lotus-petal:nth-child(3) { background: rgba(192, 132, 252, 0.9); --r: 0deg; animation-delay: 0.5s; }
-.ready-lotus .lotus-petal:nth-child(4) { background: rgba(168, 85, 247, 0.8); --r: 20deg; animation-delay: 0.6s; }
-.ready-lotus .lotus-petal:nth-child(5) { background: rgba(139, 92, 246, 0.8); --r: 40deg; animation-delay: 0.7s; }
-.ready-lotus .lotus-center {
+.ready-bloom .bloom-petal:nth-child(1) { background: rgba(139, 92, 246, 0.8); --r: -40deg; animation-delay: 0.3s; }
+.ready-bloom .bloom-petal:nth-child(2) { background: rgba(168, 85, 247, 0.8); --r: -20deg; animation-delay: 0.4s; }
+.ready-bloom .bloom-petal:nth-child(3) { background: rgba(192, 132, 252, 0.9); --r: 0deg; animation-delay: 0.5s; }
+.ready-bloom .bloom-petal:nth-child(4) { background: rgba(168, 85, 247, 0.8); --r: 20deg; animation-delay: 0.6s; }
+.ready-bloom .bloom-petal:nth-child(5) { background: rgba(139, 92, 246, 0.8); --r: 40deg; animation-delay: 0.7s; }
+.ready-bloom .bloom-center {
     position: absolute;
     width: 16px; height: 16px;
     background: radial-gradient(circle, #fbbf24, #f59e0b);
