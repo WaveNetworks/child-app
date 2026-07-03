@@ -1,6 +1,6 @@
 -- Child app — Shard DB v1.0
--- Per-user tables: assessments, sessions, relationships, content, notes
--- (Inherited from the ElevateHER assessment engine.)
+-- Per-user tables: user history and per-user scaffold data
+-- (Example scaffold tables — replace with your app's own.)
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
 

@@ -9,7 +9,7 @@ chown -R www-data:www-data /var/www/files
 chown -R www-data:www-data \
     /var/www/public_html/admin/config \
     /var/www/public_html/admin/install \
-    /var/www/public_html/elevateher/config
+    /var/www/public_html/"${CHILD_APP_SLUG:-child-app}"/config
 
 # Install admin composer dependencies if vendor/ is missing
 if [ ! -d /var/www/public_html/admin/vendor ]; then

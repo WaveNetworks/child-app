@@ -1,6 +1,6 @@
 -- Child app — Main DB v1.0
--- Foundation tables: framework data, invite links, app roles
--- (Inherited from the ElevateHER assessment engine.)
+-- Foundation tables: invite links, app roles
+-- (Example scaffold tables — replace with your app's own.)
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+00:00";
 

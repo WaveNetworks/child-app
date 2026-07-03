@@ -1,17 +1,21 @@
-# elevateher .htaccess
+# Child app .htaccess
 # Security & Routing
+#
+# Paths below assume the app is served under /child-app/. When scaffolding
+# a real app, replace "child-app" with your CHILD_APP_SLUG (the deploy
+# tooling can template this).
 
 # Custom error pages — logged to DB for security monitoring
-ErrorDocument 403 /elevateher/error.php
-ErrorDocument 404 /elevateher/error.php
-ErrorDocument 500 /elevateher/error.php
+ErrorDocument 403 /child-app/error.php
+ErrorDocument 404 /child-app/error.php
+ErrorDocument 500 /child-app/error.php
 
 # Deny direct web access to sensitive folders via rewrite
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    # /elevateher/ directory index → redirect to login
-    RewriteRule ^$ /elevateher/auth/login.php [R=302,L]
+    # /child-app/ directory index → redirect to login
+    RewriteRule ^$ /child-app/auth/login.php [R=302,L]
 
     # Serve framework content files via PHP proxy
     RewriteRule ^content/(.+)$ content.php?f=$1 [L,QSA]

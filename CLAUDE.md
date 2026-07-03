@@ -50,8 +50,8 @@ The canonical scanner/contract live in the nokemo repo
 6. Decide which scaffold files you actually need. Some files in
    `include/common/` (`questionMatrixHelpers.php`,
    `instanceFileHelpers.php`, `scoringEngine.php`,
-   `contentHelpers.php`, etc.) are inherited from the original
-   ElevateHER assessment engine and most child apps will delete them.
+   `contentHelpers.php`, etc.) are carried over from an earlier
+   domain-specific app and most child apps will delete them.
    Strip what you don't need before first run.
 
 ## Path reference

@@ -6,8 +6,8 @@
 # own namespaced DBs without editing this file.
 #
 # .env example:
-#   CHILD_APP_SLUG=hireasupport
-#   CHILD_APP_NAME=Hire a Support
+#   CHILD_APP_SLUG=myapp
+#   CHILD_APP_NAME=My App
 #   ANTHROPIC_API_KEY=sk-ant-...
 #
 # Single MySQL server hosts all 6 namespaced databases.
@@ -56,7 +56,7 @@ services:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - CHILD_APP_AI_MODEL=${CHILD_APP_AI_MODEL:-claude-sonnet-4-6}
       - CHILD_APP_FRAMEWORK_SOURCE=${CHILD_APP_FRAMEWORK_SOURCE:-local}
-      - CHILD_APP_FRAMEWORK_PATH=${CHILD_APP_FRAMEWORK_PATH:-/var/www/public_html/dswa-framework/framework}
+      - CHILD_APP_FRAMEWORK_PATH=${CHILD_APP_FRAMEWORK_PATH:-/var/www/public_html/framework-data/framework}
       - CHILD_APP_URL=${CHILD_APP_URL:-http://localhost:8085/${CHILD_APP_SLUG:-child-app}/app}
     volumes:
       # Source code — bind-mounted for live editing (no rebuild needed)
@@ -64,8 +64,8 @@ services:
       - .:/var/www/public_html/${CHILD_APP_SLUG:-child-app}
       # Optional: mount a sibling framework / demo content tree if the
       # app uses one. Comment these out if not needed.
-      # - ../dswa-framework:/var/www/public_html/dswa-framework
-      # - ../DSWADemo:/var/www/public_html/DSWADemo
+      # - ../framework-data:/var/www/public_html/framework-data
+      # - ../content-demo:/var/www/public_html/content-demo
       # Persistent data
       - files_vol:/var/www/files
     depends_on:
