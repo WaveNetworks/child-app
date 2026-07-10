@@ -123,7 +123,7 @@
 
                 <!-- Theme switcher -->
                 <select class="form-select form-select-sm me-2" id="themeSelector" style="width: auto;"
-                        data-custom-css="../assets/css/custom.css"
+                        data-custom-css="../assets/css/custom.css<?php $__cv = @filemtime(__DIR__ . '/../assets/css/custom.css'); echo $__cv ? '?v=' . $__cv : ''; ?>"
                         data-has-custom="<?= has_custom_theme() ? '1' : '0' ?>"
                         data-registered-themes='<?= get_registered_themes_json() ?>'>
                     <option value="custom">Custom</option>

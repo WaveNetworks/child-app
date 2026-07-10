@@ -19,7 +19,11 @@ function get_app_theme_css_url($admin_prefix = '../../admin/', $webroot_prefix =
 
     // "custom" explicitly selected, or no theme cookie and custom.css exists (default)
     if ($custom_exists && ($theme === 'custom' || $theme === '')) {
-        return '../assets/css/custom.css';
+        // Cache-bust on the compiled file's mtime so a rebuilt theme is picked up
+        // immediately and a stale CDN/origin 404 (cached before the file existed)
+        // is never served — the bare URL is a different cache key.
+        $v = @filemtime(__DIR__ . '/../../assets/css/custom.css');
+        return '../assets/css/custom.css' . ($v ? '?v=' . $v : '');
     }
 
     return get_theme_css_url($admin_prefix, $webroot_prefix);
