@@ -80,7 +80,6 @@ forbidden_paths:
   - "views/admin_proposals.php"
   - "views/admin_stages.php"
   - "views/results.php"
-  - "views/roadmap.php"
   - "views/game.php"
   - "views/team.php"
 
