@@ -8,9 +8,6 @@ $page_title = 'Feedback';
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="mb-0"><i class="bi bi-chat-left-text me-2"></i>Feedback</h4>
-    <a href="index.php?page=roadmap" class="btn btn-sm btn-outline-primary">
-        <i class="bi bi-kanban me-1"></i>View Roadmap
-    </a>
 </div>
 
 <div class="row g-4">
