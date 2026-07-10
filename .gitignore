@@ -14,8 +14,8 @@ vendor/
 node_modules/
 
 # Compiled CSS (each developer builds locally via npm run build:css)
-assets/css/custom.css
-assets/css/custom.css.map
+assets/themes/glassmorphism/custom.css
+assets/themes/glassmorphism/custom.css.map
 
 # Logs and temp
 *.log

@@ -14,7 +14,7 @@
  * @return string
  */
 function get_app_theme_css_url($admin_prefix = '../../admin/', $webroot_prefix = '../../') {
-    $custom_exists = file_exists(__DIR__ . '/../../assets/css/custom.css');
+    $custom_exists = file_exists(__DIR__ . '/../../assets/themes/glassmorphism/custom.css');
     $theme = $_COOKIE['wn_theme'] ?? '';
 
     // "custom" explicitly selected, or no theme cookie and custom.css exists (default)
@@ -22,8 +22,8 @@ function get_app_theme_css_url($admin_prefix = '../../admin/', $webroot_prefix =
         // Cache-bust on the compiled file's mtime so a rebuilt theme is picked up
         // immediately and a stale CDN/origin 404 (cached before the file existed)
         // is never served — the bare URL is a different cache key.
-        $v = @filemtime(__DIR__ . '/../../assets/css/custom.css');
-        return '../assets/css/custom.css' . ($v ? '?v=' . $v : '');
+        $v = @filemtime(__DIR__ . '/../../assets/themes/glassmorphism/custom.css');
+        return '../assets/themes/glassmorphism/custom.css' . ($v ? '?v=' . $v : '');
     }
 
     return get_theme_css_url($admin_prefix, $webroot_prefix);
@@ -36,5 +36,5 @@ function get_app_theme_css_url($admin_prefix = '../../admin/', $webroot_prefix =
  * @return bool
  */
 function has_custom_theme() {
-    return file_exists(__DIR__ . '/../../assets/css/custom.css');
+    return file_exists(__DIR__ . '/../../assets/themes/glassmorphism/custom.css');
 }
