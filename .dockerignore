@@ -1,0 +1,5 @@
+.git
+node_modules
+.claude
+config/config.php
+config/config.php.prod

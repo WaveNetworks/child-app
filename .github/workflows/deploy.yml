@@ -1,0 +1,149 @@
+name: Build & Deploy Child App
+
+# Generic Wave Networks child-app deploy workflow. When you scaffold
+# a new child app from this template:
+#   1. Set CHILD_APP_SLUG below to the lowercase URL-safe slug
+#      (e.g. 'myapp', 'demo', 'acme').
+#   2. Set the secrets in the new repo via `gh secret set`:
+#        SSH_HOST          ssh.us.stackcp.com (StackCP) or your host
+#        SSH_USER          the StackCP package username (e.g. yourapp.com)
+#        SSH_PRIVATE_KEY   private key matching the host's authorized_keys
+#        CROSS_REPO_PAT    PAT for cloning wave-networks-core (admin core)
+#                          (and an optional framework repo if your app uses one)
+#   3. Verify the host accepts your SSH_PRIVATE_KEY before the first deploy.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  CHILD_APP_SLUG: child-app
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout child app
+        uses: actions/checkout@v4
+        with:
+          path: ${{ env.CHILD_APP_SLUG }}
+
+      - name: Checkout wave-networks-core (admin core)
+        uses: actions/checkout@v4
+        with:
+          repository: WaveNetworks/wave-networks-core
+          path: admin
+          token: ${{ secrets.CROSS_REPO_PAT }}
+
+      # Optional: uncomment if your child app pulls a framework tree.
+      # - name: Checkout app-framework
+      #   uses: actions/checkout@v4
+      #   with:
+      #     repository: WaveNetworks/app-framework
+      #     path: app-framework
+      #     token: ${{ secrets.CROSS_REPO_PAT }}
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: gd, mbstring, xml, curl, zip, pdo_mysql
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ${{ env.CHILD_APP_SLUG }}/package-lock.json
+
+      - name: Install admin composer dependencies
+        run: composer install --no-dev --no-interaction --optimize-autoloader
+        working-directory: admin
+
+      - name: Install child-app npm dependencies & build CSS
+        run: |
+          if [ -f package.json ]; then
+            npm ci
+            if grep -q '"build:css"' package.json; then npm run build:css; fi
+          fi
+        working-directory: ${{ env.CHILD_APP_SLUG }}
+
+      - name: Prepare deploy staging
+        run: |
+          mkdir -p staging/admin staging/${{ env.CHILD_APP_SLUG }}
+
+          # Optional framework tree — only if you uncommented the checkout above
+          # mkdir -p staging/app-framework
+          # rsync -a --exclude='.git' --exclude='.github' --exclude='CLAUDE.md' \
+          #   app-framework/ staging/app-framework/
+
+          # Admin — exclude dev/build artifacts and local config
+          rsync -a --exclude='.git' --exclude='node_modules' --exclude='tests' \
+            --exclude='test' --exclude='docker' --exclude='.docker' \
+            --exclude='.env' --exclude='.env.example' --exclude='docker-compose.yml' \
+            --exclude='docker-compose.yaml' --exclude='Dockerfile' --exclude='.dockerignore' \
+            --exclude='CLAUDE.md' --exclude='CLAUDE-*.md' --exclude='CHILD_APP_SPEC.md' \
+            --exclude='phpunit.xml' --exclude='phpunit.xml.dist' --exclude='.editorconfig' \
+            --exclude='config/config.php' \
+            --exclude='deploy.py' --exclude='deploy_config.py' --exclude='deploy_config.sample.py' \
+            --exclude='__pycache__' --exclude='.github' --exclude='.claude' \
+            admin/ staging/admin/
+
+          # Child app — same exclusions
+          rsync -a --exclude='.git' --exclude='node_modules' --exclude='tests' \
+            --exclude='test' --exclude='docker' --exclude='.docker' \
+            --exclude='.env' --exclude='.env.example' --exclude='docker-compose.yml' \
+            --exclude='docker-compose.yaml' --exclude='Dockerfile' --exclude='.dockerignore' \
+            --exclude='CLAUDE.md' --exclude='CLAUDE-*.md' \
+            --exclude='phpunit.xml' --exclude='phpunit.xml.dist' --exclude='.editorconfig' \
+            --exclude='config/config.php' \
+            --exclude='deploy.py' --exclude='deploy_config.py' --exclude='deploy_config.sample.py' \
+            --exclude='__pycache__' --exclude='.github' --exclude='.claude' \
+            ${{ env.CHILD_APP_SLUG }}/ staging/${{ env.CHILD_APP_SLUG }}/
+
+      - name: Validate staging directories
+        run: |
+          ADMIN_COUNT=$(find staging/admin -type f | wc -l)
+          APP_COUNT=$(find staging/${{ env.CHILD_APP_SLUG }} -type f | wc -l)
+          echo "staging/admin file count:                $ADMIN_COUNT"
+          echo "staging/${{ env.CHILD_APP_SLUG }} file count: $APP_COUNT"
+          if [ "$ADMIN_COUNT" -lt 10 ]; then
+            echo "ERROR: staging/admin has fewer than 10 files ($ADMIN_COUNT). Aborting deploy."
+            exit 1
+          fi
+          if [ "$APP_COUNT" -lt 10 ]; then
+            echo "ERROR: staging/${{ env.CHILD_APP_SLUG }} has fewer than 10 files ($APP_COUNT). Aborting deploy."
+            exit 1
+          fi
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Deploy via rsync
+        run: |
+          # No --delete-after: server has user uploads, files, and config
+          # that must not be removed by deploy.
+          RSYNC_OPTS="-avz --chmod=D755,F644"
+          SSH_CMD="ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no"
+          TARGET="${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}"
+
+          echo "Deploying admin..."
+          rsync $RSYNC_OPTS --exclude='config/config.php' -e "$SSH_CMD" \
+            staging/admin/ $TARGET:public_html/admin/
+
+          echo "Deploying ${{ env.CHILD_APP_SLUG }}..."
+          rsync $RSYNC_OPTS --exclude='config/config.php' -e "$SSH_CMD" \
+            staging/${{ env.CHILD_APP_SLUG }}/ $TARGET:public_html/${{ env.CHILD_APP_SLUG }}/
+
+          # Optional framework deploy — uncomment if you checked out app-framework above
+          # echo "Deploying app-framework..."
+          # rsync $RSYNC_OPTS -e "$SSH_CMD" \
+          #   staging/app-framework/ $TARGET:public_html/app-framework/
+
+          echo "Deploy complete."

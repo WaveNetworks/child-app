@@ -1,0 +1,36 @@
+# Reference-contamination guard
+# ==============================
+# child-app is the GENERIC reference scaffold for the Wave Networks platform.
+# It must never carry tenant/app-specific domain logic or identity. This guard
+# runs scan_reference_contamination.py against the cleanliness contract
+# (.reference-clean.yml at the repo root) on every push and pull request.
+#
+# MODE: hard gate on Tier 1/Tier 2 (no --baseline). Tier 1/2a/2b contamination
+# has been driven to 0, so the guard now FAILS the build on any newly introduced
+# app-identity token, forbidden file, or forbidden CREATE TABLE.
+#
+# Tier 3 (advisory domain-term heuristics) is intentionally NOT gated: the repo
+# still carries ~200 legacy domain-term hits across docs/views being stripped in
+# later slices. Add `--strict` here only once Tier 3 is also clean, or it will
+# fail the build. Re-check locally with:
+#     python3 scripts/scan_reference_contamination.py --target .
+#
+# Part of the nokemo "Reference Harvest & Sync" process.
+name: contamination-guard
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install pyyaml
+      - name: Scan for reference contamination
+        run: python3 scripts/scan_reference_contamination.py --target .
