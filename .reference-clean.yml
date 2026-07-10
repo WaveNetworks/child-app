@@ -23,8 +23,11 @@ version: 1
 # ---------------------------------------------------------------------------
 forbidden_tokens:
   - elevateher
-  - dswa          # elevateHER production domain
-  - lotus         # elevateHER brand motif
+  - elevate her         # spelled-out brand (spaced) — catches marketing/onboarding copy
+  - dswa                # elevateHER production domain
+  - direct selling women # DSWA spelled out — the exact onboarding copy Tier 1 missed (verified hard-fail)
+  - sisterhood          # elevateHER community framing
+  - lotus               # elevateHER brand motif
   - pwt
   - hireasupport
   # NOTE: do not list the parent platform ("wave", "subtheme") or "nokemo";

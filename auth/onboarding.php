@@ -3,23 +3,27 @@ try {
     include(__DIR__ . '/../include/common_auth.php');
     $b = get_branding();
 } catch (Throwable $e) {
-    $b = ['site_name' => defined('CHILD_APP_NAME') ? CHILD_APP_NAME : 'this app', 'logo_path' => '', 'logo_dark_path' => '', 'favicon_path' => ''];
+    $b = ['site_name' => defined('CHILD_APP_NAME') ? CHILD_APP_NAME : 'this app', 'logo_path' => '', 'logo_dark_path' => '', 'favicon_path' => '', 'theme_color' => '#0f172a'];
     function h($s) { return htmlspecialchars($s ?? '', ENT_QUOTES, 'UTF-8'); }
 }
 $logo = !empty($b['logo_dark_path']) ? $b['logo_dark_path'] : ($b['logo_path'] ?? '');
+$app_name = defined('CHILD_APP_NAME') ? CHILD_APP_NAME : ($b['site_name'] ?? 'this app');
+$ob_key = (defined('CHILD_APP_SLUG') ? CHILD_APP_SLUG : 'app') . '_onboarded';
+$theme_color = !empty($b['theme_color']) ? $b['theme_color'] : '#0f172a';
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Welcome to <?= h($b['site_name']) ?></title>
-    <meta name="theme-color" content="#1a0533">
+    <meta name="theme-color" content="<?= h($theme_color) ?>">
     <?php if (!empty($b['favicon_path'])) { ?>
     <link rel="icon" href="../../admin/branding/<?= h($b['favicon_path']) ?>">
     <?php } ?>
-    <link rel="stylesheet" href="../assets/css/onboarding.css?v=20260331h">
+    <link rel="stylesheet" href="../assets/css/onboarding.css?v=20260710a">
     <script>
-    if (localStorage.getItem('elevatehr_onboarded')) {
+    window.WN_ONBOARD_KEY = <?= json_encode($ob_key) ?>;
+    if (localStorage.getItem(window.WN_ONBOARD_KEY)) {
         window.location.replace('login.php');
     }
     </script>
@@ -40,44 +44,43 @@ $logo = !empty($b['logo_dark_path']) ? $b['logo_dark_path'] : ($b['logo_path'] ?
                 <img src="../../admin/branding/<?= h($logo) ?>" alt="<?= h($b['site_name']) ?>" class="panel-brand-logo">
                 <?php } ?>
                 <div class="panel-icon">
-                    <div class="bloom-icon">
-                        <div class="bloom-petal"></div>
-                        <div class="bloom-petal"></div>
-                        <div class="bloom-petal"></div>
-                        <div class="bloom-petal"></div>
-                        <div class="bloom-petal"></div>
-                        <div class="bloom-center"></div>
+                    <div class="hub-icon">
+                        <div class="hub-core"></div>
+                        <div class="hub-node"></div>
+                        <div class="hub-node"></div>
+                        <div class="hub-node"></div>
+                        <div class="hub-node"></div>
+                        <div class="hub-node"></div>
+                        <div class="hub-node"></div>
                     </div>
                 </div>
-                <h1 class="panel-title">Welcome to <?= h(defined("CHILD_APP_NAME") ? CHILD_APP_NAME : "this app") ?></h1>
+                <h1 class="panel-title">Welcome to <?= h($app_name) ?></h1>
                 <p class="panel-subtitle">
-                    A free AI-powered assessment from the Direct Selling Women's Alliance.
-                    Discover exactly where you stand in your direct sales journey &mdash;
-                    always 100% free for you and your team.
+                    Everything your team needs, in one place. Here's a quick look
+                    before you sign in.
                 </p>
             </div>
         </div>
 
-        <!-- Panel 2: A Real Assessment -->
+        <!-- Panel 2: Built around your work -->
         <div class="onboarding-panel">
             <div class="panel-content">
                 <div class="panel-icon">
                     <div class="chat-bubbles-icon">
-                        <div class="bubble bubble-left">How am I doing?</div>
-                        <div class="bubble bubble-right">Let's find out...</div>
-                        <div class="bubble bubble-left">Show me my path</div>
+                        <div class="bubble bubble-left">Welcome aboard</div>
+                        <div class="bubble bubble-right">Let's get set up</div>
+                        <div class="bubble bubble-left">Ready when you are</div>
                     </div>
                 </div>
-                <h1 class="panel-title">A Real AI Assessment</h1>
+                <h1 class="panel-title">Built Around Your Work</h1>
                 <p class="panel-subtitle">
-                    Our AI coach quickly evaluates your business across 7 dimensions
-                    and grows with you over time &mdash; a lifelong learning tool
-                    that tracks your progress from first steps to Elite Legacy.
+                    A fast, focused workspace that adapts to how you and your team
+                    actually work &mdash; on desktop and mobile.
                 </p>
             </div>
         </div>
 
-        <!-- Panel 3: What You Get -->
+        <!-- Panel 3: What you get -->
         <div class="onboarding-panel">
             <div class="panel-content">
                 <div class="panel-icon">
@@ -88,27 +91,24 @@ $logo = !empty($b['logo_dark_path']) ? $b['logo_dark_path'] : ($b['logo_path'] ?
                         <div class="dim-bar"></div>
                         <div class="dim-bar"></div>
                         <div class="dim-bar"></div>
-                        <div class="dim-bar"></div>
                     </div>
                 </div>
-                <h1 class="panel-title">What You'll Get</h1>
+                <h1 class="panel-title">What You Get</h1>
                 <p class="panel-subtitle">
-                    Your assessment maps strengths and growth areas across the training continuum.
-                    Coaches at the Pro tier can assess unlimited team members for free and
-                    track everyone's progress in real time.
+                    A secure account and a workspace that keeps your data yours.
                 </p>
                 <div class="panel-features">
                     <div class="panel-feature">
-                        <span class="panel-feature-icon">&#9670;</span>
-                        <span>100% free assessment &mdash; no credit card</span>
+                        <span class="panel-feature-icon">&#128274;</span>
+                        <span>Secure sign-in with 2FA and SSO support</span>
                     </div>
                     <div class="panel-feature">
-                        <span class="panel-feature-icon">&#9733;</span>
-                        <span>Coaches see their team's scores &amp; progress</span>
+                        <span class="panel-feature-icon">&#128241;</span>
+                        <span>Works on desktop and mobile</span>
                     </div>
                     <div class="panel-feature">
-                        <span class="panel-feature-icon">&#9829;</span>
-                        <span>Access to a 30 day free trial in the community</span>
+                        <span class="panel-feature-icon">&#9878;</span>
+                        <span>Your data stays private and portable</span>
                     </div>
                 </div>
             </div>
@@ -116,7 +116,6 @@ $logo = !empty($b['logo_dark_path']) ? $b['logo_dark_path'] : ($b['logo_path'] ?
 
         <!-- Panel 4: Ready to Start -->
         <div class="onboarding-panel panel-ready">
-            <!-- Falling petals background -->
             <div class="ready-petals-bg">
                 <div class="falling-petal"></div>
                 <div class="falling-petal"></div>
@@ -130,24 +129,22 @@ $logo = !empty($b['logo_dark_path']) ? $b['logo_dark_path'] : ($b['logo_path'] ?
             <div class="panel-content">
                 <h1 class="panel-title">Ready to Start?</h1>
                 <p class="panel-subtitle">
-                    Create a free account and take your first assessment.
-                    Share your results with your coach or keep them private &mdash; it's up to you.
+                    Create your account and jump in &mdash; it only takes a minute.
                 </p>
-                <!-- Bloom at bottom of content -->
                 <div class="ready-bloom">
-                    <div class="bloom-petal"></div>
-                    <div class="bloom-petal"></div>
-                    <div class="bloom-petal"></div>
-                    <div class="bloom-petal"></div>
-                    <div class="bloom-petal"></div>
-                    <div class="bloom-center"></div>
+                    <div class="hub-core"></div>
+                    <div class="hub-node"></div>
+                    <div class="hub-node"></div>
+                    <div class="hub-node"></div>
+                    <div class="hub-node"></div>
+                    <div class="hub-node"></div>
+                    <div class="hub-node"></div>
                 </div>
             </div>
         </div>
 
     </div>
 
-    <!-- Dots + Nav: outside the track so they stay visible on all panels -->
     <div class="onboarding-footer">
         <div class="onboarding-dots">
             <button class="onboarding-dot active" type="button" aria-label="Panel 1"></button>
@@ -162,6 +159,6 @@ $logo = !empty($b['logo_dark_path']) ? $b['logo_dark_path'] : ($b['logo_path'] ?
     </div>
 </div>
 
-<script src="../assets/js/onboarding.js?v=20260331h"></script>
+<script src="../assets/js/onboarding.js?v=20260710a"></script>
 </body>
 </html>

@@ -7,8 +7,9 @@
 (function() {
     'use strict';
 
-    /** @constant {string} localStorage key to track onboarding completion */
-    var STORAGE_KEY = 'elevatehr_onboarded';
+    /** @constant {string} localStorage key to track onboarding completion.
+     *  Injected per-app by the page (window.WN_ONBOARD_KEY = "<slug>_onboarded"). */
+    var STORAGE_KEY = window.WN_ONBOARD_KEY || 'wn_onboarded';
 
     var track = document.getElementById('onboardingTrack');
     var panels = document.querySelectorAll('.onboarding-panel');

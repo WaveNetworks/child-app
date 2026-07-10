@@ -1,17 +1,26 @@
 /**
  * onboarding.css — Pre-auth first-time user onboarding panels
- * 4 swipeable full-screen panels with app brand gradient
+ * 4 swipeable full-screen panels. Palette is driven by CSS custom
+ * properties on .onboarding-container so each child app can theme it;
+ * the defaults below are a brand-neutral slate/teal scaffold palette.
+ * Provisioned apps override --ob-* to match their brand.
  */
 
-/* ── Base layout: flex column so footer never overlaps ── */
 .onboarding-container {
+    /* ── Theme knobs (override per app) ── */
+    --ob-accent-rgb: 91, 124, 250;   /* neutral indigo — primary */
+    --ob-accent-2-rgb: 45, 212, 191; /* neutral teal — secondary */
+    --ob-glow: #38bdf8;              /* soft accent glow */
+    --ob-bg: linear-gradient(135deg, #0f172a 0%, #131c31 30%, #0d1526 50%, #0f172a 100%);
+    --ob-base: #0b1120;
+
     position: fixed;
     inset: 0;
     z-index: 9999;
     overflow: hidden;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     color: #fff;
-    background: #0a0a1a;
+    background: var(--ob-base);
     display: flex;
     flex-direction: column;
 }
@@ -19,7 +28,7 @@
 .onboarding-bg {
     position: absolute;
     inset: 0;
-    background: linear-gradient(135deg, #1a0533 0%, #0d1b3e 30%, #0a1628 50%, #1a0533 100%);
+    background: var(--ob-bg);
     z-index: 0;
     pointer-events: none;
 }
@@ -38,13 +47,13 @@
     width: 60vw; height: 60vw;
     max-width: 600px; max-height: 600px;
     top: -10%; left: -10%;
-    background: radial-gradient(circle, rgba(139, 92, 246, 0.6), transparent 70%);
+    background: radial-gradient(circle, rgba(var(--ob-accent-rgb), 0.6), transparent 70%);
 }
 .onboarding-bg::after {
     width: 50vw; height: 50vw;
     max-width: 500px; max-height: 500px;
     bottom: -10%; right: -10%;
-    background: radial-gradient(circle, rgba(99, 102, 241, 0.5), transparent 70%);
+    background: radial-gradient(circle, rgba(var(--ob-accent-2-rgb), 0.5), transparent 70%);
     animation-delay: -6s;
 }
 
@@ -155,8 +164,8 @@
     padding: 0;
 }
 .onboarding-dot.active {
-    background: rgba(139, 92, 246, 0.9);
-    box-shadow: 0 0 12px rgba(139, 92, 246, 0.5);
+    background: rgba(var(--ob-accent-rgb), 0.9);
+    box-shadow: 0 0 12px rgba(var(--ob-accent-rgb), 0.5);
     transform: scale(1.2);
 }
 
@@ -186,12 +195,12 @@
     color: #fff;
 }
 .onboarding-btn-primary {
-    background: linear-gradient(135deg, #8b5cf6, #6366f1);
+    background: linear-gradient(135deg, rgba(var(--ob-accent-rgb), 1), rgba(var(--ob-accent-2-rgb), 1));
     color: #fff;
-    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);
+    box-shadow: 0 4px 16px rgba(var(--ob-accent-rgb), 0.3);
 }
 .onboarding-btn-primary:hover {
-    box-shadow: 0 6px 24px rgba(99, 102, 241, 0.5);
+    box-shadow: 0 6px 24px rgba(var(--ob-accent-rgb), 0.5);
     transform: translateY(-1px);
 }
 
@@ -234,51 +243,54 @@
     width: 28px;
     height: 28px;
     border-radius: 8px;
-    background: rgba(139, 92, 246, 0.2);
+    background: rgba(var(--ob-accent-rgb), 0.2);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.85rem;
 }
 
-/* ── Panel 1: Bloom ── */
-.bloom-icon {
+/* ── Panel 1 & 4: Hub motif — a core ringed by nodes (neutral) ── */
+.hub-icon,
+.ready-bloom {
     position: relative;
     width: 100%;
     height: 100%;
 }
-.bloom-petal {
+.hub-core {
     position: absolute;
-    width: 24px;
-    height: 48px;
-    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-    left: 50%;
-    bottom: 30%;
-    transform-origin: bottom center;
-    opacity: 0;
-    animation: petalBloom 1.2s ease-out forwards;
-}
-.bloom-petal:nth-child(1) { background: rgba(139, 92, 246, 0.8); --r: -40deg; animation-delay: 0.1s; }
-.bloom-petal:nth-child(2) { background: rgba(168, 85, 247, 0.8); --r: -20deg; animation-delay: 0.2s; }
-.bloom-petal:nth-child(3) { background: rgba(192, 132, 252, 0.9); --r: 0deg; animation-delay: 0.3s; }
-.bloom-petal:nth-child(4) { background: rgba(168, 85, 247, 0.8); --r: 20deg; animation-delay: 0.4s; }
-.bloom-petal:nth-child(5) { background: rgba(139, 92, 246, 0.8); --r: 40deg; animation-delay: 0.5s; }
-.bloom-center {
-    position: absolute;
-    width: 20px; height: 20px;
-    background: radial-gradient(circle, #fbbf24, #f59e0b);
+    top: 50%; left: 50%;
+    width: 30%; height: 30%;
+    min-width: 22px; min-height: 22px;
     border-radius: 50%;
-    left: 50%; bottom: 28%;
-    transform: translate(-50%, 0) scale(0);
-    animation: centerPop 0.4s ease-out 0.7s forwards;
+    background: radial-gradient(circle at 40% 35%, rgba(255,255,255,0.95), rgba(var(--ob-accent-rgb), 0.6));
+    box-shadow: 0 0 18px rgba(var(--ob-glow), 0.45);
+    transform: translate(-50%, -50%) scale(0);
+    animation: centerPop 0.5s ease-out 0.15s forwards;
 }
-@keyframes petalBloom {
-    0% { opacity: 0; transform: translateX(-50%) rotate(var(--r, 0deg)) scaleY(0); }
-    100% { opacity: 1; transform: translateX(-50%) rotate(var(--r, 0deg)) scaleY(1); }
+.hub-node {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 12px; height: 12px;
+    margin: -6px 0 0 -6px;
+    border-radius: 50%;
+    background: rgba(var(--ob-accent-2-rgb), 0.85);
+    opacity: 0;
+    animation: nodeIn 0.5s ease-out forwards;
+}
+.hub-node:nth-child(2) { transform: rotate(0deg)   translateY(-38px); animation-delay: 0.25s; }
+.hub-node:nth-child(3) { transform: rotate(60deg)  translateY(-38px); animation-delay: 0.35s; }
+.hub-node:nth-child(4) { transform: rotate(120deg) translateY(-38px); animation-delay: 0.45s; }
+.hub-node:nth-child(5) { transform: rotate(180deg) translateY(-38px); animation-delay: 0.55s; }
+.hub-node:nth-child(6) { transform: rotate(240deg) translateY(-38px); animation-delay: 0.65s; }
+.hub-node:nth-child(7) { transform: rotate(300deg) translateY(-38px); animation-delay: 0.75s; }
+@keyframes nodeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
 }
 @keyframes centerPop {
-    0% { transform: translate(-50%, 0) scale(0); }
-    100% { transform: translate(-50%, 0) scale(1); }
+    0% { transform: translate(-50%, -50%) scale(0); }
+    100% { transform: translate(-50%, -50%) scale(1); }
 }
 
 /* ── Panel 2: Chat bubbles ── */
@@ -301,14 +313,14 @@
     width: fit-content;
 }
 .bubble-left {
-    background: rgba(99, 102, 241, 0.3);
-    border: 1px solid rgba(99, 102, 241, 0.4);
+    background: rgba(var(--ob-accent-2-rgb), 0.3);
+    border: 1px solid rgba(var(--ob-accent-2-rgb), 0.4);
     align-self: flex-start;
     border-bottom-left-radius: 4px;
 }
 .bubble-right {
-    background: rgba(139, 92, 246, 0.3);
-    border: 1px solid rgba(139, 92, 246, 0.4);
+    background: rgba(var(--ob-accent-rgb), 0.3);
+    border: 1px solid rgba(var(--ob-accent-rgb), 0.4);
     align-self: flex-end;
     border-bottom-right-radius: 4px;
 }
@@ -320,7 +332,7 @@
     100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* ── Panel 3: Dimension bars ── */
+/* ── Panel 3: Bars ── */
 .dimension-bars-icon {
     display: flex;
     align-items: flex-end;
@@ -334,19 +346,18 @@
     opacity: 0;
     animation: barGrow 0.6s ease-out forwards;
 }
-.dim-bar:nth-child(1) { height: 35%; background: linear-gradient(180deg, #8b5cf6, #6d28d9); animation-delay: 0.1s; }
-.dim-bar:nth-child(2) { height: 55%; background: linear-gradient(180deg, #6366f1, #4f46e5); animation-delay: 0.2s; }
-.dim-bar:nth-child(3) { height: 75%; background: linear-gradient(180deg, #a78bfa, #7c3aed); animation-delay: 0.3s; }
-.dim-bar:nth-child(4) { height: 45%; background: linear-gradient(180deg, #818cf8, #6366f1); animation-delay: 0.4s; }
-.dim-bar:nth-child(5) { height: 85%; background: linear-gradient(180deg, #c084fc, #9333ea); animation-delay: 0.5s; }
-.dim-bar:nth-child(6) { height: 40%; background: linear-gradient(180deg, #8b5cf6, #6d28d9); animation-delay: 0.6s; }
-.dim-bar:nth-child(7) { height: 65%; background: linear-gradient(180deg, #a78bfa, #7c3aed); animation-delay: 0.7s; }
+.dim-bar:nth-child(1) { height: 45%; background: linear-gradient(180deg, rgba(var(--ob-accent-rgb),1), rgba(var(--ob-accent-rgb),0.6)); animation-delay: 0.1s; }
+.dim-bar:nth-child(2) { height: 60%; background: linear-gradient(180deg, rgba(var(--ob-accent-2-rgb),1), rgba(var(--ob-accent-2-rgb),0.6)); animation-delay: 0.2s; }
+.dim-bar:nth-child(3) { height: 52%; background: linear-gradient(180deg, rgba(var(--ob-accent-rgb),1), rgba(var(--ob-accent-rgb),0.6)); animation-delay: 0.3s; }
+.dim-bar:nth-child(4) { height: 58%; background: linear-gradient(180deg, rgba(var(--ob-accent-2-rgb),1), rgba(var(--ob-accent-2-rgb),0.6)); animation-delay: 0.4s; }
+.dim-bar:nth-child(5) { height: 50%; background: linear-gradient(180deg, rgba(var(--ob-accent-rgb),1), rgba(var(--ob-accent-rgb),0.6)); animation-delay: 0.5s; }
+.dim-bar:nth-child(6) { height: 56%; background: linear-gradient(180deg, rgba(var(--ob-accent-2-rgb),1), rgba(var(--ob-accent-2-rgb),0.6)); animation-delay: 0.6s; }
 @keyframes barGrow {
     0% { opacity: 0; transform: scaleY(0); transform-origin: bottom; }
     100% { opacity: 1; transform: scaleY(1); transform-origin: bottom; }
 }
 
-/* ── Panel 4: Ready — falling petals bg + bloom at bottom ── */
+/* ── Panel 4: Ready — rising motes + hub motif ── */
 .panel-ready {
     position: relative;
 }
@@ -358,59 +369,34 @@
 }
 .ready-petals-bg .falling-petal {
     position: absolute;
-    width: 14px;
-    height: 20px;
-    border-radius: 50% 0 50% 0;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    filter: blur(1px);
     opacity: 0;
-    animation: petalFall 4s ease-in-out infinite;
+    animation: moteRise 5s ease-in-out infinite;
 }
-.ready-petals-bg .falling-petal:nth-child(1) { background: rgba(192, 132, 252, 0.5); left: 10%; animation-delay: 0s; }
-.ready-petals-bg .falling-petal:nth-child(2) { background: rgba(139, 92, 246, 0.4); left: 25%; animation-delay: 0.6s; }
-.ready-petals-bg .falling-petal:nth-child(3) { background: rgba(168, 85, 247, 0.5); left: 42%; animation-delay: 1.2s; }
-.ready-petals-bg .falling-petal:nth-child(4) { background: rgba(192, 132, 252, 0.35); left: 58%; animation-delay: 1.8s; }
-.ready-petals-bg .falling-petal:nth-child(5) { background: rgba(139, 92, 246, 0.4); left: 72%; animation-delay: 2.4s; }
-.ready-petals-bg .falling-petal:nth-child(6) { background: rgba(168, 85, 247, 0.45); left: 88%; animation-delay: 0.3s; }
-.ready-petals-bg .falling-petal:nth-child(7) { background: rgba(192, 132, 252, 0.3); left: 35%; animation-delay: 1.5s; }
-.ready-petals-bg .falling-petal:nth-child(8) { background: rgba(139, 92, 246, 0.35); left: 55%; animation-delay: 2.8s; }
-@keyframes petalFall {
-    0% { top: -10%; opacity: 0; transform: rotate(0deg) translateX(0); }
+.ready-petals-bg .falling-petal:nth-child(1) { background: rgba(var(--ob-accent-2-rgb), 0.5); left: 10%; animation-delay: 0s; }
+.ready-petals-bg .falling-petal:nth-child(2) { background: rgba(var(--ob-accent-rgb), 0.4); left: 25%; animation-delay: 0.7s; }
+.ready-petals-bg .falling-petal:nth-child(3) { background: rgba(var(--ob-accent-2-rgb), 0.5); left: 42%; animation-delay: 1.4s; }
+.ready-petals-bg .falling-petal:nth-child(4) { background: rgba(var(--ob-accent-rgb), 0.35); left: 58%; animation-delay: 2.1s; }
+.ready-petals-bg .falling-petal:nth-child(5) { background: rgba(var(--ob-accent-2-rgb), 0.4); left: 72%; animation-delay: 2.8s; }
+.ready-petals-bg .falling-petal:nth-child(6) { background: rgba(var(--ob-accent-rgb), 0.45); left: 88%; animation-delay: 0.4s; }
+.ready-petals-bg .falling-petal:nth-child(7) { background: rgba(var(--ob-accent-2-rgb), 0.3); left: 35%; animation-delay: 1.7s; }
+.ready-petals-bg .falling-petal:nth-child(8) { background: rgba(var(--ob-accent-rgb), 0.35); left: 55%; animation-delay: 3.2s; }
+@keyframes moteRise {
+    0% { top: 95%; opacity: 0; transform: translateX(0); }
     15% { opacity: 0.7; }
     85% { opacity: 0.5; }
-    100% { top: 95%; opacity: 0; transform: rotate(200deg) translateX(15px); }
+    100% { top: -10%; opacity: 0; transform: translateX(15px); }
 }
 
-/* Bloom at bottom of ready panel content */
+/* Hub motif at bottom of ready panel content */
 .ready-bloom {
-    position: relative;
-    width: 80px;
-    height: 70px;
+    width: 90px;
+    height: 90px;
     margin-top: 24px;
     flex-shrink: 0;
-}
-.ready-bloom .bloom-petal {
-    position: absolute;
-    width: 20px;
-    height: 40px;
-    border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-    left: 50%;
-    bottom: 10%;
-    transform-origin: bottom center;
-    opacity: 0;
-    animation: petalBloom 1.2s ease-out forwards;
-}
-.ready-bloom .bloom-petal:nth-child(1) { background: rgba(139, 92, 246, 0.8); --r: -40deg; animation-delay: 0.3s; }
-.ready-bloom .bloom-petal:nth-child(2) { background: rgba(168, 85, 247, 0.8); --r: -20deg; animation-delay: 0.4s; }
-.ready-bloom .bloom-petal:nth-child(3) { background: rgba(192, 132, 252, 0.9); --r: 0deg; animation-delay: 0.5s; }
-.ready-bloom .bloom-petal:nth-child(4) { background: rgba(168, 85, 247, 0.8); --r: 20deg; animation-delay: 0.6s; }
-.ready-bloom .bloom-petal:nth-child(5) { background: rgba(139, 92, 246, 0.8); --r: 40deg; animation-delay: 0.7s; }
-.ready-bloom .bloom-center {
-    position: absolute;
-    width: 16px; height: 16px;
-    background: radial-gradient(circle, #fbbf24, #f59e0b);
-    border-radius: 50%;
-    left: 50%; bottom: 8%;
-    transform: translate(-50%, 0) scale(0);
-    animation: centerPop 0.4s ease-out 0.9s forwards;
 }
 
 /* ── Responsive: small screens ── */

@@ -12,8 +12,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script>
     document.documentElement.setAttribute('data-bs-theme','dark');
+    window.WN_ONBOARD_KEY = <?= json_encode((defined('CHILD_APP_SLUG') ? CHILD_APP_SLUG : 'app') . '_onboarded') ?>;
     // Redirect first-time visitors to onboarding (except if already on onboarding page)
-    if (!localStorage.getItem('elevatehr_onboarded') && !window.location.pathname.match(/onboarding\.php/)) {
+    if (!localStorage.getItem(window.WN_ONBOARD_KEY) && !window.location.pathname.match(/onboarding\.php/)) {
         window.location.replace('onboarding.php');
     }
     </script>
