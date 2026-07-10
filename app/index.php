@@ -13,6 +13,8 @@ $views = [
     'dashboard' => __DIR__ . '/../views/dashboard.php',
     'items'     => __DIR__ . '/../views/items.php',
     'profile'   => __DIR__ . '/../views/profile.php',
+    'feedback'  => __DIR__ . '/../views/feedback.php',
+    'privacy'   => __DIR__ . '/../views/privacy.php',
     'examples'  => __DIR__ . '/../views/examples.php',
     'ui-guide'  => __DIR__ . '/../views/ui-guide.php',
 ];

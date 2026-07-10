@@ -60,6 +60,14 @@
                 <i class="bi bi-person sidebar-icon"></i>
                 <span class="sidebar-text">Profile</span>
             </a>
+            <a class="nav-link <?= ($page ?? '') === 'feedback' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=feedback">
+                <i class="bi bi-chat-dots sidebar-icon"></i>
+                <span class="sidebar-text">Feedback</span>
+            </a>
+            <a class="nav-link <?= ($page ?? '') === 'privacy' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=privacy">
+                <i class="bi bi-shield-lock sidebar-icon"></i>
+                <span class="sidebar-text">Privacy &amp; Data</span>
+            </a>
             <a class="nav-link <?= ($page ?? '') === 'examples' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=examples">
                 <i class="bi bi-grid sidebar-icon"></i>
                 <span class="sidebar-text">Examples</span>
