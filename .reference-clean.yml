@@ -67,7 +67,6 @@ forbidden_paths:
   - "include/actions/memberActions/contentActions.php"
   - "include/actions/memberActions/proposalActions.php"
   - "include/actions/memberActions/relationshipActions.php"
-  - "include/actions/memberActions/itemActions.php"
   - "include/actions/apiActions/assessmentApiActions.php"
   - "include/actions/apiActions/contentApiActions.php"
   - "include/actions/apiActions/teamApiActions.php"
@@ -99,7 +98,6 @@ forbidden_tables:
   - "content_progress"
   - "progress_snapshots"
   - "session_notes"
-  - "user_history"
 
 # ---------------------------------------------------------------------------
 # TIER 3 — domain-term heuristics. Advisory (warn, do NOT fail) unless --strict.

@@ -33,4 +33,6 @@ jobs:
       - name: Install dependencies
         run: pip install pyyaml
       - name: Scan for reference contamination
-        run: python3 scripts/scan_reference_contamination.py --target .
+        # --strict also gates Tier 3 (domain vocabulary). Enabled 2026-07-10 once
+        # the restored reference reached CLEAN on all tiers (T1/T2a/T2b/T3 = 0).
+        run: python3 scripts/scan_reference_contamination.py --target . --strict
