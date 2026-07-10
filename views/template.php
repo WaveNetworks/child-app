@@ -314,5 +314,6 @@
 <script src="../assets/js/page-nav.js"></script>
 <script src="../../admin/assets/js/notifications.js"></script>
 <script src="../assets/js/bg-canvas.js"></script>
+<?php if (file_exists(__DIR__ . '/../snippets/feedback_tab.php')) { include(__DIR__ . '/../snippets/feedback_tab.php'); } ?>
 </body>
 </html>
