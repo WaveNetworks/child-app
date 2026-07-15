@@ -198,9 +198,13 @@
             ?>
 
             <!-- REGION: content -->
+            <!-- #content-dynamic is the mount the mobile shell renders screens into
+                 (child-app spec 05). Harmless on desktop — just a wrapper. -->
+            <div id="content-dynamic">
             <?php if (isset($current_page_file) && file_exists($current_page_file)) {
                 include($current_page_file);
             } ?>
+            </div>
         </div>
 
         <!-- REGION: footer -->
