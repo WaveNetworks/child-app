@@ -11,12 +11,18 @@ $page = $_GET['page'] ?? 'dashboard';
 // Map page names to view files
 $views = [
     'dashboard' => __DIR__ . '/../views/dashboard.php',
+    // SCAFFOLD:DEMO-START
     'items'     => __DIR__ . '/../views/items.php',
+    // SCAFFOLD:DEMO-END
     'profile'   => __DIR__ . '/../views/profile.php',
     'feedback'  => __DIR__ . '/../views/feedback.php',
     'privacy'   => __DIR__ . '/../views/privacy.php',
+    // SCAFFOLD:DEMO-START
     'examples'  => __DIR__ . '/../views/examples.php',
+    // SCAFFOLD:DEMO-END
+    // SCAFFOLD:DEMO-START
     'ui-guide'  => __DIR__ . '/../views/ui-guide.php',
+    // SCAFFOLD:DEMO-END
 ];
 
 if (isset($views[$page]) && file_exists($views[$page])) {
@@ -35,10 +41,13 @@ if (($_GET['mobile'] ?? '') === '1' && function_exists('wn_mobile_fragment_emit'
     wn_mobile_fragment_emit(ob_get_clean(), $page, $current_page_file);
 }
 
-// Sidebar badge data
+// SCAFFOLD:DEMO-START
+// Sidebar badge for the example Items page. Stripped when scaffolding a real
+// app — it is the only reason a fresh app would query the demo `items` table.
 $item_count = 0;
 $stmt = child_db_query_prepared("SELECT COUNT(*) FROM items WHERE user_id = ?", [$_SESSION['user_id']]);
 if ($stmt) { $item_count = (int) $stmt->fetchColumn(); }
+// SCAFFOLD:DEMO-END
 
 // Template wraps the view
 include(__DIR__ . '/../views/template.php');

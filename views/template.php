@@ -51,11 +51,13 @@
                 <i class="bi bi-speedometer2 sidebar-icon"></i>
                 <span class="sidebar-text">Dashboard</span>
             </a>
+            <!-- SCAFFOLD:DEMO-START -->
             <a class="nav-link <?= ($page ?? '') === 'items' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=items">
                 <i class="bi bi-collection sidebar-icon"></i>
                 <span class="sidebar-text">Items</span>
                 <span class="badge <?= ($page ?? '') === 'items' ? 'bg-light text-primary' : 'bg-primary' ?> sidebar-badge"><?= $item_count ?></span>
             </a>
+            <!-- SCAFFOLD:DEMO-END -->
             <a class="nav-link <?= ($page ?? '') === 'profile' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=profile">
                 <i class="bi bi-person sidebar-icon"></i>
                 <span class="sidebar-text">Profile</span>
@@ -68,14 +70,18 @@
                 <i class="bi bi-shield-lock sidebar-icon"></i>
                 <span class="sidebar-text">Privacy &amp; Data</span>
             </a>
+            <!-- SCAFFOLD:DEMO-START -->
             <a class="nav-link <?= ($page ?? '') === 'examples' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=examples">
                 <i class="bi bi-grid sidebar-icon"></i>
                 <span class="sidebar-text">Examples</span>
             </a>
+            <!-- SCAFFOLD:DEMO-END -->
+            <!-- SCAFFOLD:DEMO-START -->
             <a class="nav-link <?= ($page ?? '') === 'ui-guide' ? 'active bg-primary rounded' : '' ?>" href="index.php?page=ui-guide">
                 <i class="bi bi-book sidebar-icon"></i>
                 <span class="sidebar-text">UI Guide</span>
             </a>
+            <!-- SCAFFOLD:DEMO-END -->
         </nav>
         <div class="sidebar-footer text-center d-none d-md-block p-2 border-top border-secondary border-opacity-25">
             <button class="btn btn-sm btn-outline-light rounded-circle" id="sidebarToggle" type="button">

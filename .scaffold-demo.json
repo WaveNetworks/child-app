@@ -1,0 +1,28 @@
+{
+  "_comment": [
+    "Declares the reference scaffold's EXAMPLE surface — the pages that exist to",
+    "show a developer the patterns, and that a real provisioned app must not",
+    "inherit. The provisioning runner reads this via scripts/strip_demo_surface.py.",
+    "",
+    "Add to this list whenever the reference gains a new example page, and wrap",
+    "its route and nav entry in SCAFFOLD:DEMO-START / SCAFFOLD:DEMO-END so they",
+    "are removed with it. Nothing else needs to change."
+  ],
+  "delete_files": [
+    "views/items.php",
+    "views/examples.php",
+    "views/ui-guide.php",
+    "include/actions/memberActions/itemActions.php",
+    "include/actions/apiActions/exampleApiActions.php",
+    "db_migrations/seeds/dev_seed.sql"
+  ],
+  "keep_note": [
+    "views/dashboard.php is NOT stripped: every app needs a landing page, and it",
+    "is the natural place for the app's own content. It is left in place to be",
+    "rewritten, not deleted.",
+    "",
+    "The `items` table itself is left in the schema. Dropping a table from a",
+    "migration that has already run is how you get a schema that no longer",
+    "matches its own migration history — the app simply stops referencing it."
+  ]
+}
