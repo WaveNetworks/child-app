@@ -52,9 +52,20 @@ Decimal versioning: 1.0, 1.1, 2.0, etc.
 
 EVERY migration requires BOTH steps:
 1. Create the SQL file in db_migrations/main/ or db_migrations/shard/
-2. Update $child_db_version or $child_shard_version in include/common.php
+2. Update $child_db_version or $child_shard_version in BOTH
+   include/common.php AND include/common_api.php — they each carry their own
+   copy, and when they drift the lower one silently stops migrating (web
+   requests migrate, API requests don't, or vice versa).
 
 THIS STEP IS FREQUENTLY FORGOTTEN — DO NOT SKIP IT.
+
+Versions are single-decimal floats: (float)"1.10" == 1.1 and collides with
+1.1.sql, so after 1.9 the next version is 2.0.
+
+Never edit an already-applied migration to fix a schema mistake — the runner
+records the version and will not re-run it, so the file and the live schema
+drift apart with nothing to reconcile them. Roll FORWARD with a new version
+(CREATE TABLE IF NOT EXISTS / DROP TABLE IF EXISTS) instead.
 
 ## Action files
 Same pattern as admin. Auto-included via glob in common.php / common_api.php.
