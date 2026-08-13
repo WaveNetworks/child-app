@@ -94,3 +94,47 @@ function reloadModalThisForm(formName, gvars) {
             '<div class="modal-body"><p class="text-danger">Failed to load: ' + err.message + '</p></div>';
     });
 }
+
+/**
+ * Keep modals out of the app's stacking context.
+ *
+ * template.php wraps the whole app in #wrapper with `position:relative;
+ * z-index:1` so the content paints above the fixed #bgCanvas. That creates a
+ * STACKING CONTEXT. Bootstrap appends its backdrop to <body> at z-index 1050,
+ * which is outside that context — so a modal declared inside a view is painted
+ * UNDER its own backdrop: it opens, the screen dims, and nothing is clickable.
+ *
+ * The template's own #largeModal sits after #wrapper closes, which is why the
+ * platform's modals always worked and view-level ones never could — the bug was
+ * invisible until an app added its own modal.
+ *
+ * Fix: move every modal to be a direct child of <body>, out of the context.
+ * Bootstrap keeps working — its instance is bound to the element, which
+ * survives the move.
+ *
+ * We do NOT drop #wrapper's z-index instead: it is what holds the content above
+ * the canvas background, and removing it would break that on every gamified app.
+ */
+(function () {
+    function liftModal(el) {
+        if (el && el.parentElement && el.parentElement !== document.body) {
+            document.body.appendChild(el);
+        }
+    }
+
+    function liftAll() {
+        document.querySelectorAll('.modal').forEach(liftModal);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', liftAll);
+    } else {
+        liftAll();
+    }
+
+    // Safety net for modals injected after load (AJAX, templates). Capture
+    // phase so we relocate BEFORE Bootstrap builds the backdrop.
+    document.addEventListener('show.bs.modal', function (e) {
+        liftModal(e.target);
+    }, true);
+})();
