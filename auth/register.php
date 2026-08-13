@@ -52,6 +52,18 @@ ob_start();
         <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
     </div>
 
+    <!-- REQUIRED. The core's register action rejects any signup without
+         agree_terms and records a GDPR consent row from it, so a scaffold that
+         omits this checkbox has registration that can never succeed — the user
+         is told to agree to something the page never showed them. -->
+    <div class="mb-3 form-check">
+        <input type="checkbox" class="form-check-input" id="agree_terms" name="agree_terms" value="1" required>
+        <label class="form-check-label small" for="agree_terms">
+            I agree to the <a href="../terms.php" target="_blank" rel="noopener">Terms of Service</a>
+            and <a href="../privacy.php" target="_blank" rel="noopener">Privacy Policy</a>
+        </label>
+    </div>
+
     <?php if (recaptcha_enabled()) { ?>
     <div class="mb-3">
         <div class="g-recaptcha" data-sitekey="<?= h(recaptcha_site_key()) ?>"></div>
