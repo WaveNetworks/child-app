@@ -96,6 +96,61 @@ def strip_blocks(root, dry_run):
     return changed
 
 
+def replace_files(root, manifest, dry_run):
+    """Swap a file for its scaffold variant, then remove the variant.
+
+    Used where marking up the original would mean many fragile edits inside one
+    file — the reference dashboard is 364 lines built around the example table.
+    """
+    done = []
+    for target, source in (manifest.get('replace_files') or {}).items():
+        src, dst = os.path.join(root, source), os.path.join(root, target)
+        if not os.path.isfile(src):
+            continue
+        done.append('%s <- %s' % (target, source))
+        if not dry_run:
+            with open(src, encoding='utf-8') as fh:
+                body = fh.read()
+            with open(dst, 'w', encoding='utf-8') as fh:
+                fh.write(body)
+            os.remove(src)
+    return done
+
+
+def find_dangling(root):
+    """Report references to surface that was just removed.
+
+    The first version of the manifest was too shallow — snippets, the mobile
+    view map, the topnav search and the GDPR export all still pointed at the
+    example pages after a 'successful' strip. Nothing failed; the app was simply
+    broken in ways only a person clicking around would find. This makes that
+    visible instead.
+    """
+    needles = ['page=items', 'page=examples', 'page=ui-guide',
+               '$item_count', 'itemActions', 'FROM items']
+    hits = []
+    for dirpath, dirnames, filenames in os.walk(root):
+        dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
+        for name in filenames:
+            if os.path.splitext(name)[1] not in SCAN_EXTENSIONS or name in SKIP_FILES:
+                continue
+            full = os.path.join(dirpath, name)
+            rel = os.path.relpath(full, root)
+            if rel.startswith('seeds' + os.sep) or rel.startswith('db_migrations' + os.sep):
+                continue  # migrations keep their history; seeds are data
+            if rel == 'CLAUDE.md':
+                continue  # regenerated per app by provisioning step 4a
+            try:
+                with open(full, encoding='utf-8') as fh:
+                    text = fh.read()
+            except (UnicodeDecodeError, OSError):
+                continue
+            for n in needles:
+                if n in text:
+                    hits.append((rel, n))
+    return hits
+
+
 def delete_files(root, manifest, dry_run):
     removed, missing = [], []
     for rel in manifest.get('delete_files', []):
@@ -122,6 +177,7 @@ def main():
         print('No .scaffold-demo.json in %s — nothing declared as demo surface.' % root)
 
     removed, missing = delete_files(root, manifest, dry_run)
+    replaced = replace_files(root, manifest, dry_run)
     changed = strip_blocks(root, dry_run)
 
     prefix = '[dry-run] ' if dry_run else ''
@@ -132,9 +188,22 @@ def main():
         # Not an error: a file may already be gone, or the app may never have
         # had it. Reported so a stale manifest entry is visible.
         print('   (not present: %s)' % ', '.join(missing))
+    print('%sreplaced %d file(s):' % (prefix, len(replaced)))
+    for r in replaced:
+        print('   -', r)
     print('%sstripped demo blocks from %d file(s):' % (prefix, len(changed)))
     for c in changed:
         print('   -', c)
+
+    if not dry_run:
+        dangling = find_dangling(root)
+        if dangling:
+            print('\nWARNING: %d reference(s) to removed demo surface remain:' % len(dangling))
+            for rel, needle in dangling:
+                print('   %-52s %s' % (rel, needle))
+            print('Add these to .scaffold-demo.json or wrap them in SCAFFOLD:DEMO markers.')
+        else:
+            print('\nNo dangling references to the removed surface.')
 
 
 if __name__ == '__main__':

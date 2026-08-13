@@ -63,11 +63,13 @@ if (($_POST['action'] ?? '') == 'requestDataExport') {
             // Add child app data
             child_prime_shard($sid);
 
+            // SCAFFOLD:DEMO-START
             // Child items
             $r = child_db_query_prepared("SELECT item_id, title, description, status, created, updated FROM items WHERE user_id = ?", [$uid]);
             $items = [];
             while ($row = db_fetch($r)) { $items[] = $row; }
             $data['child_app_items'] = $items;
+            // SCAFFOLD:DEMO-END
 
             // Child preferences
             $r = child_db_query_shard_prepared($sid,

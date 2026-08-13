@@ -15,6 +15,10 @@ return [
 
     // Desktop-only meta pages — long-form reading, not phone surfaces.
     'privacy'   => ['file' => 'privacy.php',   'mobile' => false],
+    // SCAFFOLD:DEMO-START
     'examples'  => ['file' => 'examples.php',  'mobile' => false],
+    // SCAFFOLD:DEMO-END
+    // SCAFFOLD:DEMO-START
     'ui-guide'  => ['file' => 'ui-guide.php',  'mobile' => false],
+    // SCAFFOLD:DEMO-END
 ];

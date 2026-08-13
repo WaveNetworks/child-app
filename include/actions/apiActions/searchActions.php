@@ -1,4 +1,8 @@
 <?php
+// SCAFFOLD:DEMO-START
+// Live search over the example `items` table. A real app should replace this
+// with search over its own content; until then the strip removes it so the
+// topnav search does not silently return nothing.
 /**
  * apiActions/searchActions.php
  * Live search: returns matching items for the nav search bar.
@@ -35,3 +39,4 @@ if (($_POST['action'] ?? '') == 'liveSearch') {
         $data['query']   = $q;
     }
 }
+// SCAFFOLD:DEMO-END

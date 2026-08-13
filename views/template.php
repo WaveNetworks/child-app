@@ -101,6 +101,7 @@
             <span class="navbar-brand mb-0 h6">&nbsp;</span>
 
             <!-- Live search -->
+            <!-- SCAFFOLD:DEMO-START -->
             <div class="nav-search position-relative d-none d-md-block me-auto" id="navSearch">
                 <div class="input-group input-group-sm">
                     <span class="input-group-text border-0 bg-transparent"><i class="bi bi-search"></i></span>
@@ -109,10 +110,13 @@
                 </div>
                 <div class="nav-search-results dropdown-menu shadow" id="navSearchResults"></div>
             </div>
+            <!-- SCAFFOLD:DEMO-END -->
             <!-- Mobile search toggle -->
+            <!-- SCAFFOLD:DEMO-START -->
             <button class="btn btn-sm btn-outline-light me-2 d-md-none" id="navSearchToggle" type="button" title="Search">
                 <i class="bi bi-search"></i>
             </button>
+            <!-- SCAFFOLD:DEMO-END -->
 
             <div class="ms-auto d-flex align-items-center">
                 <!-- Notification bell -->
@@ -323,7 +327,9 @@
 <script src="../assets/js/modal.js"></script>
 <script src="../assets/js/theme.js"></script>
 <script src="../assets/js/toast.js"></script>
+<!-- SCAFFOLD:DEMO-START -->
 <script src="../assets/js/search.js"></script>
+<!-- SCAFFOLD:DEMO-END -->
 <script src="../assets/js/page-nav.js"></script>
 <script src="../../admin/assets/js/notifications.js"></script>
 <script src="../assets/js/bg-canvas.js"></script>
