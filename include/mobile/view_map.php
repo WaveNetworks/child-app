@@ -11,7 +11,7 @@ return [
     'dashboard' => ['file' => 'dashboard.php', 'mobile' => true,  'tab' => 'Home',    'menu' => 'Dashboard',        'icon' => 'house'],
     'items'     => ['file' => 'items.php',     'mobile' => true,  'tab' => 'Items',   'menu' => 'Items',            'icon' => 'grid'],
     'profile'   => ['file' => 'profile.php',   'mobile' => true,  'tab' => 'You',     'menu' => 'Profile & Settings','icon' => 'person'],
-    'feedback'  => ['file' => 'feedback.php',  'mobile' => true,                      'menu' => 'Feedback',         'icon' => 'chat-left-text'],
+    'feedback'  => ['file' => 'feedback.php',  'mobile' => true],
 
     // Desktop-only meta pages — long-form reading, not phone surfaces.
     'privacy'   => ['file' => 'privacy.php',   'mobile' => false],
