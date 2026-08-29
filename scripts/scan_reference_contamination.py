@@ -15,11 +15,11 @@ So this scanner classifies every hit by CONTEXT before it decides anything:
 
   * code  — an identifier, a string literal, a path, a table name, a require.
             Matched as a substring, so a slug fused into a longer name
-            (elevateherAnalyticsHooks.php, $pwtDeck) is still caught.
-            `require 'elevateherAnalyticsHooks.php'` or a table `eh_session`
+            (acmeAnalyticsHooks.php, $zephyrDeck) is still caught.
+            `require 'acmeAnalyticsHooks.php'` or a table `acme_session`
             really is another app's code in this repo. HARD FAIL.
   * prose — a comment, a docblock, a markdown body, a JSON `_comment`.
-            "unlike pwt's, these SVGs carry no webfont" names another app but
+            "unlike zephyr's, these SVGs carry no webfont" names another app but
             ships none of its code. Reported as a mention; never fails.
 
 The same distinction governs the domain-term heuristics: `scoringEngine.php`
@@ -84,7 +84,7 @@ def prose_mask(text, ext, rel):
 
     Comments and documentation are prose; identifiers, string literals, paths and
     table names are code. String literals count as CODE on purpose — a slug like
-    'elevateher' passed to register_theme() is exactly the contamination we care
+    'acme' passed to register_theme() is exactly the contamination we care
     about, and it is indistinguishable from any other literal at this level.
     """
     n = len(text)
@@ -215,10 +215,10 @@ IDENT_CHAR = re.compile(r"[A-Za-z0-9_$]")
 def at_segment_start(text, start):
     """True when a match begins at the start of a name or of one of its parts.
 
-    A tenant slug is contamination when it NAMES something — `elevateherHooks`,
-    `$pwtDeck`, `theme_dswa`, `'elevateher'`. It is a coincidence when it merely
-    falls inside an unrelated word: 'dswa' hides in respon(dSwa)p, and matching
-    that would fail a build over a swap handler. So require the match to start
+    A tenant slug is contamination when it NAMES something — `acmeHooks`,
+    `$zephyrDeck`, `theme_acme`, `'acme'`. It is a coincidence when it merely
+    falls inside an unrelated word: 'art' hides in sm(art)phone, and matching
+    that would fail a build over a smartphone helper. So require the match to start
     at a segment boundary: after a non-identifier character, after a separator,
     or on a camelCase hump.
     """
@@ -277,7 +277,7 @@ def scan(target, cfg, max_hits):
     ignore_res = [glob_to_regex(p) for p in cfg.get("ignore_paths", [])]
     # Tier 1 matches WITHOUT a word boundary on purpose: the worst
     # contamination fuses the slug into an identifier or filename
-    # (elevateherAnalyticsHooks.php, $pwtDeck, eh_scoring), and \b would
+    # (acmeAnalyticsHooks.php, $zephyrDeck, acme_scoring), and \b would
     # walk straight past all of it.
     forbidden_tok = [(t, loose_regex(t)) for t in cfg.get("forbidden_tokens", [])]
     warn_tok = [(t, loose_regex(t), token_regex(t), " " in t)
