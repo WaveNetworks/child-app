@@ -147,6 +147,19 @@ check_links() {
   local path="$1" label="$2" body tmp bad n u full code
   CHECKS=$((CHECKS+1))
   tmp="$(mktemp)"; fetch "$BASE_URL$path" "$tmp" >/dev/null; body="$(cat "$tmp")"; rm -f "$tmp"
+  # Drop <script>/<style> before extracting hrefs. A page that builds links in JS
+  # (href="' + URL + '") otherwise yields fragments like SHARE_URL and bare quotes,
+  # which then "fail" as 404s — a false alarm that trains people to ignore this
+  # check, which is worse than not running it at all.
+  body="$(printf '%s' "$body" | awk '
+    BEGIN{IGNORECASE=1}
+    { line=$0
+      while (match(line, /<(script|style)[^>]*>.*<\/(script|style)>/)) {
+        line = substr(line,1,RSTART-1) " " substr(line,RSTART+RLENGTH)
+      }
+      if (skip) { if (match(line, /<\/(script|style)>/)) { line=substr(line,RSTART+RLENGTH); skip=0 } else next }
+      if (match(line, /<(script|style)[^>]*>/)) { line=substr(line,1,RSTART-1); skip=1 }
+      print line }')"
   bad=""; n=0
   for u in $(printf '%s' "$body" | grep -oE 'href="[^"]+"' | sed 's/^href="//; s/"$//' | sort -u); do
     case "$u" in
