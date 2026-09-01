@@ -134,6 +134,35 @@ check_og_image() {
   fi
 }
 
+# Every link on the page must resolve. A campaign that says "check the receipts"
+# and then cites a 404 has spent its credibility, and nothing else in the build
+# loop looks at an outbound URL. Real case: yes4yelm's receipts page cited
+# thurstoncountywa.gov/departments/assessor/tax-levy-rates and
+# .../auditor/elections/election-results on 4 of its 5 claims — both had 404'd,
+# so almost every "Source:" link under the campaign's central argument was dead.
+#
+# mailto:/tel:/#fragments are skipped: curl cannot resolve them and they are not
+# broken. Internal links are resolved against the base URL.
+check_links() {
+  local path="$1" label="$2" body tmp bad n u full code
+  CHECKS=$((CHECKS+1))
+  tmp="$(mktemp)"; fetch "$BASE_URL$path" "$tmp" >/dev/null; body="$(cat "$tmp")"; rm -f "$tmp"
+  bad=""; n=0
+  for u in $(printf '%s' "$body" | grep -oE 'href="[^"]+"' | sed 's/^href="//; s/"$//' | sort -u); do
+    case "$u" in
+      mailto:*|tel:*|javascript:*|\#*|"") continue ;;
+      http*) full="$u" ;;
+      /*)    full="$(printf '%s' "$BASE_URL" | sed -E 's|(https?://[^/]+).*|\1|')$u" ;;
+      *)     full="$BASE_URL/$u" ;;
+    esac
+    n=$((n+1))
+    code="$(code_for "$full")"
+    case "$code" in 200|301|302|303|307|308) ;; *) bad="$bad\n        · $code  $u" ;; esac
+  done
+  if [ -z "$bad" ]; then green "$label — all $n links resolve"
+  else red "$label has broken links:"; printf "$bad\n"; fi
+}
+
 check_contains() {
   local path="$1" needle="$2" label="$3" body tmp
   CHECKS=$((CHECKS+1))
@@ -149,6 +178,7 @@ echo
 check_reachable "/" "app root"
 check_no_placeholders "/" "app root"
 check_og_image "/" "app root"
+check_links "/" "app root"
 
 # A logged-out visitor must be able to find the way in. An app whose only entry
 # point is a URL you have to already know is not finished.
@@ -169,6 +199,7 @@ if [ -f "$CONFIG" ] && command -v php >/dev/null 2>&1; then
     [ -n "$p" ] || continue
     check_reachable "$p" "page $p"
     check_no_placeholders "$p" "page $p"
+    check_links "$p" "page $p"
   done < <(php -r '$c=json_decode(file_get_contents($argv[1]),true); foreach(($c["paths"]??[]) as $p) echo $p,"\n";' "$CONFIG" 2>/dev/null)
 
   while IFS=$'\t' read -r p needle; do
