@@ -173,3 +173,70 @@ if ($_POST['action'] == 'doThing') {
 docker compose up — starts 8 services (app, 3 admin DBs, 3 child DBs, mailhog).
 Source code is volume-mounted: edit PHP → refresh browser → changes are live.
 Admin repo must be checked out as sibling: ../admin/
+
+## Deployment traps that have already cost real time
+
+Every item here caused a real, days-long outage on a provisioned app. They are
+invisible to `docs/spec-coverage.md`, because a coverage manifest verifies that
+code EXISTS — a static property of the repo. None of them are theoretical.
+
+### opcache: a shipped fix can silently not run
+makershost runs `opcache.validate_timestamps=0`. Bytecode is compiled once and
+cached in FPM shared memory **forever**, ignoring mtime. Brand-NEW files compile
+fresh, but **MODIFIED files keep serving the old build after rsync** — a correct
+fix sits on disk and does nothing.
+
+Symptom: "I deployed the fix and it still does the old thing." Suspect this FIRST.
+On yes4yelm a `pac_is_treasurer()` load-order fix deployed green while FPM kept
+executing the broken bytecode, so the settings screen went on silently discarding
+the owner's typed input for a day after it was fixed.
+
+Fix: ship `opcache-bust.php` at the repo root plus "Inject OPcache bust token"
+(before rsync) and "Reset OPcache" (after) steps in `deploy.yml`. The token lives
+only in the `OPCACHE_BUST_TOKEN` Actions secret and is substituted into the
+staging copy, so it never lands in git. **Set the secret BEFORE the first push** —
+otherwise the endpoint compiles carrying its placeholder and is then stale and
+unreachable with the real token.
+
+### Helper load order: define shared helpers in `include/common/`, never in an action file
+`include/common.php` globs `common/*.php` **before** `actions/**`, and action files
+run their flat `if ($_POST['action'] …)` blocks at include time. So a helper defined
+in one action file **does not exist yet** when an earlier-globbed action file runs.
+
+On yes4yelm `pac_is_treasurer()` lived in `treasurerActions.php`, which globs after
+`memberConsoleActions.php`. Every staff write guarded by
+`function_exists('pac_is_treasurer')` short-circuited to "Staff access required."
+and silently persisted nothing — settings, site content and agent drafts, all dead,
+for anyone including an admin. It fails closed and looks like a permissions problem.
+
+**Rule: any helper more than one file uses goes in `include/common/`.**
+
+### Cron on makershost is a SHELL command, and it must run EVERY MINUTE
+There is no URL endpoint — `cron/cron.php` is CLI-only (`php_sapi_name()` guard)
+and `cron/.htaccess` denies the directory. Hitting the path over HTTP returns 403.
+
+ONE entry covers core and every app on the account, because admin's runner globs
+`../../*/cron/cron.php`:
+
+    /usr/bin/php83 <home>/public_html/admin/cron/cron.php
+
+Never add `-l` (lint mode: syntax-checks and exits without running anything).
+**Every minute, not every five:** each `minutes/{N}/` directory gates on
+`$minute % N === 0`, so a 5-minute cron that is not aligned to :00/:05/:10 silently
+never fires ANY `minutes/5` job. The tell is output with `Running minute/1/…` and
+no `Running minute/5/…`.
+
+### An app is not installed when its files are on the host
+Provisioning stops at "deployed". Anything that must run once on the box —
+seeding reference data, the first publish of a read seam — has nothing running it,
+so the app lands half-installed and looks fine. `tools/install.php` is that step;
+wire it into `deploy.yml` over the SSH connection the deploy already holds. It is
+idempotent, so running it on every deploy is correct.
+
+### Verify the running app, not the repo
+Run `scripts/acceptance.sh <base-url>` after deploy. It catches scaffold text
+reaching production, unsubstituted placeholders, an `og:image` that 404s, and a
+root page with no way to sign in. On yes4yelm all four were live simultaneously
+while the manifest read 239/255 — including `views/dashboard.php` still being the
+scaffold placeholder, because no coverage row named a general dashboard and so
+nothing measured the first screen every user saw.
