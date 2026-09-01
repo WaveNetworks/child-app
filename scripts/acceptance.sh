@@ -90,11 +90,11 @@ FORBIDDEN=(
 )
 
 check_no_placeholders() {
-  local path="$1" label="$2" body hit
+  local path="$1" label="$2" body hit tmp code
   CHECKS=$((CHECKS+1))
-  body="$(fetch "$BASE_URL$path")"
-  if [ "$HTTP_CODE" != "200" ]; then
-    red "$label unreachable (HTTP $HTTP_CODE) — cannot check placeholders"
+  tmp="$(mktemp)"; code="$(fetch "$BASE_URL$path" "$tmp")"; body="$(cat "$tmp")"; rm -f "$tmp"
+  if [ "$code" != "200" ]; then
+    red "$label unreachable (HTTP $code) — cannot check placeholders"
     return
   fi
   hit=""
@@ -112,9 +112,9 @@ check_no_placeholders() {
 # that declares og:image pointing at a missing file shares as a bare grey link —
 # indistinguishable from success unless you resolve the URL.
 check_og_image() {
-  local path="$1" label="$2" body url code
+  local path="$1" label="$2" body url code tmp
   CHECKS=$((CHECKS+1))
-  body="$(fetch "$BASE_URL$path")"
+  tmp="$(mktemp)"; fetch "$BASE_URL$path" "$tmp" >/dev/null; body="$(cat "$tmp")"; rm -f "$tmp"
   url="$(printf '%s' "$body" | grep -o '<meta property="og:image" content="[^"]*"' | head -1 | sed 's/.*content="//; s/"$//')"
   if [ -z "$url" ]; then
     red "$label declares no og:image — shared links render as a bare URL"
@@ -122,14 +122,22 @@ check_og_image() {
   fi
   case "$url" in http*) ;; /*) url="${BASE_URL%/*}$url" ;; *) url="$BASE_URL/$url" ;; esac
   code="$(code_for "$url")"
-  if [ "$code" = "200" ]; then green "$label og:image resolves ($code)"
-  else red "$label og:image is declared but returns HTTP $code — $url"; fi
+  ctype="$(curl -sS -L -m 25 -o /dev/null -w '%{content_type}' "$url" 2>/dev/null || echo '')"
+  # A rewrite-everything-to-index.php htaccess hands back an HTML 404 page for a
+  # missing asset, so status alone is not proof. Facebook needs a real raster.
+  if [ "$code" = "200" ] && printf '%s' "$ctype" | grep -qi '^image/'; then
+    green "$label og:image resolves ($ctype)"
+  elif [ "$code" = "200" ]; then
+    red "$label og:image returns 200 but is $ctype, not an image — $url"
+  else
+    red "$label og:image is declared but returns HTTP $code — $url"
+  fi
 }
 
 check_contains() {
-  local path="$1" needle="$2" label="$3" body
+  local path="$1" needle="$2" label="$3" body tmp
   CHECKS=$((CHECKS+1))
-  body="$(fetch "$BASE_URL$path")"
+  tmp="$(mktemp)"; fetch "$BASE_URL$path" "$tmp" >/dev/null; body="$(cat "$tmp")"; rm -f "$tmp"
   if printf '%s' "$body" | grep -qF -- "$needle"; then green "$label"
   else red "$label — expected to find: $needle"; fi
 }
@@ -145,7 +153,7 @@ check_og_image "/" "app root"
 # A logged-out visitor must be able to find the way in. An app whose only entry
 # point is a URL you have to already know is not finished.
 CHECKS=$((CHECKS+1))
-BODY="$(fetch "$BASE_URL/")"
+_T="$(mktemp)"; fetch "$BASE_URL/" "$_T" >/dev/null; BODY="$(cat "$_T")"; rm -f "$_T"
 if printf '%s' "$BODY" | grep -qiE 'href="[^"]*(login|signin|sign-in|auth)[^"]*"'; then
   green "a sign-in route is linked from the root"
 else
