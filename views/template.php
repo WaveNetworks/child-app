@@ -20,8 +20,8 @@
     <meta name="theme-color" content="<?= h($b['theme_color']) ?>">
     <link rel="manifest" href="../../admin/manifest.php">
     <?php if (!empty($b['favicon_path'])) { ?>
-    <link rel="icon" href="../../admin/uploads/<?= h($b['favicon_path']) ?>">
-    <link rel="apple-touch-icon" href="../../admin/uploads/<?= h($b['favicon_path']) ?>">
+    <link rel="icon" href="../../admin/branding/<?= h($b['favicon_path']) ?>">
+    <link rel="apple-touch-icon" href="../../admin/branding/<?= h($b['favicon_path']) ?>">
     <?php } ?>
     <link rel="stylesheet" href="../../admin/assets/css/style.css">
     <link rel="stylesheet" href="../../admin/assets/css/bs-theme-overrides.css">
@@ -39,7 +39,7 @@
     <div class="d-flex flex-column" id="sidebar">
         <div class="sidebar-brand px-3 py-2">
             <?php if (!empty($b['logo_path'])) { ?>
-            <span class="sidebar-brand-icon"><img src="../../admin/uploads/<?= h($b['logo_path']) ?>" alt=""<?php if (!empty($b['logo_dark_path'])) { ?> data-logo-dark="../../admin/uploads/<?= h($b['logo_dark_path']) ?>" data-logo-light="../../admin/uploads/<?= h($b['logo_path']) ?>"<?php } ?>></span>
+            <span class="sidebar-brand-icon"><img src="../../admin/branding/<?= h($b['logo_path']) ?>" alt=""<?php if (!empty($b['logo_dark_path'])) { ?> data-logo-dark="../../admin/branding/<?= h($b['logo_dark_path']) ?>" data-logo-light="../../admin/branding/<?= h($b['logo_path']) ?>"<?php } ?>></span>
             <?php } else { ?>
             <span class="sidebar-brand-icon"><i class="bi bi-app-indicator"></i></span>
             <?php } ?>
