@@ -171,6 +171,47 @@ check_contains() {
   else red "$label — expected to find: $needle"; fi
 }
 
+# ── Objectives (docs/OBJECTIVES.md) ─────────────────────────────────────────
+# "No wasted spec" applied to PURPOSE, not just to files. A coverage manifest
+# answers "was every listed unit built"; it cannot answer "does the app do its
+# job", because the job is not in the list. That gap is how an app ships with a
+# placeholder dashboard, no sign-in link and dead source links while reporting
+# 239/255 built.
+#
+# docs/OBJECTIVES.md states what the app exists to DO, and each objective carries
+# a `Verify:` line resolved here. Supported forms:
+#   Verify: <path> contains <string>
+#   Verify: links <path>            — every href on that page resolves
+#   Verify: og <path>               — og:image present and an actual image
+#   Verify: no-placeholders <path>
+#   Verify: staff <thing>           — behind auth; reported as needing a human
+check_objectives() {
+  local file="$(dirname "$0")/../docs/OBJECTIVES.md" line verb rest path needle
+  [ -f "$file" ] || return 0
+  echo
+  info "objectives — $file"
+  while IFS= read -r line; do
+    line="$(printf '%s' "$line" | sed 's/^`Verify:[[:space:]]*//; s/`$//')"
+    [ -n "$line" ] || continue
+    verb="$(printf '%s' "$line" | awk '{print $1}')"
+    rest="$(printf '%s' "$line" | cut -d" " -f2-)"
+    case "$verb" in
+      links)           check_links "$rest" "objective: links on $rest" ;;
+      og)              check_og_image "$rest" "objective: share card on $rest" ;;
+      no-placeholders) check_no_placeholders "$rest" "objective: $rest" ;;
+      staff)
+        CHECKS=$((CHECKS+1))
+        info "SKIPPED (needs a signed-in session): $rest — verify by hand"
+        ;;
+      *)
+        path="$verb"
+        needle="$(printf '%s' "$rest" | sed 's/^contains[[:space:]]*//')"
+        check_contains "$path" "$needle" "objective: $path shows $needle"
+        ;;
+    esac
+  done < <(grep -oE '^`Verify:[^`]*`' "$file")
+}
+
 echo "Acceptance: $BASE_URL"
 echo
 
@@ -207,6 +248,8 @@ if [ -f "$CONFIG" ] && command -v php >/dev/null 2>&1; then
     check_contains "$p" "$needle" "page $p contains expected content"
   done < <(php -r '$c=json_decode(file_get_contents($argv[1]),true); foreach(($c["must_contain"]??[]) as $p=>$n) echo $p,"\t",$n,"\n";' "$CONFIG" 2>/dev/null)
 fi
+
+check_objectives
 
 echo
 if [ "$FAILURES" -eq 0 ]; then
