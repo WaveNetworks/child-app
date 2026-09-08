@@ -1,6 +1,6 @@
 {
   "_comment": [
-    "Declares the reference scaffold's EXAMPLE surface \u2014 the pages that exist to",
+    "Declares the reference scaffold's EXAMPLE surface — the pages that exist to",
     "show a developer the patterns, and that a real provisioned app must not",
     "inherit. The provisioning runner reads this via scripts/strip_demo_surface.py.",
     "",
@@ -25,11 +25,15 @@
     "",
     "The `items` table itself is left in the schema. Dropping a table from a",
     "migration that has already run is how you get a schema that no longer",
-    "matches its own migration history \u2014 the app simply stops referencing it."
+    "matches its own migration history — the app simply stops referencing it."
   ],
   "replace_files": {
     "views/dashboard.php": "views/dashboard.scaffold.php",
     "README.md": "README.scaffold.md"
   },
-  "_replace_note": "dashboard.php is REPLACED rather than stripped: the reference's version is 364 lines of stat cards and D3 charts driven by the example `items` table, so marking it up would be 16 fragile edits inside one file. The replacement is a plain landing page meant to be rewritten."
+  "_replace_note": "dashboard.php is REPLACED rather than stripped: the reference's version is 364 lines of stat cards and D3 charts driven by the example `items` table, so marking it up would be 16 fragile edits inside one file. The replacement is a plain landing page meant to be rewritten.",
+  "delete_dirs": [
+    "mobile-shell"
+  ],
+  "_delete_dirs_note": "mobile-shell/ is the parameterized source for the app's <slug>-cordova repo. The provisioner copies it out BEFORE this strip runs; a provisioned app must not ship a template belonging to a different repo."
 }

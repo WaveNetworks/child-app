@@ -30,6 +30,7 @@ Usage:  python3 scripts/strip_demo_surface.py [--dry-run] [target_dir]
 import json
 import os
 import re
+import shutil
 import sys
 
 MARKER_START = 'SCAFFOLD:DEMO-START'
@@ -164,6 +165,25 @@ def delete_files(root, manifest, dry_run):
     return removed, missing
 
 
+def delete_dirs(root, manifest, dry_run):
+    """Whole directories that are template material for a DIFFERENT repo.
+
+    mobile-shell/ is the source for <slug>-cordova; the provisioner copies it out
+    before this runs, and a provisioned app must not carry a template it will
+    never use.
+    """
+    removed, missing = [], []
+    for rel in manifest.get('delete_dirs', []):
+        full = os.path.join(root, rel)
+        if os.path.isdir(full):
+            removed.append(rel)
+            if not dry_run:
+                shutil.rmtree(full)
+        else:
+            missing.append(rel)
+    return removed, missing
+
+
 def main():
     args = [a for a in sys.argv[1:] if a != '--dry-run']
     dry_run = '--dry-run' in sys.argv
@@ -177,6 +197,7 @@ def main():
         print('No .scaffold-demo.json in %s — nothing declared as demo surface.' % root)
 
     removed, missing = delete_files(root, manifest, dry_run)
+    dremoved, dmissing = delete_dirs(root, manifest, dry_run)
     replaced = replace_files(root, manifest, dry_run)
     changed = strip_blocks(root, dry_run)
 
@@ -188,6 +209,11 @@ def main():
         # Not an error: a file may already be gone, or the app may never have
         # had it. Reported so a stale manifest entry is visible.
         print('   (not present: %s)' % ', '.join(missing))
+    print('%sdeleted %d demo dir(s):' % (prefix, len(dremoved)))
+    for r in dremoved:
+        print('   -', r + '/')
+    if dmissing:
+        print('   (not present: %s)' % ', '.join(dmissing))
     print('%sreplaced %d file(s):' % (prefix, len(replaced)))
     for r in replaced:
         print('   -', r)
