@@ -7,12 +7,12 @@ Every `__PLACEHOLDER__` is substituted at that point:
 
 | placeholder | example |
 |---|---|
-| `__APP_NAME__` | `Vivajee` |
-| `__APP_SLUG__` | `vivajee` |
-| `__APP_DOMAIN__` | `vivajee.com` |
-| `__APP_BUNDLE_ID__` | `com.wavenetworks.vivajee` |
+| `__APP_NAME__` | `Northwind` |
+| `__APP_SLUG__` | `northwind` |
+| `__APP_DOMAIN__` | `northwind.com` |
+| `__APP_BUNDLE_ID__` | `com.wavenetworks.northwind` |
 | `__APP_DESCRIPTION__` | one line, from the spec |
-| `__APP_BRAND_HEX__` | `C4552D` — no leading `#` |
+| `__APP_BRAND_HEX__` | `2D6FC4` — no leading `#` |
 | `__CAPAWESOME_APP_ID__` | the Capawesome Cloud app UUID |
 
 ## What the shell is for
