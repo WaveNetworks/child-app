@@ -1,0 +1,13 @@
+node_modules/
+platforms/
+plugins/
+.gradle/
+*.keystore
+*.mobileprovision
+*.p12
+
+# local signing workdir (certs, keystore, API key — never commit)
+signing/
+
+# macOS cruft
+.DS_Store

@@ -1,0 +1,29 @@
+{
+  "name": "__APP_SLUG__-cordova",
+  "version": "0.1.0",
+  "private": true,
+  "description": "__APP_NAME__ Cordova shell. A dumb build target — www/ is generated from WaveNetworks/__APP_SLUG__ m/.",
+  "scripts": {
+    "build:android": "cordova build android --release",
+    "build:android:aab": "cordova build android --release --buildConfig=signing/build.json -- --packageType=bundle",
+    "build:android:apk": "cordova build android --debug -- --packageType=apk",
+    "build:ios": "cordova build ios --release",
+    "prepare:res": "cordova-res --skip-config --copy"
+  },
+  "devDependencies": {
+    "cordova": "^12.0.0",
+    "cordova-android": "^14.0.0",
+    "cordova-ios": "^7.1.0",
+    "cordova-res": "^0.15.4"
+  },
+  "cordova": {
+    "platforms": ["android", "ios"],
+    "plugins": {
+      "cordova-plugin-statusbar": {},
+      "cordova-plugin-network-information": {},
+      "cordova-plugin-inappbrowser": {},
+      "cordova-plugin-camera": {},
+      "cordova-plugin-media-capture": {}
+    }
+  }
+}

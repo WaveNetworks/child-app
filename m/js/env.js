@@ -11,18 +11,23 @@
  */
 window.WN_ENV = (function () {
     'use strict';
-    var isBundled = location.protocol !== 'http:' && location.protocol !== 'https:';
+    // A bundled Cordova app is served from the device, NOT from the app's real domain:
+    //   Android WebView → https://localhost   iOS WKWebView → app://localhost   old → file://
+    // So "bundled" = not served over http(s) from a real host. The protocol test alone is
+    // NOT enough — Android uses https, so it must also treat a localhost host as bundled.
+    var h = location.hostname;
+    var isBundled = location.protocol === 'file:' || h === 'localhost' || h === '127.0.0.1' || h === '';
 
     // ── Fill these per app ────────────────────────────────────────────────────
-    var ORIGIN = 'https://childapp.example.com';   // e.g. https://vivajee.com
-    var PATH   = '/child-app';            // webroot path, e.g. /vivajee
+    var ORIGIN = 'https://__APP_DOMAIN__';   // e.g. https://vivajee.com
+    var PATH   = '/__APP_SLUG__';            // webroot path, e.g. /vivajee
 
     return {
         API_BASE:  isBundled ? ORIGIN + PATH + '/api/'  : '../api/',
         APP_BASE:  isBundled ? ORIGIN + PATH + '/app/'  : '../app/',
         AUTH_BASE: isBundled ? ORIGIN + PATH + '/auth/' : '../auth/',
         BUNDLED:   isBundled,
-        APP_NAME:  'Child App',            // e.g. Vivajee — shown on login + topbar
-        APP_SLUG:  'child-app'             // e.g. vivajee — error-log source_app
+        APP_NAME:  '__APP_NAME__',            // e.g. Vivajee — shown on login + topbar
+        APP_SLUG:  '__APP_SLUG__'             // e.g. vivajee — error-log source_app
     };
 })();

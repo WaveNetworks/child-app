@@ -1,0 +1,14 @@
+{
+  "//": "Copy to signing/build.json and fill in — signing/ is gitignored so passwords never get committed.",
+  "//keystore": "Path is relative to the project root (where you run `cordova`/npm). Put the .keystore in signing/.",
+  "//vault": "On the ops box these live in ~/.openclaw/signing/__APP_SLUG__/android/ — see openclaw-ops/docs/signing-vault.md",
+  "android": {
+    "release": {
+      "keystore": "signing/__APP_SLUG__-upload.keystore",
+      "storePassword": "REPLACE_WITH_STORE_PASSWORD",
+      "alias": "REPLACE_WITH_KEY_ALIAS",
+      "password": "REPLACE_WITH_KEY_PASSWORD",
+      "packageType": "bundle"
+    }
+  }
+}
