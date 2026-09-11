@@ -204,9 +204,22 @@ def token_regex(tok):
     return re.compile(re.escape(tok), re.IGNORECASE)
 
 
+# Below this length a boundary-free match is more likely to be a coincidence
+# than a finding. "pwt" matched "pwtitle" in an uploaded design prototype and
+# hard-failed a brand-new app's CI on every commit.
+MIN_LOOSE_LEN = 5
+
+
 def loose_regex(tok):
     """Case-insensitive matcher with NO word boundary, so it can find a term
-    buried inside an identifier (scoringEngine, eh_assessment_result)."""
+    buried inside an identifier (scoringEngine, eh_assessment_result).
+
+    SHORT tokens fall back to a word-boundary match. The boundary-free search
+    exists to catch a tenant name fused into a longer identifier, which needs
+    the token to be distinctive enough that an accidental substring is not a
+    realistic English or code fragment. Three letters is not."""
+    if len(tok.strip()) < MIN_LOOSE_LEN:
+        return token_regex(tok)
     return re.compile(re.escape(tok), re.IGNORECASE)
 
 

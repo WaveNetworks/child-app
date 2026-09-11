@@ -125,5 +125,10 @@ ignore_paths:
   # The scanner and its CI workflow legitimately name app-identity tokens in
   # docstrings/comments to explain what they enforce. Exclude them so the guard
   # never trips on its own tooling (same reason .reference-clean.yml is ignored).
+  # An uploaded design prototype is the owner's artifact, not the app's code.
+  # It is committed so the builder can match the design, and it is not written
+  # to this contract — holding it to one fails a brand-new app for a substring
+  # in someone else's markup.
+  - "docs/prototype/**"
   - "scripts/scan_reference_contamination.py"
   - ".github/workflows/contamination-guard.yml"
