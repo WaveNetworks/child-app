@@ -20,6 +20,10 @@ on:
 
 jobs:
   scan:
+    # Contamination only matters in the REFERENCE scaffold. Tenant apps are
+    # provisioned from child-app and inherit this file; there, vocabulary and
+    # features from other apps are the app's own business, so the job is a no-op.
+    if: github.repository == 'WaveNetworks/child-app'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
