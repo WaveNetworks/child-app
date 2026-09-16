@@ -15,11 +15,11 @@ So this scanner classifies every hit by CONTEXT before it decides anything:
 
   * code  — an identifier, a string literal, a path, a table name, a require.
             Matched as a substring, so a slug fused into a longer name
-            (acmeAnalyticsHooks.php, $zephyrDeck) is still caught.
-            `require 'acmeAnalyticsHooks.php'` or a table `acme_session`
+            (elevateherAnalyticsHooks.php, $pwtDeck) is still caught.
+            `require 'elevateherAnalyticsHooks.php'` or a table `eh_session`
             really is another app's code in this repo. HARD FAIL.
   * prose — a comment, a docblock, a markdown body, a JSON `_comment`.
-            "unlike zephyr's, these SVGs carry no webfont" names another app but
+            "unlike pwt's, these SVGs carry no webfont" names another app but
             ships none of its code. Reported as a mention; never fails.
 
 The same distinction governs the domain-term heuristics: `scoringEngine.php`
@@ -84,7 +84,7 @@ def prose_mask(text, ext, rel):
 
     Comments and documentation are prose; identifiers, string literals, paths and
     table names are code. String literals count as CODE on purpose — a slug like
-    'acme' passed to register_theme() is exactly the contamination we care
+    'elevateher' passed to register_theme() is exactly the contamination we care
     about, and it is indistinguishable from any other literal at this level.
     """
     n = len(text)
@@ -204,22 +204,9 @@ def token_regex(tok):
     return re.compile(re.escape(tok), re.IGNORECASE)
 
 
-# Below this length a boundary-free match is more likely to be a coincidence
-# than a finding. "pwt" matched "pwtitle" in an uploaded design prototype and
-# hard-failed a brand-new app's CI on every commit.
-MIN_LOOSE_LEN = 5
-
-
 def loose_regex(tok):
     """Case-insensitive matcher with NO word boundary, so it can find a term
-    buried inside an identifier (scoringEngine, eh_assessment_result).
-
-    SHORT tokens fall back to a word-boundary match. The boundary-free search
-    exists to catch a tenant name fused into a longer identifier, which needs
-    the token to be distinctive enough that an accidental substring is not a
-    realistic English or code fragment. Three letters is not."""
-    if len(tok.strip()) < MIN_LOOSE_LEN:
-        return token_regex(tok)
+    buried inside an identifier (scoringEngine, eh_assessment_result)."""
     return re.compile(re.escape(tok), re.IGNORECASE)
 
 
@@ -228,10 +215,10 @@ IDENT_CHAR = re.compile(r"[A-Za-z0-9_$]")
 def at_segment_start(text, start):
     """True when a match begins at the start of a name or of one of its parts.
 
-    A tenant slug is contamination when it NAMES something — `acmeHooks`,
-    `$zephyrDeck`, `theme_acme`, `'acme'`. It is a coincidence when it merely
-    falls inside an unrelated word: 'art' hides in sm(art)phone, and matching
-    that would fail a build over a smartphone helper. So require the match to start
+    A tenant slug is contamination when it NAMES something — `elevateherHooks`,
+    `$pwtDeck`, `theme_dswa`, `'elevateher'`. It is a coincidence when it merely
+    falls inside an unrelated word: 'dswa' hides in respon(dSwa)p, and matching
+    that would fail a build over a swap handler. So require the match to start
     at a segment boundary: after a non-identifier character, after a separator,
     or on a camelCase hump.
     """
@@ -240,10 +227,43 @@ def at_segment_start(text, start):
     prev = text[start - 1]
     if not IDENT_CHAR.match(prev):
         return True
-    if prev in "_-":
+    # '$' is an identifier char for PHP/JS, but it opens a name: $pwtDeck.
+    if prev in "_-$":
         return True
     # camelCase hump: lowercase/digit then an uppercase letter.
     return bool(prev.islower() or prev.isdigit()) and text[start].isupper()
+
+
+# A token this short can hide inside an unrelated word from either side: 'pwt'
+# in `pwtitle`, 'dswa' in `dswatch`. Checking only where the match STARTS failed a
+# build over a DOM id in the embedded map. Short tokens must also END on a
+# segment boundary. Longer tokens (elevateher, hireasupport) are distinctive
+# enough that a start boundary alone is safe, which keeps an all-lowercase fusion
+# like `elevateherhooks.php` caught.
+SHORT_TOKEN_LEN = 5
+
+def at_segment_end(text, end):
+    """True when a match ends at the end of a name or of one of its parts.
+
+    'pwt'      -> True   'pwt_deck' -> True   'pwt.com' -> True
+    'pwtDeck'  -> True   (camelCase hump)     'PWTDeck' -> True
+    'pwtitle'  -> False  (runs on into a lowercase letter)
+    """
+    if end >= len(text):
+        return True
+    nxt = text[end]
+    if not IDENT_CHAR.match(nxt) or nxt in "_-" or nxt.isdigit():
+        return True
+    return nxt.isupper()
+
+
+def is_named_token(text, start, end, tok):
+    """Tier 1 code-context test: the match names something, not a coincidence."""
+    if not at_segment_start(text, start):
+        return False
+    if len(tok) <= SHORT_TOKEN_LEN and not at_segment_end(text, end):
+        return False
+    return True
 
 
 def in_identifier(text, start, end):
@@ -290,7 +310,7 @@ def scan(target, cfg, max_hits):
     ignore_res = [glob_to_regex(p) for p in cfg.get("ignore_paths", [])]
     # Tier 1 matches WITHOUT a word boundary on purpose: the worst
     # contamination fuses the slug into an identifier or filename
-    # (acmeAnalyticsHooks.php, $zephyrDeck, acme_scoring), and \b would
+    # (elevateherAnalyticsHooks.php, $pwtDeck, eh_scoring), and \b would
     # walk straight past all of it.
     forbidden_tok = [(t, loose_regex(t)) for t in cfg.get("forbidden_tokens", [])]
     warn_tok = [(t, loose_regex(t), token_regex(t), " " in t)
@@ -357,7 +377,7 @@ def scan(target, cfg, max_hits):
         for tok, rgx in forbidden_tok:
             for m in rgx.finditer(text):
                 is_prose = mask[m.start()] if m.start() < len(mask) else False
-                if not is_prose and not at_segment_start(text, m.start()):
+                if not is_prose and not is_named_token(text, m.start(), m.end(), tok):
                     continue  # coincidence inside an unrelated word
                 entry = {"token": tok, "file": rel, "line": line_of[m.start()],
                          "text": line_text(m.start())}
