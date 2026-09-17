@@ -52,10 +52,12 @@ Decimal versioning: 1.0, 1.1, 2.0, etc.
 
 EVERY migration requires BOTH steps:
 1. Create the SQL file in db_migrations/main/ or db_migrations/shard/
-2. Update $child_db_version or $child_shard_version in BOTH
-   include/common.php AND include/common_api.php — they each carry their own
-   copy, and when they drift the lower one silently stops migrating (web
-   requests migrate, API requests don't, or vice versa).
+2. Update $child_db_version or $child_shard_version in include/migration_versions.php —
+   the ONE declaration. common.php, common_api.php and common_auth.php all include it;
+   never re-declare them in a bootstrap (per-bootstrap copies drifted, and the lower
+   one silently stopped migrating). The loop is core's wn_child_migrate(): it STOPS at
+   the first failed file (ledger stays at the last success; apiSchemaAudit shows
+   migration_failure) and retries it on the next request.
 
 THIS STEP IS FREQUENTLY FORGOTTEN — DO NOT SKIP IT.
 

@@ -14,6 +14,14 @@
  * @param string $base_dir        Path to child app's db_migrations/ directory
  */
 function child_check_and_migrate($conn, $db_type, $target_version, $base_dir) {
+    // Core's one loop (migrationFunctions.php): ordered, STOPS at the first failed
+    // file, records it for apiSchemaAudit, flag-gated. The code below is only the
+    // fallback for a core older than that API, and it stops on failure too.
+    if (function_exists('wn_child_migrate')) {
+        wn_child_migrate($conn, $db_type, $target_version, $base_dir);
+        return;
+    }
+
     $current = get_current_db_version($conn);
     if ($current >= $target_version) return;
 
@@ -25,7 +33,7 @@ function child_check_and_migrate($conn, $db_type, $target_version, $base_dir) {
         $file = rtrim($base_dir, '/') . '/' . $db_type . '/' . number_format($ver, 1, '.', '') . '.sql';
         if (!file_exists($file)) continue;
 
-        run_migration($conn, $file, "child-$db_type", $ver);
+        if (!run_migration($conn, $file, "child-$db_type", $ver)) break;  // never skip past a failure
     }
 }
 
@@ -35,8 +43,14 @@ function child_check_and_migrate($conn, $db_type, $target_version, $base_dir) {
  * @param float  $target_version  The shard version to migrate to
  * @param string $base_dir        Path to child app's db_migrations/ directory
  */
-function child_check_and_migrate_shards($target_version, $base_dir) {
+function child_check_and_migrate_shards($target_version, $base_dir, $budget = null) {
     global $childShardConfigs;
+
+    if (function_exists('wn_child_migrate_shards')) {
+        // Per-shard flags + connection budget; each shard stops at its first failed file.
+        wn_child_migrate_shards($childShardConfigs ?? [], 'child_prime_shard', $target_version, $base_dir, $budget);
+        return;
+    }
 
     if (empty($childShardConfigs)) return;
 
@@ -57,7 +71,7 @@ function child_check_and_migrate_shards($target_version, $base_dir) {
             $file = rtrim($base_dir, '/') . '/shard/' . number_format($ver, 1, '.', '') . '.sql';
             if (!file_exists($file)) continue;
 
-            run_migration($conn, $file, "child-shard/$shard_id", $ver);
+            if (!run_migration($conn, $file, "child-shard/$shard_id", $ver)) break;  // never skip past a failure
         }
     }
 }

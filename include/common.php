@@ -51,8 +51,7 @@ include_once(__DIR__ . '/common/childDBFunctions.php');
 include_once(__DIR__ . '/common/appMigrationFunctions.php');
 
 // 5. Run child app migrations
-$child_db_version    = 1.1;
-$child_shard_version = 1.2;
+include(__DIR__ . '/migration_versions.php');   // $child_db_version / $child_shard_version — declared ONLY there
 child_check_and_migrate($child_db, 'main', $child_db_version, __DIR__ . '/../db_migrations/');
 child_check_and_migrate_shards($child_shard_version, __DIR__ . '/../db_migrations/');
 

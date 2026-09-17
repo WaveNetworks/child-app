@@ -50,13 +50,7 @@ include_once(__DIR__ . '/common/childDBFunctions.php');
 include_once(__DIR__ . '/common/appMigrationFunctions.php');
 
 // 5. Run child app migrations
-// MUST stay in sync with include/common.php. These had drifted to 1.0/1.0 while
-// common.php was on 1.1/1.2, so API requests silently skipped migrations that
-// web requests applied — and every app scaffolded from this template inherited
-// the drift. Versions are single-decimal floats: (float)"1.10" == 1.1 and would
-// collide with 1.1.sql, so after 1.9 comes 2.0.
-$child_db_version    = 1.1;
-$child_shard_version = 1.2;
+include(__DIR__ . '/migration_versions.php');   // $child_db_version / $child_shard_version — declared ONLY there
 child_check_and_migrate($child_db, 'main', $child_db_version, __DIR__ . '/../db_migrations/');
 child_check_and_migrate_shards($child_shard_version, __DIR__ . '/../db_migrations/');
 
