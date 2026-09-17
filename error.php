@@ -79,8 +79,8 @@ $page_title = $status . ' — ' . $err['title'];
     <?php if (!empty($branding['favicon_path'])) { ?>
     <link rel="icon" href="/admin/branding/<?= h($branding['favicon_path']) ?>">
     <?php } ?>
-    <link rel="stylesheet" href="/admin/assets/css/style.css">
-    <link rel="stylesheet" href="/admin/assets/css/bs-theme-overrides.css">
+    <link rel="stylesheet" href="<?= h(function_exists('core_asset_url') ? core_asset_url('assets/css/style.css', '/admin/') : '/admin/assets/css/style.css') ?>">
+    <link rel="stylesheet" href="<?= h(function_exists('core_asset_url') ? core_asset_url('assets/css/bs-theme-overrides.css', '/admin/') : '/admin/assets/css/bs-theme-overrides.css') ?>">
     <link rel="stylesheet" href="<?= h($theme_url) ?>" id="themeStylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>

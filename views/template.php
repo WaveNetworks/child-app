@@ -5,6 +5,15 @@
  * References admin's shared assets. Child-app-specific CSS loaded if present.
  * $current_page_file is set by app/index.php.
  */
+
+// Core asset URLs versioned by mtime so a host CDN can't keep serving a stale core
+// style.css/JS after a core deploy. core_asset_url() lives in core; the fallback
+// covers a core that predates it.
+$core_asset = function ($rel) {
+    return function_exists('core_asset_url')
+        ? core_asset_url($rel, '../../admin/')
+        : '../../admin/' . $rel . '?v=' . (int) @filemtime(__DIR__ . '/../../admin/' . $rel);
+};
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,8 +32,8 @@
     <link rel="icon" href="../../admin/branding/<?= h($b['favicon_path']) ?>">
     <link rel="apple-touch-icon" href="../../admin/branding/<?= h($b['favicon_path']) ?>">
     <?php } ?>
-    <link rel="stylesheet" href="../../admin/assets/css/style.css">
-    <link rel="stylesheet" href="../../admin/assets/css/bs-theme-overrides.css">
+    <link rel="stylesheet" href="<?= h($core_asset('assets/css/style.css')) ?>">
+    <link rel="stylesheet" href="<?= h($core_asset('assets/css/bs-theme-overrides.css')) ?>">
     <link rel="stylesheet" href="<?= h(get_app_theme_css_url()) ?>" id="themeStylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 </head>
@@ -321,9 +330,9 @@
 
 <!-- REGION: footer-scripts -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script src="../../admin/assets/js/bs-init.js"></script>
-<script src="../../admin/assets/js/sidebar.js"></script>
-<script src="../../admin/assets/js/color-mode.js"></script>
+<script src="<?= h($core_asset('assets/js/bs-init.js')) ?>"></script>
+<script src="<?= h($core_asset('assets/js/sidebar.js')) ?>"></script>
+<script src="<?= h($core_asset('assets/js/color-mode.js')) ?>"></script>
 <script src="../assets/js/modal.js"></script>
 <script src="../assets/js/theme.js"></script>
 <script src="../assets/js/toast.js"></script>
@@ -331,7 +340,7 @@
 <script src="../assets/js/search.js"></script>
 <!-- SCAFFOLD:DEMO-END -->
 <script src="../assets/js/page-nav.js"></script>
-<script src="../../admin/assets/js/notifications.js"></script>
+<script src="<?= h($core_asset('assets/js/notifications.js')) ?>"></script>
 <script src="../assets/js/bg-canvas.js"></script>
 <?php if (file_exists(__DIR__ . '/../snippets/feedback_tab.php')) { include(__DIR__ . '/../snippets/feedback_tab.php'); } ?>
 </body>

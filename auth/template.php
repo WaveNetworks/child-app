@@ -5,6 +5,15 @@
  * Uses admin's branding by default. Override by editing this file.
  * $page_title and $page_content_html must be set before including this.
  */
+
+// Core asset URLs versioned by mtime so a host CDN can't keep serving a stale core
+// style.css/JS after a core deploy. core_asset_url() lives in core; the fallback
+// covers a core that predates it.
+$core_asset = function ($rel) {
+    return function_exists('core_asset_url')
+        ? core_asset_url($rel, '../../admin/')
+        : '../../admin/' . $rel . '?v=' . (int) @filemtime(__DIR__ . '/../../admin/' . $rel);
+};
 ?><!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,8 +32,8 @@
     <link rel="apple-touch-icon" href="../../admin/branding/<?= h($b['favicon_path']) ?>">
     <?php } ?>
     <link rel="stylesheet" href="<?= h(get_app_theme_css_url()) ?>" id="themeStylesheet">
-    <link rel="stylesheet" href="../../admin/assets/css/style.css">
-    <link rel="stylesheet" href="../../admin/assets/css/bs-theme-overrides.css">
+    <link rel="stylesheet" href="<?= h($core_asset('assets/css/style.css')) ?>">
+    <link rel="stylesheet" href="<?= h($core_asset('assets/css/bs-theme-overrides.css')) ?>">
     <style>
         body { background-color: var(--bs-tertiary-bg); }
         .auth-wrapper { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
