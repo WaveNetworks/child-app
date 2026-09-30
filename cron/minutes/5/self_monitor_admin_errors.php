@@ -17,14 +17,12 @@
  *   1. Read unresolved admin error_log rows via $db (READ ONLY from child).
  *   2. Group by normalized message pattern (same regex used by nokemo's
  *      monitoring path so fingerprints match).
- *   3. Dedup against a JSON state file at $files_location/self_monitor_state.json
- *      — track last-notified timestamp per pattern fingerprint. Only re-notify
- *      if 24h has elapsed since the last notification for that fingerprint.
- *   4. For each new or re-notify-due pattern: send_notification() to every
- *      admin-role user, category 'admin_error_alert'. The notification body
- *      summarizes the error level, occurrence count, sample message, and the
- *      most recent error_id so a human can jump straight to the admin error
- *      log view.
+ *   3. State file ($files_location/self_monitor/admin_errors_state.json): per pattern
+ *      {ts: last alert, seen: last_seen_at it covered}, plus _digest_at.
+ *   4. ERROR/FATAL patterns that are new or have RECURRED since their last alert go
+ *      into ONE digest notification (category 'admin_error_alert') to every admin,
+ *      at most once an hour. Info/warnings never push (owner 2026-09-29: the old
+ *      per-pattern, every-24h-forever policy was a steady stream of pushes).
  *   5. Update the state file.
  *
  * Rules followed:
@@ -65,7 +63,6 @@ if (is_file($state_file)) {
 }
 // Structure: { pattern_fingerprint: last_notified_unix_ts }
 
-$renotify_after_seconds = 86400; // 24h — don't spam the same pattern
 $now_ts = time();
 
 // ─── Pull open admin errors ─────────────────────────────────────────────────
@@ -116,71 +113,73 @@ if (empty($admin_users)) {
     return;
 }
 
-// ─── Notify new/re-due patterns ─────────────────────────────────────────────
-$notified = 0;
-$skipped  = 0;
-
+// ─── Notify: errors only, only when they happen again, one digest, ≤1/hour ─────
+// Owner 2026-09-29: "I'm getting pretty regular admin warnings through push
+// notifications". The old loop pushed EVERY unresolved pattern (info and warnings
+// included — 404s, week-old needs-build warnings, a Sep 17 billing test) once per
+// pattern and again every 24h forever. Now:
+//   - ERROR / FATAL only (info + warnings stay in the error log and nokemo's monitor);
+//   - a pattern alerts when first seen, then only if it RECURRED since its last alert
+//     (last_seen_at moved), never just because nobody resolved it;
+//   - one digest notification per run, and at most one per hour (_digest_at).
+$min_digest_gap = 3600;
+// Which app this is, for the push title (the file is shared by every child app).
+$app_slug = basename(dirname(__DIR__, 3));
+$app_name = '';
+if (function_exists('get_branding')) {
+    $b = get_branding();
+    $app_name = trim((string) ($b['site_name'] ?? ''));
+    if ($app_name === 'Admin') $app_name = '';
+}
+if ($app_name === '') $app_name = $app_slug !== '' ? ucfirst($app_slug) : 'App';
+$due = [];
 foreach ($groups as $pattern => $group_errors) {
-    $count  = count($group_errors);
     $sample = $group_errors[0];
     $level  = strtoupper($sample['level'] ?? 'ERROR');
-    $msg    = trim($sample['message'] ?? 'Unknown error');
-    $src    = $sample['source_app'] ?? 'admin';
-
+    if (!in_array($level, ['ERROR', 'FATAL', 'CRITICAL'], true)) continue;
     $fingerprint = hash('sha256', $pattern . '|' . $level);
-
-    // Dedup: skip if notified within the re-notify window
-    if (isset($state[$fingerprint]) && ($now_ts - (int)$state[$fingerprint]) < $renotify_after_seconds) {
-        $skipped++;
-        continue;
+    $seen = strtotime((string) ($sample['last_seen_at'] ?? $sample['created'] ?? '')) ?: 0;
+    $prev = $state[$fingerprint] ?? null;
+    // Old state format is the bare notify time: it counts as "seen up to then".
+    $prev_seen = is_array($prev) ? (int) ($prev['seen'] ?? 0) : (int) $prev;
+    if ($prev !== null && $seen <= $prev_seen) continue;   // nothing new since the last alert
+    $due[$fingerprint] = ['sample' => $sample, 'level' => $level, 'count' => array_sum(array_map(function ($e) { return (int) ($e['occurrence_count'] ?? 1); }, $group_errors)), 'seen' => $seen];
+}
+$last_digest = (int) ($state['_digest_at'] ?? 0);
+if ($due && ($now_ts - $last_digest) >= $min_digest_gap) {
+    $n = count($due);
+    $title = $app_name . ': ' . $n . ' new error' . ($n === 1 ? '' : 's');
+    $lines = [];
+    foreach (array_slice($due, 0, 5) as $d) {
+        $lines[] = '[' . $d['level'] . '] ' . mb_substr(trim((string) ($d['sample']['message'] ?? '')), 0, 110) . ' (×' . $d['count'] . ')';
     }
-
-    $short_msg = mb_substr($msg, 0, 120);
-    $title = "Admin error: [{$level}] {$short_msg}";
-    $title = mb_substr($title, 0, 140);
-
-    $body  = "A new admin error pattern has been detected on this host.\n\n";
-    $body .= "Level: {$level}\n";
-    $body .= "Source: {$src}\n";
-    $body .= "Occurrences in this group: {$count}\n";
-    if (!empty($sample['file'])) {
-        $body .= "File: {$sample['file']}" . (!empty($sample['line']) ? ":{$sample['line']}" : '') . "\n";
-    }
-    $body .= "Most recent error_id: " . (int)($sample['error_id'] ?? 0) . "\n";
-    $body .= "Last seen: " . ($sample['last_seen_at'] ?? 'unknown') . "\n\n";
-    $body .= "Review in the admin Error Log view. This alert was sent by the app's standalone self-monitor cron — no dependency on external monitoring.";
-
+    if ($n > 5) $lines[] = '…and ' . ($n - 5) . ' more.';
+    $body = implode("\n", $lines) . "\n\nOpen the admin Error Log for details.";
     foreach ($admin_users as $u) {
         try {
-            send_notification(
-                (int)$u['user_id'],
-                (string)$u['shard_id'],
-                'admin_error_alert',
-                $title,
-                $body,
-                [
-                    'source_app' => $src,
-                    'error_id'   => (int)($sample['error_id'] ?? 0),
-                ]
-            );
+            send_notification((int) $u['user_id'], (string) $u['shard_id'], 'admin_error_alert', $title, $body,
+                ['source_app' => $app_slug, 'error_id' => (int) (reset($due)['sample']['error_id'] ?? 0)]);
         } catch (Exception $e) {
-            error_log('self_monitor_admin_errors: send_notification failed for user '
-                . $u['user_id'] . ': ' . $e->getMessage());
+            error_log('self_monitor_admin_errors: send_notification failed for user ' . $u['user_id'] . ': ' . $e->getMessage());
         }
     }
-
-    $state[$fingerprint] = $now_ts;
-    $notified++;
+    foreach ($due as $fp => $d) $state[$fp] = ['ts' => $now_ts, 'seen' => $d['seen']];
+    $state['_digest_at'] = $now_ts;
+    $notified = $n; $skipped = 0;
+} else {
+    $notified = 0; $skipped = count($due);
 }
 
 // ─── Persist state ──────────────────────────────────────────────────────────
 // Prune stale fingerprints so the file doesn't grow unbounded — anything
 // older than 30 days is dropped.
 $cutoff = $now_ts - (30 * 86400);
-foreach ($state as $fp => $ts) {
-    if ((int)$ts < $cutoff) unset($state[$fp]);
+foreach ($state as $fp => $v) {
+    if ($fp === '_digest_at') continue;
+    $ts = is_array($v) ? (int) ($v['ts'] ?? 0) : (int) $v;
+    if ($ts < $cutoff) unset($state[$fp]);
 }
 
 @file_put_contents($state_file, json_encode($state, JSON_PRETTY_PRINT), LOCK_EX);
 
-echo "    self-monitor: {$notified} pattern(s) notified, {$skipped} skipped (within re-notify window).\n";
+echo "    self-monitor: {$notified} new error pattern(s) in one digest, {$skipped} waiting for the hourly gap.\n";
