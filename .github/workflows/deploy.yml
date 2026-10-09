@@ -22,6 +22,12 @@ env:
 
 jobs:
   deploy:
+    # The template repo itself has no host and no deploy secrets, so it never
+    # deploys (every push there went red at the core checkout). The name is
+    # built with format() on purpose: provisioning sed-rewrites the template's
+    # slug token in every file, and a literal here would become the NEW app's
+    # own name and silently skip its deploys.
+    if: github.repository != format('{0}/{1}-{2}', 'WaveNetworks', 'child', 'app')
     runs-on: ubuntu-latest
 
     steps:
