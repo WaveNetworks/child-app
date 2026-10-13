@@ -153,3 +153,32 @@ jobs:
           #   staging/app-framework/ $TARGET:public_html/app-framework/
 
           echo "Deploy complete."
+
+      # Core sub-admins (contract: wave-networks-core docs/SubAdmins.md, nokemo #2396).
+      # Repo variable SUBADMINS="help-desk,social-media" (repo names). Each is checked out at
+      # main, linted, and rsynced to public_html/<mount>/ (mount from its subadmin.json) —
+      # --delete scoped to that dir, config/ never touched. A mounted sub-admin no longer listed
+      # loses only its subadmin.json (drops out of admin's registry/sidebar); code and data stay
+      # until an explicit offboard. Unset SUBADMINS → only the retire sweep runs.
+      - name: Mount sub-admins (SUBADMINS)
+        env:
+          SUBADMINS: ${{ vars.SUBADMINS }}
+          PAT: ${{ secrets.CROSS_REPO_PAT }}
+          DEST: ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}
+        run: |
+          set -euo pipefail
+          SSH_CMD="ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no"
+          keep=" "
+          for r in $(printf '%s\n' "${SUBADMINS:-}" | tr ', ' '\n\n' | grep -v '^$' | sort -u); do
+            case "$r" in *[!a-z0-9-]*) echo "::error::bad sub-admin name '$r'"; exit 1;; esac
+            git clone -q --depth 1 "https://x-access-token:${PAT}@github.com/WaveNetworks/$r.git" "staging/sub/$r"
+            mount=$(jq -r '.mount // .slug // empty' "staging/sub/$r/subadmin.json")
+            case "$mount" in ''|admin|"${{ env.CHILD_APP_SLUG }}"|*[!a-z0-9-]*) echo "::error::$r: bad mount '$mount'"; exit 1;; esac
+            find "staging/sub/$r" -name '*.php' -not -path '*/.git/*' -print0 | xargs -0 -r -n1 php -l > /dev/null
+            rsync -az --delete --exclude='.git' --exclude='config/' \
+              -e "$SSH_CMD" "staging/sub/$r/" "$DEST:public_html/$mount/"
+            echo "mounted $r at /$mount/"
+            keep="$keep$mount "
+          done
+          sleep 3
+          $SSH_CMD "$DEST" "cd public_html && for f in */subadmin.json; do [ -f \"\$f\" ] || continue; d=\${f%%/*}; case '$keep' in *\" \$d \"*) ;; *) rm -f \"\$f\" && echo \"retired \$d\";; esac; done"

@@ -1,0 +1,46 @@
+name: Follow sub-admins
+
+# Sub-admins listed in the SUBADMINS repo variable (wave-networks-core docs/SubAdmins.md) are
+# checked out at main by deploy.yml, but only a push to THIS repo runs one — so a sub-admin fix
+# would sit undeployed here. This redeploys when any listed sub-admin's main has moved since the
+# last deploy started (same idea as core-follow). Nothing listed → nothing to do.
+
+on:
+  schedule:
+    - cron: '47 * * * *'
+  workflow_dispatch:
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: subadmin-follow
+  cancel-in-progress: false
+
+jobs:
+  follow:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Redeploy if a mounted sub-admin is newer than the last deploy
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PAT: ${{ secrets.CROSS_REPO_PAT }}
+          SUBADMINS: ${{ vars.SUBADMINS }}
+        run: |
+          set -euo pipefail
+          list=$(printf '%s\n' "${SUBADMINS:-}" | tr ', ' '\n\n')
+          list=$(printf '%s\n' "$list" | grep -v '^$' | sort -u || true)
+          [ -z "$list" ] && { echo "no sub-admins listed"; exit 0; }
+          last=$(gh run list -R "$GITHUB_REPOSITORY" -w deploy.yml -L 1 --json createdAt --jq '.[0].createdAt // ""')
+          for r in $list; do
+            case "$r" in *[!a-z0-9-]*) echo "::warning::bad sub-admin name '$r'"; continue;; esac
+            at=$(GH_TOKEN="$PAT" gh api "repos/WaveNetworks/$r/commits/main" --jq .commit.committer.date)
+            echo "$r HEAD: $at   last deploy: ${last:-none}"
+            if [[ -z "$last" || "$at" > "$last" ]]; then
+              gh workflow run deploy.yml -R "$GITHUB_REPOSITORY" --ref main
+              echo "::notice::$r moved ($at > ${last:-none}) — deploy dispatched"
+              exit 0
+            fi
+          done
+          echo "up to date"
