@@ -1,0 +1,16 @@
+Wave Networks Child App
+Copyright 2026 Wave Networks
+
+This product includes software developed at Wave Networks
+(https://github.com/WaveNetworks).
+
+It is built on Wave Networks Core
+(https://github.com/WaveNetworks/wave-networks-core), also licensed under
+the Apache License, Version 2.0.
+
+This product includes Bootswatch theme sources (assets/scss/_bootswatch.scss).
+  Bootswatch: Copyright 2012-2023 Thomas Park, MIT License
+    https://github.com/thomaspark/bootswatch/blob/master/LICENSE
+
+npm and Composer dependencies are installed, not bundled here; each keeps its
+own license (see package.json / composer.json).

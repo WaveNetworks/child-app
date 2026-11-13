@@ -257,3 +257,7 @@ Create `snippets/modal_myfeature.php`, register in `modal_controller.php`, then 
 - All auth actions (login, register, 2FA, etc.) are provided by admin's action files automatically
 - **Bootstrap chain**: `child-app/include/common.php` → `admin/include/common.php` — admin handles config, `$db`, helpers, migrations, and session guard; child app then opens `$child_db` and runs its own migrations
 - **Asset sharing**: admin provides shared CSS (`style.css`, `bs-theme-overrides.css`) and JS (`bs-init.js`, `sidebar.js`, `color-mode.js`, `notifications.js`); child app adds its own theme CSS and feature JS on top
+
+## License
+
+Apache License 2.0; see [LICENSE](LICENSE) and [NOTICE](NOTICE).

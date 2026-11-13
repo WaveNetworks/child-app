@@ -1,6 +1,7 @@
 {
   "name": "child-app",
   "private": true,
+  "license": "Apache-2.0",
   "description": "Wave Networks child-app template — SCSS theme build pipeline",
   "scripts": {
     "build:css": "sass assets/scss/custom.scss assets/themes/glassmorphism/custom.css --style compressed --load-path=node_modules",
