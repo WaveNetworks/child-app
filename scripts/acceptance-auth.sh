@@ -6,12 +6,13 @@
 # ----------------------------------------------
 # acceptance.sh is unauthenticated by design: it checks what the public sees. That
 # leaves the entire logged-in surface unverified, which is where a run of real bugs
-# hid on yes4yelm — a dashboard that was still the scaffold placeholder, a branding
+# hid on one app — a dashboard that was still the scaffold placeholder, a branding
 # logo pointing at a directory that does not exist, a console loading the wrong
 # theme, staff pages gated on a role that could never be true.
 #
 # Every provisioned app HAS a usable test account: admin/install/provision.php
-# creates nokemo@nokemo.com as is_admin=1 / is_test_account=1 on each app's admin
+# creates the test account (test@temporarydemo.com unless the app's config names
+# another) as is_admin=1 / is_test_account=1 on each app's admin
 # DB. So there is no reason for the authenticated surface to go unchecked.
 #
 # It also catches a failure mode single-request checks structurally cannot: an
@@ -24,7 +25,7 @@
 #   e.g. scripts/acceptance-auth.sh https://ex.com/myapp https://ex.com/admin
 #
 # Credentials come from the environment — never from a file in the repo:
-#   TEST_USER_EMAIL / TEST_USER_PASSWORD   (fleet values live in ~/.openclaw/test_user.env)
+#   TEST_USER_EMAIL / TEST_USER_PASSWORD   (fleet values live in the ops box's test_user.env)
 #
 # If they are unset it SKIPS rather than fails, so this stays safe to wire into a
 # deploy where the secret may legitimately be absent.

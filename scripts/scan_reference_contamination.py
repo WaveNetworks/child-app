@@ -15,11 +15,11 @@ So this scanner classifies every hit by CONTEXT before it decides anything:
 
   * code  — an identifier, a string literal, a path, a table name, a require.
             Matched as a substring, so a slug fused into a longer name
-            (elevateherAnalyticsHooks.php, $pwtDeck) is still caught.
-            `require 'elevateherAnalyticsHooks.php'` or a table `eh_session`
+            (acmeAnalyticsHooks.php, $acmeDeck) is still caught.
+            `require 'acmeAnalyticsHooks.php'` or a table `acme_session`
             really is another app's code in this repo. HARD FAIL.
   * prose — a comment, a docblock, a markdown body, a JSON `_comment`.
-            "unlike pwt's, these SVGs carry no webfont" names another app but
+            "unlike acme's, these SVGs carry no webfont" names another app but
             ships none of its code. Reported as a mention; never fails.
 
 The same distinction governs the domain-term heuristics: `scoringEngine.php`
@@ -46,11 +46,14 @@ Usage:
 
 Dependencies: pyyaml (CI: `pip install pyyaml`).
 
-CANONICAL COPY: WaveNetworks/nokemo scripts/scan_reference_contamination.py.
-Every app repo carries a vendored copy; do not edit those by hand — change this
-file and run scripts/sync-shared-tooling.py so every repo gets the same fix.
-Part of the nokemo "Reference Harvest & Sync" process — see
-nokemo/docs/reference-maintenance.md
+Tokens and paths can also come from the environment, one per line, merged into
+the contract: REFERENCE_FORBIDDEN_TOKENS and REFERENCE_FORBIDDEN_PATHS. A public
+repo keeps the names of other apps in CI secrets that way instead of in its
+committed contract.
+
+CANONICAL COPY: the platform's tooling repo, scripts/scan_reference_contamination.py.
+Every app repo carries a vendored copy; do not edit those by hand — change the
+canonical file and run its sync-shared-tooling.py so every repo gets the same fix.
 """
 import argparse
 import json
@@ -84,7 +87,7 @@ def prose_mask(text, ext, rel):
 
     Comments and documentation are prose; identifiers, string literals, paths and
     table names are code. String literals count as CODE on purpose — a slug like
-    'elevateher' passed to register_theme() is exactly the contamination we care
+    'acme' passed to register_theme() is exactly the contamination we care
     about, and it is indistinguishable from any other literal at this level.
     """
     n = len(text)
@@ -215,10 +218,10 @@ IDENT_CHAR = re.compile(r"[A-Za-z0-9_$]")
 def at_segment_start(text, start):
     """True when a match begins at the start of a name or of one of its parts.
 
-    A tenant slug is contamination when it NAMES something — `elevateherHooks`,
-    `$pwtDeck`, `theme_dswa`, `'elevateher'`. It is a coincidence when it merely
-    falls inside an unrelated word: 'dswa' hides in respon(dSwa)p, and matching
-    that would fail a build over a swap handler. So require the match to start
+    A tenant slug is contamination when it NAMES something — `acmeHooks`,
+    `$acmeDeck`, `theme_acme`, `'acme'`. It is a coincidence when it merely
+    falls inside an unrelated word: 'tch' hides in ma(tch)Handler, and matching
+    that would fail a build over a match handler. So require the match to start
     at a segment boundary: after a non-identifier character, after a separator,
     or on a camelCase hump.
     """
@@ -227,27 +230,27 @@ def at_segment_start(text, start):
     prev = text[start - 1]
     if not IDENT_CHAR.match(prev):
         return True
-    # '$' is an identifier char for PHP/JS, but it opens a name: $pwtDeck.
+    # '$' is an identifier char for PHP/JS, but it opens a name: $acmeDeck.
     if prev in "_-$":
         return True
     # camelCase hump: lowercase/digit then an uppercase letter.
     return bool(prev.islower() or prev.isdigit()) and text[start].isupper()
 
 
-# A token this short can hide inside an unrelated word from either side: 'pwt'
-# in `pwtitle`, 'dswa' in `dswatch`. Checking only where the match STARTS failed a
+# A token this short can hide inside an unrelated word from either side: 'acme'
+# in `acmeter`, 'tch' in `tchotchke`. Checking only where the match STARTS failed a
 # build over a DOM id in the embedded map. Short tokens must also END on a
-# segment boundary. Longer tokens (elevateher, hireasupport) are distinctive
+# segment boundary. Longer tokens (e.g. northwind) are distinctive
 # enough that a start boundary alone is safe, which keeps an all-lowercase fusion
-# like `elevateherhooks.php` caught.
+# like `northwindhooks.php` caught.
 SHORT_TOKEN_LEN = 5
 
 def at_segment_end(text, end):
     """True when a match ends at the end of a name or of one of its parts.
 
-    'pwt'      -> True   'pwt_deck' -> True   'pwt.com' -> True
-    'pwtDeck'  -> True   (camelCase hump)     'PWTDeck' -> True
-    'pwtitle'  -> False  (runs on into a lowercase letter)
+    'acme'     -> True   'acme_deck' -> True  'acme.com' -> True
+    'acmeDeck' -> True   (camelCase hump)     'ACMEDeck' -> True
+    'acmeter'  -> False  (runs on into a lowercase letter)
     """
     if end >= len(text):
         return True
@@ -298,9 +301,20 @@ def iter_files(root, ignore_res):
                 yield rel, os.path.join(dirpath, fn)
 
 
+def _env_list(name):
+    raw = os.environ.get(name, "")
+    return [ln.strip() for ln in raw.replace(",", "\n").splitlines() if ln.strip()]
+
+
 def load_config(path):
     with open(path, "r", encoding="utf-8") as f:
         cfg = yaml.safe_load(f) or {}
+    # Names kept out of a public repo arrive from CI secrets, one per line.
+    for key, env in (("forbidden_tokens", "REFERENCE_FORBIDDEN_TOKENS"),
+                     ("forbidden_paths", "REFERENCE_FORBIDDEN_PATHS")):
+        extra = _env_list(env)
+        if extra:
+            cfg[key] = list(cfg.get(key) or []) + [e for e in extra if e not in (cfg.get(key) or [])]
     return cfg
 
 
@@ -310,7 +324,7 @@ def scan(target, cfg, max_hits):
     ignore_res = [glob_to_regex(p) for p in cfg.get("ignore_paths", [])]
     # Tier 1 matches WITHOUT a word boundary on purpose: the worst
     # contamination fuses the slug into an identifier or filename
-    # (elevateherAnalyticsHooks.php, $pwtDeck, eh_scoring), and \b would
+    # (acmeAnalyticsHooks.php, $acmeDeck, acme_scoring), and \b would
     # walk straight past all of it.
     forbidden_tok = [(t, loose_regex(t)) for t in cfg.get("forbidden_tokens", [])]
     warn_tok = [(t, loose_regex(t), token_regex(t), " " in t)

@@ -5,18 +5,18 @@
  * Standalone self-monitor: detects new admin error patterns in this host's
  * own admin error_log and notifies the app's admin users. Runs every 5 min.
  *
- * Why this exists: each deployed admin has its own error_log. When nokemo.com
- * aggregates errors across apps it picks these up via its monitoring cron and
- * creates tasks for the builder — but if nokemo is offline or unreachable,
+ * Why this exists: each deployed admin has its own error_log. When a monitoring
+ * server aggregates errors across apps it picks these up via its monitoring cron and
+ * creates tasks for the builder — but if that server is offline or unreachable,
  * errors would pile up with nothing watching. This cron is the standalone
  * fallback: each app's admin surfaces its own errors to its own admin users
- * via the existing notification/email system. No dependency on nokemo, no
+ * via the existing notification/email system. No dependency on the monitor, no
  * new schema, no new tables.
  *
  * Design:
  *   1. Read unresolved admin error_log rows via $db (READ ONLY from child).
- *   2. Group by normalized message pattern (same regex used by nokemo's
- *      monitoring path so fingerprints match).
+ *   2. Group by normalized message pattern (same regex used by the monitoring
+ *      server's path so fingerprints match).
  *   3. State file ($files_location/self_monitor/admin_errors_state.json): per pattern
  *      {ts: last alert, seen: last_seen_at it covered}, plus _digest_at.
  *   4. ERROR/FATAL patterns that are new or have RECURRED since their last alert go
@@ -86,7 +86,7 @@ if (empty($errors)) {
     return;
 }
 
-// ─── Group by normalized pattern (same logic as nokemo monitor) ─────────────
+// ─── Group by normalized pattern (same logic as the monitoring server) ─────────────
 $groups = [];
 foreach ($errors as $err) {
     $msg = $err['message'] ?? '';
@@ -118,7 +118,7 @@ if (empty($admin_users)) {
 // notifications". The old loop pushed EVERY unresolved pattern (info and warnings
 // included — 404s, week-old needs-build warnings, a Sep 17 billing test) once per
 // pattern and again every 24h forever. Now:
-//   - ERROR / FATAL only (info + warnings stay in the error log and nokemo's monitor);
+//   - ERROR / FATAL only (info + warnings stay in the error log and the monitoring server);
 //   - a pattern alerts when first seen, then only if it RECURRED since its last alert
 //     (last_seen_at moved), never just because nobody resolved it;
 //   - one digest notification per run, and at most one per hour (_digest_at).

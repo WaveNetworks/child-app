@@ -8,7 +8,7 @@
 # That is a static property. Nothing else in the build loop ever loads the running
 # application, so a whole class of defect is structurally invisible:
 #
-#   - yes4yelm shipped its dashboard as the untouched scaffold placeholder
+#   - one app shipped its dashboard as the untouched scaffold placeholder
 #     ("This is your dashboard. It is waiting to be built") — no coverage row named
 #     a general dashboard, so nothing measured the first screen every user saw.
 #   - Its public site had no sign-in link at all. No row asks "can a user get in?"
@@ -136,7 +136,7 @@ check_og_image() {
 
 # Every link on the page must resolve. A campaign that says "check the receipts"
 # and then cites a 404 has spent its credibility, and nothing else in the build
-# loop looks at an outbound URL. Real case: yes4yelm's receipts page cited
+# loop looks at an outbound URL. Real case: one app's receipts page cited
 # thurstoncountywa.gov/departments/assessor/tax-levy-rates and
 # .../auditor/elections/election-results on 4 of its 5 claims — both had 404'd,
 # so almost every "Source:" link under the campaign's central argument was dead.

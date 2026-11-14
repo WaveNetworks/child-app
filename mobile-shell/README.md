@@ -47,5 +47,5 @@ res/screen/ios/Default@2x~universal~anyany.png  2732x2732
    not hand-edit it. Pinning the channel to the binary version is what stops a
    bundle reaching an app that cannot run it.
 
-See `docs/MOBILE.md` in this repo, and `openclaw-ops/docs/signing-vault.md` for
+See `docs/MOBILE.md` in this repo, and the ops box's signing-vault notes for
 where the signing material lives.

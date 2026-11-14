@@ -11,7 +11,7 @@ resolves against the running site, so an objective is evidence, not an assertion
 
 State the app's bias explicitly. Most apps have two plausible centres of gravity
 and only one of them is the point — say which wins when they compete for a screen.
-(yes4yelm: "an organising tool, not a bookkeeping tool"; the treasury machinery is
+(e.g. a campaign app: "an organising tool, not a bookkeeping tool"; the treasury machinery is
 legally required but serves the committee, not the campaign.)
 
 ## Verify forms

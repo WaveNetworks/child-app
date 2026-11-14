@@ -183,13 +183,13 @@ invisible to `docs/spec-coverage.md`, because a coverage manifest verifies that
 code EXISTS — a static property of the repo. None of them are theoretical.
 
 ### opcache: a shipped fix can silently not run
-makershost runs `opcache.validate_timestamps=0`. Bytecode is compiled once and
+The shared host runs `opcache.validate_timestamps=0`. Bytecode is compiled once and
 cached in FPM shared memory **forever**, ignoring mtime. Brand-NEW files compile
 fresh, but **MODIFIED files keep serving the old build after rsync** — a correct
 fix sits on disk and does nothing.
 
 Symptom: "I deployed the fix and it still does the old thing." Suspect this FIRST.
-On yes4yelm a `pac_is_treasurer()` load-order fix deployed green while FPM kept
+On one app a `pac_is_treasurer()` load-order fix deployed green while FPM kept
 executing the broken bytecode, so the settings screen went on silently discarding
 the owner's typed input for a day after it was fixed.
 
@@ -205,7 +205,7 @@ unreachable with the real token.
 run their flat `if ($_POST['action'] …)` blocks at include time. So a helper defined
 in one action file **does not exist yet** when an earlier-globbed action file runs.
 
-On yes4yelm `pac_is_treasurer()` lived in `treasurerActions.php`, which globs after
+On one app `pac_is_treasurer()` lived in `treasurerActions.php`, which globs after
 `memberConsoleActions.php`. Every staff write guarded by
 `function_exists('pac_is_treasurer')` short-circuited to "Staff access required."
 and silently persisted nothing — settings, site content and agent drafts, all dead,
@@ -213,7 +213,7 @@ for anyone including an admin. It fails closed and looks like a permissions prob
 
 **Rule: any helper more than one file uses goes in `include/common/`.**
 
-### Cron on makershost is a SHELL command, and it must run EVERY MINUTE
+### Cron on the shared host is a SHELL command, and it must run EVERY MINUTE
 There is no URL endpoint — `cron/cron.php` is CLI-only (`php_sapi_name()` guard)
 and `cron/.htaccess` denies the directory. Hitting the path over HTTP returns 403.
 
@@ -238,7 +238,7 @@ idempotent, so running it on every deploy is correct.
 ### Verify the running app, not the repo
 Run `scripts/acceptance.sh <base-url>` after deploy. It catches scaffold text
 reaching production, unsubstituted placeholders, an `og:image` that 404s, and a
-root page with no way to sign in. On yes4yelm all four were live simultaneously
+root page with no way to sign in. On one app all four were live simultaneously
 while the manifest read 239/255 — including `views/dashboard.php` still being the
 scaffold placeholder, because no coverage row named a general dashboard and so
 nothing measured the first screen every user saw.

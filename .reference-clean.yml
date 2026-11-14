@@ -5,12 +5,10 @@
 # declares what "clean" means; scan_reference_contamination.py enforces it and
 # the contamination-guard CI workflow fails the build on any Tier 1/2 violation.
 #
-# Maintained by the nokemo "Reference Harvest & Sync" process.
-# Docs: nokemo/docs/reference-maintenance.md
-#
-# This is the TEMPLATE that lives in nokemo. The live copy is committed to
-# child-app as `.reference-clean.yml` (Phase 1). Keep the two in sync, or have
-# child-app's copy be the source of truth and this one the seed.
+# The app names and app-specific paths it forbids are NOT listed here, so this
+# public repo does not name other apps. They are kept in the Actions secrets
+# REFERENCE_FORBIDDEN_TOKENS and REFERENCE_FORBIDDEN_PATHS (one per line) and
+# merged in by scan_reference_contamination.py at run time.
 
 version: 1
 
@@ -18,20 +16,10 @@ version: 1
 # TIER 1 — app-identity tokens.  ZERO TOLERANCE → hard fail.
 # Slugs/brand names of monitored/tenant apps. These must NEVER appear anywhere
 # in the generic reference. This is the single rule that would have caught the
-# "Add all ElevateHER app features" merge. Keep in sync with the registered_app
-# registry (harvest_app_features.py can regenerate this list).
+# merge that copied a whole tenant app into the reference. Keep the secret in
+# sync with the app registry.
 # ---------------------------------------------------------------------------
-forbidden_tokens:
-  - elevateher
-  - elevate her         # spelled-out brand (spaced) — catches marketing/onboarding copy
-  - dswa                # elevateHER production domain
-  - direct selling women # DSWA spelled out — the exact onboarding copy Tier 1 missed (verified hard-fail)
-  - sisterhood          # elevateHER community framing
-  - lotus               # elevateHER brand motif
-  - pwt
-  - hireasupport
-  # NOTE: do not list the parent platform ("wave", "subtheme") or "nokemo";
-  # those legitimately appear in the scaffold.
+forbidden_tokens: []   # + REFERENCE_FORBIDDEN_TOKENS secret
 
 # ---------------------------------------------------------------------------
 # TIER 2a — forbidden files/paths (the known app-specific domain surface).
@@ -40,15 +28,12 @@ forbidden_tokens:
 # all disappear. Globs are relative to repo root; ** spans directories.
 # ---------------------------------------------------------------------------
 forbidden_paths:
-  # explicit elevateHER artifacts
-  - "docker/generate-elevateher-config.php"
-  - "assets/themes/dswa/**"
+  # app-named artifacts are in the REFERENCE_FORBIDDEN_PATHS secret
   - "assets/js/explorer-view.js"
-  - "assets/js/lotus-canvas.js"
   - "EXPLORER_SPEC.md"
   - "FRAMEWORK_UPDATE_PROMPT.md"
   - "QUESTION_GAP_DETECTION.md"
-  # assessment / coaching / framework / content engine (elevateHER domain)
+  # assessment / coaching / framework / content engine (one tenant's domain)
   - "include/common/assessmentHelpers.php"
   - "include/common/scoringEngine.php"
   - "include/common/questionMatrixHelpers.php"

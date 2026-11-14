@@ -9,7 +9,7 @@
  * class of once-per-host steps that nothing was running, so provisioned apps
  * landed half-installed and looked completely fine.
  *
- * yes4yelm was the worked example. Its public site sat empty for days:
+ * One app was the worked example. Its public site sat empty for days:
  *
  *   - tools/seed_reference.php had never been run, so the table its share pages
  *     read was empty. That file's own docstring said "this must run before the
@@ -107,7 +107,7 @@ if ($publisher) {
 // ─── 3. No wasted spec ───────────────────────────────────────────────────────
 // Authored content that nothing consumes is the quietest failure in this stack:
 // it passes every review, because the file exists and is correct — it just never
-// reaches a human. yes4yelm's reference/pieces.json was the worst case: 8 finished
+// reaches a human. One app's reference/pieces.json was the worst case: 8 finished
 // share pieces, written, deployed, and unreachable because nothing seeded them.
 //
 // So every asset under reference/ must be named by some code path. Anything that
@@ -154,7 +154,7 @@ $manual = [];
 
 // Has any cron ever run? cron_run is written by every job including skipped ones,
 // so an empty table means "never scheduled" rather than "nothing to do". On
-// makershost this is ONE shell entry, every minute, pointed at ADMIN's runner —
+// the shared host this is ONE shell entry, every minute, pointed at ADMIN's runner —
 // admin/cron/cron.php globs ../../*/cron/cron.php and dispatches every child app.
 // It must be every minute: the dispatcher gates minutes/{N} on $minute % N === 0,
 // so a 5-minute cron that is not aligned to :00/:05 silently never fires them.

@@ -11,7 +11,9 @@
 # build on any newly introduced contamination at any tier. Re-check locally with:
 #     python3 scripts/scan_reference_contamination.py --target . --strict
 #
-# Part of the nokemo "Reference Harvest & Sync" process.
+# The app names it forbids are not in this public repo: they come from the
+# REFERENCE_FORBIDDEN_TOKENS and REFERENCE_FORBIDDEN_PATHS Actions secrets
+# (one entry per line), merged into .reference-clean.yml by the scanner.
 name: contamination-guard
 
 on:
@@ -33,6 +35,9 @@ jobs:
       - name: Install dependencies
         run: pip install pyyaml
       - name: Scan for reference contamination
+        env:
+          REFERENCE_FORBIDDEN_TOKENS: ${{ secrets.REFERENCE_FORBIDDEN_TOKENS }}
+          REFERENCE_FORBIDDEN_PATHS: ${{ secrets.REFERENCE_FORBIDDEN_PATHS }}
         # --strict also gates Tier 3 (domain vocabulary). Enabled 2026-07-10 once
         # the restored reference reached CLEAN on all tiers (T1/T2a/T2b/T3 = 0).
         run: python3 scripts/scan_reference_contamination.py --target . --strict
