@@ -87,6 +87,11 @@
                 selector.appendChild(opt);
             });
         }
+
+        // A one-option selector (a branded app showing only "Custom (default)")
+        // offers no choice, so hide it.
+        var choices = selector.querySelectorAll('option:not([disabled])').length;
+        selector.classList.toggle('d-none', choices <= 1);
     }
 
     // Fetch Bootswatch themes

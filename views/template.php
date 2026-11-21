@@ -104,7 +104,7 @@ $core_asset = function ($rel) {
 
         <!-- REGION: topnav -->
         <nav class="navbar navbar-expand-lg border-bottom border-secondary border-opacity-25 px-3 py-2 sticky-top">
-            <button class="btn btn-sm btn-outline-light me-2 d-md-none" id="sidebarToggleTop" type="button">
+            <button class="btn btn-sm btn-outline-secondary me-2 d-md-none" id="sidebarToggleTop" type="button">
                 <i class="bi bi-list"></i>
             </button>
             <span class="navbar-brand mb-0 h6">&nbsp;</span>
@@ -122,7 +122,7 @@ $core_asset = function ($rel) {
             <!-- SCAFFOLD:DEMO-END -->
             <!-- Mobile search toggle -->
             <!-- SCAFFOLD:DEMO-START -->
-            <button class="btn btn-sm btn-outline-light me-2 d-md-none" id="navSearchToggle" type="button" title="Search">
+            <button class="btn btn-sm btn-outline-secondary me-2 d-md-none" id="navSearchToggle" type="button" title="Search">
                 <i class="bi bi-search"></i>
             </button>
             <!-- SCAFFOLD:DEMO-END -->
@@ -130,7 +130,7 @@ $core_asset = function ($rel) {
             <div class="ms-auto d-flex align-items-center">
                 <!-- Notification bell -->
                 <div class="dropdown me-2" id="notificationBell">
-                    <button class="btn btn-sm btn-outline-light position-relative" data-bs-toggle="dropdown" data-bs-auto-close="outside" title="Notifications">
+                    <button class="btn btn-sm btn-outline-secondary position-relative" data-bs-toggle="dropdown" data-bs-auto-close="outside" title="Notifications">
                         <i class="bi bi-bell"></i>
                         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" id="notifBadge">0</span>
                     </button>
@@ -144,7 +144,7 @@ $core_asset = function ($rel) {
                 </div>
 
                 <!-- Color mode toggle -->
-                <button class="btn btn-sm btn-outline-light me-2" id="colorModeToggle" type="button" title="Toggle dark mode">
+                <button class="btn btn-sm btn-outline-secondary me-2" id="colorModeToggle" type="button" title="Toggle dark mode">
                     <i class="bi bi-moon-fill"></i>
                 </button>
 
@@ -158,7 +158,7 @@ $core_asset = function ($rel) {
 
                 <!-- User dropdown -->
                 <div class="dropdown me-2">
-                    <a class="btn btn-sm btn-outline-light dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                    <a class="btn btn-sm btn-outline-secondary dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                         <?= h($_SESSION['first_name'] ?? '') ?><span class="d-none d-md-inline"> <?= h($_SESSION['last_name'] ?? '') ?></span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end">
@@ -176,7 +176,7 @@ $core_asset = function ($rel) {
                 </div>
 
                 <!-- Right panel toggle (rightmost — closest to panel) -->
-                <button class="btn btn-sm btn-outline-light" type="button"
+                <button class="btn btn-sm btn-outline-secondary" type="button"
                         data-bs-toggle="offcanvas" data-bs-target="#rightPanel" title="Settings">
                     <i class="bi bi-three-dots-vertical"></i>
                 </button>
