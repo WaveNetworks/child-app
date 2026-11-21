@@ -1,7 +1,7 @@
 /**
  * bg-canvas.js — Full-page canvas background layer
- * Debug pattern: gradient background + grid + corner arrows.
- * Confirms canvas covers entire viewport behind all UI.
+ * Gradient background. Debug pattern (grid + corner arrows + coordinates, to confirm
+ * the canvas covers the whole viewport) only with ?bgdebug=1.
  * Responds to data-bs-theme for light/dark mode.
  *
  * Replace draw() with your own rendering logic for gamified
@@ -16,6 +16,7 @@
     var dpr = window.devicePixelRatio || 1;
     var GRID_SIZE = 80;
     var ARROW_SIZE = 6;
+    var DEBUG = /[?&]bgdebug=1\b/.test(window.location.search);
 
     function isDark() {
         return document.documentElement.getAttribute('data-bs-theme') !== 'light';
@@ -138,6 +139,10 @@
             ctx.fillStyle = 'rgba(0, 0, 0, 0.06)';
             var labelColor = 'rgba(0, 0, 0, 0.12)';
         }
+
+        // Debug overlay (grid, corner arrows, coordinates) is opt-in: add ?bgdebug=1 to the URL.
+        // It used to draw on every page, so live apps showed 'TL (0,0)' / 'BR (w,h)' to real users.
+        if (!DEBUG) return;
 
         // Grid lines
         ctx.lineWidth = 1;
